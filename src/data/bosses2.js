@@ -157,7 +157,7 @@ export const PATTERN_BOSSES_2 = {
         [2, 'summon', { windup: 0.9, type: 'skeleton', count: 3, max: 4, anim: 'cast' }],
       ] },
       { below: 0.5, speedMult: 1.15, attacks: [
-        [3, 'laser', { windup: 0.8, duration: 2.0, sweep: 3.1, width: 6, beams: 2, color: 'shadow' }],
+        [3, 'laser', { windup: 0.85, duration: 2.0, sweep: 2.3, width: 6, beams: 2, color: 'shadow' }],
         [3, 'spiral', { windup: 0.5, arms: 3, rate: 13, duration: 2.4, speed: 100, turn: 1.8, frame: 10 }],
         [2, 'blink', {}],
       ] },
@@ -190,7 +190,7 @@ export const PATTERN_BOSSES_2 = {
         [2, 'summon', { windup: 0.8, type: 'toad', count: 3, max: 4, anim: 'cast' }],
       ] },
       { below: 0.5, speedMult: 1.2, attacks: [
-        [4, 'slam', { windup: 0.4, air: 0.65, height: 60, radius: 40, shards: 12, shardSpeed: 120, frame: 0 }],
+        [4, 'slam', { windup: 0.55, air: 0.65, height: 60, radius: 40, shards: 12, shardSpeed: 120, frame: 0 }],
         [3, 'ring', { windup: 0.6, count: 18, speed: 100, frame: 0, rings: 2, spin: 0.17, anim: 'cast' }],
         [2, 'laser', { windup: 0.5, duration: 0.35, sweep: 0, width: 7, beams: 1, length: 170, color: 'tongue' }],
       ] },
@@ -336,7 +336,7 @@ export const PATTERN_BOSSES_2 = {
         [1, 'blink', {}],
       ] },
       { below: 0.5, speedMult: 1.2, attacks: [
-        [3, 'laser', { windup: 0.8, duration: 2.2, sweep: 3.2, width: 6, beams: 2, color: 'fire' }],
+        [3, 'laser', { windup: 0.85, duration: 2.2, sweep: 2.3, width: 6, beams: 2, color: 'fire' }],
         [3, 'cross', { windup: 0.5, arms: 6, rate: 9, duration: 2.6, speed: 110, turn: 0.9, frame: 8 }],
         [2, 'wall', { windup: 0.6, speed: 90, frame: 8, gapSize: 3, volleys: 3, gapStep: 2 }],
         [1, 'blink', {}],

@@ -187,7 +187,7 @@ export const ENEMIES = {
   },
   wisp: {
     name: 'Wisp', hp: 8, speed: 34, radius: 5, hitRadius: 8, contactDamage: 1, mass: 0.5, flying: true,
-    attackInterval: [2.2, 3.2], chargeTime: 0.55, spiralTime: 1.3, spiralRate: 14, orbSpeed: 95,
+    attackInterval: [2.4, 3.4], chargeTime: 0.6, spiralTime: 1.1, spiralRate: 11, orbSpeed: 92,
   },
   scarecrow: {
     name: 'Scarecrow', hp: 22, speed: 0, radius: 8, hitRadius: 10, contactDamage: 0, mass: 99,
@@ -200,7 +200,7 @@ export const ENEMIES = {
   },
   sapling: {
     name: 'Root Sapling', hp: 16, speed: 24, radius: 8, hitRadius: 10, contactDamage: 1, mass: 2,
-    attackInterval: [2.0, 3.0], windupTime: 0.65, rootSteps: 9, rootSpacing: 18, rootDelay: 0.06, rootRadius: 11,
+    attackInterval: [2.2, 3.2], windupTime: 0.75, rootSteps: 8, rootSpacing: 18, rootDelay: 0.06, rootRadius: 11,
   },
   cutpurse: {
     name: 'Goblin Cutpurse', hp: 9, speed: 125, radius: 6, hitRadius: 8, contactDamage: 0, mass: 0.8,

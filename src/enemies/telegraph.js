@@ -6,7 +6,8 @@ import * as THREE from 'three';
 export const TELE = {
   danger: new THREE.Color(1.8, 0.12, 0.06), // red: an attack is coming here
   dangerHot: new THREE.Color(3.2, 0.5, 0.25), // flashes just before it lands
-  fire: new THREE.Color(2.4, 0.8, 0.15), // where a fireball will land
+  fire: new THREE.Color(2.4, 0.8, 0.15), // where a fireball will land (and burning pitch on the floor)
+  poison: new THREE.Color(0.5, 1.8, 0.3), // a poison or spore cloud on the floor
   chainDark: new THREE.Color('#5d606c'),
   chainLight: new THREE.Color('#9a9eab'),
 };

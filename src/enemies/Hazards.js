@@ -176,6 +176,17 @@ export class Hazards {
   }
 
   drawOverlay(o, time) {
+    // fire and poison on the floor: a bright pulsing rim, so a puddle can be seen (and stepped around)
+    // even in the dark and under everything else going on
+    for (let i = 0; i < this.patches.count; i++) {
+      const f = this.patches.active[i];
+      if (f.kind !== 'fire' && f.kind !== 'poison') continue;
+      const fade = Math.min(1, f.ttl / 0.5); // it fades out just before it goes
+      const pulse = 0.55 + 0.25 * Math.sin(time * 9 + f.x * 0.1);
+      const c = f.kind === 'fire' ? TELE.fire : TELE.poison;
+      o.ring(f.x, f.y, f.r + 2, c, pulse * fade);
+      o.ring(f.x, f.y, f.r - 1, c, pulse * fade * 0.45);
+    }
     for (let i = 0; i < this.eruptions.count; i++) {
       const e = this.eruptions.active[i];
       if (e.done) continue;

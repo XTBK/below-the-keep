@@ -29,7 +29,7 @@ import { Beatrix } from '../world/Beatrix.js';
 import { ENCOUNTER_IDS } from '../data/encounters.js';
 import { PRISONERS, PRISONER_IDS, rescued } from '../data/prisoners.js';
 import { EMBERS, rank } from '../data/embers.js';
-import { enemyScale, bossScale, EARLY_BOSS_LIMIT, TIER_INFO, bossTier } from '../data/difficulty.js';
+import { enemyScale, bossScale, EARLY_BOSS_LIMIT, TIER_INFO, bossTier, DIFFICULTY } from '../data/difficulty.js';
 import { OMENS, OMEN_IDS, OMEN_CHANCE, OMEN_FX } from '../data/omens.js';
 import { Familiars } from '../items/Familiars.js';
 import { DamageNumbers } from '../ui/DamageNumbers.js';
@@ -310,6 +310,9 @@ export class Game {
     this._snapCamera();
     this.onEnteredRoom();
     onFloorStart(this);
+    // a breath on the stairs: arriving on a new floor of the Keep restores a little health
+    // (a heart on floors 2-4, half a heart deeper) - early runs shouldn't die of attrition
+    if (this.player && this.floorNumber >= 2 && !this.realm && !this.inVault) this.player.heal(this.floorNumber <= 4 ? DIFFICULTY.arrivalHealEarly : DIFFICULTY.arrivalHeal);
     this._arriveByRoute();
     this._summonBeatrix();
     // Old Knowledge II: every run starts with a relic
@@ -536,7 +539,8 @@ export class Game {
     if (e.isBoss) {
       const s = bossScale(this.floorNumber, bossHome(e.type));
       const t = TIER_INFO[this.bossTierOf(e.type)];
-      return { ...s, hp: s.hp * t.hp * hp, tempo: s.tempo * t.tempo * tempo };
+      const ease = DIFFICULTY.bossEase[this.floorNumber] || { hp: 1, tempo: 1 }; // the first bosses ease you in
+      return { ...s, hp: s.hp * t.hp * hp * ease.hp, tempo: s.tempo * t.tempo * tempo * ease.tempo };
     }
     const s = enemyScale(this.floorNumber);
     return { ...s, hp: s.hp * hp, tempo: s.tempo * tempo };

@@ -695,3 +695,20 @@ Three systems so a run feels like this game's own, not a borrowed loop.
   and a puff of dust to show where.
 - Playtest bot: `scratchpad/shot/playrun.mjs` + `botlib.js` play whole runs and log every room (the bot must advance
   `game.time` itself, or the attack budget never frees up).
+
+### The difficulty curve (after playtesting)
+
+Measured with a bot that plays each floor with a build typical of that depth (`scratchpad/shot/diffprobe.mjs`). Before:
+floor 1-2 rooms were nearly free and their bosses spiked (a Hard boss could already appear on floor 2); floor 7 was a
+cliff (whole-heart hits plus two runaway bosses); the sword hero took 2-3x the boss damage of the others. Changes:
+
+- **Body contact**: a boss's body only hurts while it is moving at you (not resting, dazed or winding up), and anything
+  that touches you reels back (knockback + a short daze), so one touch is one hit - no chains.
+- **Bosses ease in**: `DIFFICULTY.bossEase` (floor 1: x0.85 health, x0.82 attack tempo; floor 2: x0.9 / x0.88;
+  floor 3: x0.95 / x0.94).
+- **Ranks a floor later**: Hard from floor 3, Deadly from 5, Legendary from 7.
+- **Whole-heart hits from floor 8** (was 7).
+- **No full circles of beams**: the Lich's, the Pyre Bishop's and the Faceless Saint's sweeping lasers leave a gap.
+  The Great Toad's slam warns longer (0.55 s). Wisps spiral fewer orbs; Root Saplings warn longer.
+- **Burning pitch and poison clouds** have a bright pulsing rim (orange / green), so they're easy to see and avoid.
+- **A breath on the stairs**: reaching a new floor restores a heart (floors 2-4) or half a heart (deeper).

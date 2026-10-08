@@ -350,8 +350,19 @@ export class EnemyManager {
         if (dmg <= 0) continue;
         const dx = p.x - e.x;
         const dy = p.y - e.y;
+        // a boss's body only hurts when it is coming at you - resting, dazed or winding up, standing
+        // next to it is safe (its attacks still hurt). That is what makes a sword fair against it.
+        if (e.isBoss && (e.vx || 0) * dx + (e.vy || 0) * dy <= 12 * Math.hypot(dx, dy)) continue;
         const r = e.def.radius + PLAYER.radius - 1;
-        if (dx * dx + dy * dy < r * r) p.hurt(dmg, e.x, e.y, e.def.name);
+        if (dx * dx + dy * dy < r * r && p.hurt(dmg, e.x, e.y, e.def.name)) {
+          // whatever hit you with its body reels back for a moment, so one touch is one hit
+          // (not a chain of them the moment your invulnerability runs out)
+          const d = Math.hypot(dx, dy) || 1;
+          const push = e.isBoss ? 230 : 150;
+          e.kbx -= (dx / d) * push;
+          e.kby -= (dy / d) * push;
+          e.stun(e.isBoss ? 0.5 : 0.3);
+        }
       }
     }
 

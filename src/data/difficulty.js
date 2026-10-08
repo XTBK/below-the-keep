@@ -14,11 +14,16 @@ export const DIFFICULTY = {
   enemySpeedPerFloor: 0.025, // floor 9: x1.2 speed
   enemyTempoPerFloor: 0.03, // floor 9: attacks come x1.24 as often
   championPerFloor: 0.012, // floor 9: about 15% of enemies are champions
-  fullHeartFrom: 7, // from this floor on, every hit costs a whole heart
+  fullHeartFrom: 8, // from this floor on, every hit costs a whole heart
+  arrivalHealEarly: 2, // half hearts restored on reaching floors 2-4 (a breath on the stairs)
+  arrivalHeal: 1, // ...and on deeper floors
 
   bossHpPerFloor: 0.32,
   bossTempoPerFloor: 0.035,
   bossShotPerFloor: 0.03, // how fast boss shots fly
+
+  // The first bosses ease you in: less health and slower attacks, fading out by floor 4.
+  bossEase: { 1: { hp: 0.85, tempo: 0.82 }, 2: { hp: 0.9, tempo: 0.88 }, 3: { hp: 0.95, tempo: 0.94 } },
 };
 
 // The first few floors only draw from the gentler bosses, so a run eases in. For each early floor:
@@ -64,9 +69,9 @@ export const BOSS_TIERS = {
 export const TIER_INFO = [
   null,
   { name: 'NORMAL', color: '#b8b0a0', hp: 1, tempo: 1, minFloor: 1, reward: { bias: 0 } },
-  { name: 'HARD', color: '#e0a040', hp: 1.15, tempo: 1.05, minFloor: 2, reward: { bias: 0.5 } },
-  { name: 'DEADLY', color: '#e04030', hp: 1.35, tempo: 1.1, minFloor: 4, reward: { bias: 0.9, minQuality: 2, choice: true } },
-  { name: 'LEGENDARY', color: '#c070ff', hp: 1.6, tempo: 1.16, minFloor: 6, reward: { bias: 1.2, minQuality: 3, choice: true, chest: true } },
+  { name: 'HARD', color: '#e0a040', hp: 1.15, tempo: 1.05, minFloor: 3, reward: { bias: 0.5 } },
+  { name: 'DEADLY', color: '#e04030', hp: 1.35, tempo: 1.1, minFloor: 5, reward: { bias: 0.9, minQuality: 2, choice: true } },
+  { name: 'LEGENDARY', color: '#c070ff', hp: 1.6, tempo: 1.16, minFloor: 7, reward: { bias: 1.2, minQuality: 3, choice: true, chest: true } },
 ];
 
 export function bossTier(type) {

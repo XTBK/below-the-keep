@@ -80,7 +80,7 @@ export const PATTERN_BOSSES_4 = {
         [2, 'rain', { windup: 0.4, count: 3, onPlayer: true, radius: 18, delay: 0.8, visual: 0, shards: 6, shardFrame: 12 }],
       ] },
       { below: 0.5, speedMult: 1.2, attacks: [
-        [3, 'laser', { windup: 0.8, duration: 2.0, sweep: 2.0, width: 6, beams: 3, color: 'holy' }],
+        [3, 'laser', { windup: 0.85, duration: 2.0, sweep: 1.4, width: 6, beams: 3, color: 'holy' }],
         [3, 'ring', { windup: 0.6, count: 22, speed: 110, frame: 12, rings: 2, holes: 3, gapSpin: 0.6, anim: 'cast' }],
         [2, 'blink', {}],
       ] },
