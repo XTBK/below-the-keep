@@ -121,6 +121,10 @@ canvas {
 .touch-btn[hidden] {
   display: none !important;
 }
+/* only during a run: never over the title screen, menus or cutscenes */
+.touch-ui:not(.in-run) .touch-btn {
+  display: none !important;
+}
 
 /* --- portrait phones: ask to rotate --- */
 .rotate-hint {

@@ -34,6 +34,8 @@ export class TouchControls {
     this.useBtn = el('button', 'touch-btn touch-use', root, 'USE');
     this.rollBtn = el('button', 'touch-btn touch-roll', root, 'ROLL');
     this.onTap = null; // set by the Game: taps confirm menus (title, death screen)
+    this.inRun = null;
+    this.setInRun(false);
     for (const [btn, action] of [[this.bombBtn, 'bomb'], [this.itemBtn, 'active'], [this.useBtn, 'consumable'], [this.rollBtn, 'dodge']]) {
       btn.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
@@ -54,6 +56,13 @@ export class TouchControls {
     window.addEventListener('pointermove', (e) => this._moveEvt(e), { passive: false });
     window.addEventListener('pointerup', (e) => this._up(e));
     window.addEventListener('pointercancel', (e) => this._up(e));
+  }
+
+  /** The action buttons only belong on screen during a run: not over the title, menus or cutscenes. */
+  setInRun(on) {
+    if (on === this.inRun) return;
+    this.inRun = on;
+    this.root.classList.toggle('in-run', on);
   }
 
   _down(e) {

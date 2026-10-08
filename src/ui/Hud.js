@@ -676,6 +676,8 @@ export class Hud {
       const fought = (Save.data.unlocks.enemiesFought || []).filter((t) => ENEMIES[t]).length;
       drawText(ctx, `RUNS ${st.runsStarted}   VICTORIES ${st.victories}   BOSSES SLAIN ${st.bossesBeaten}   RELICS FOUND ${RELIC_IDS.filter((r) => Save.data.unlocks.itemsSeen.includes(r)).length}/${RELIC_IDS.length}   ENEMIES FOUGHT ${fought}/${Object.keys(ENEMIES).length}`, W / 2, H - 24, FAINT, { align: 'center' });
     }
+    // the build stamp, faint in the corner (so a player can check they have the latest version)
+    if (onTitle) drawText(ctx, `BUILD ${typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'dev'}`, W - 4, H - 10, FAINT, { align: 'right' });
     // browsers keep quiet until the first key press or tap
     const audio = state.audio;
     if (!audio.ctx || audio.ctx.state !== 'running') {

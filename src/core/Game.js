@@ -1175,6 +1175,7 @@ export class Game {
     this.enemies.sync(this.time);
     if (this.beatrix) this.beatrix.sync();
     for (const k in this.particles) this.particles[k].sync();
+    this.touch.setInRun(this.state === 'play' && !this.cutscene && !this.descending);
     this.hud.tick(rawDt, this);
     this.hud.draw(this);
     this.renderer.render(this.paused ? 0 : this.feel.shakeX, this.paused ? 0 : this.feel.shakeY);
