@@ -292,7 +292,13 @@ export const SOUNDS = {
     s.metal(o, t + 0.07, 2450 * p, 0.25, 0.1);
   }],
   coins: [0.3, (s, o, t, p) => { for (let i = 0; i < 4; i++) s.metal(o, t + i * 0.045 + Math.random() * 0.02, (2100 + Math.random() * 600) * p, 0.3, 0.15); }],
-  heart: [0.4, (s, o, t) => arpeggio(s, o, t, [D.D4, D.F4, D.A4, D.D5], 0.07, 0.35, 1.2, 0.35)],
+  heart: [0.4, (s, o, t, p) => {
+    // a healing draught: the cork, three gulps, warmth
+    s.drum(o, t, 900 * p, 420, 0.035, 0.22, 0.7);
+    s.noise(o, t, { type: 'bandpass', f: [2400, 1600], q: 3, gain: 0.12, dur: 0.04 });
+    for (let i = 0; i < 3; i++) s.sweep(o, t + 0.12 + i * 0.13, 'sine', 260 * p, 150 * p, 0.09, 0.14);
+    s.choir(o, t + 0.3, [D.D3, D.A3, D.F4], 0.9, 0.05, 0.2);
+  }],
   bombPickup: [0.25, (s, o, t, p) => {
     s.drum(o, t, 190 * p, 120, 0.15, 0.35, 0.3);
     s.noise(o, t, { type: 'bandpass', f: [700, 500], q: 4, gain: 0.3, dur: 0.06 });
@@ -302,8 +308,10 @@ export const SOUNDS = {
     s.metal(o, t + 0.08, 2500 * p, 0.35, 0.16);
   }],
   buy: [0.35, (s, o, t) => {
+    // coins counted onto the table, and the trader's nod
     SOUNDS.coins[1](s, o, t, 1);
-    arpeggio(s, o, t + 0.05, [D.A4, D.D5], 0.08, 0.3, 0.9);
+    s.drum(o, t + 0.16, 140, 100, 0.08, 0.3, 0.5);
+    s.metal(o, t + 0.2, 880, 0.5, 0.12);
   }],
   deny: [0.2, (s, o, t) => {
     // a dull double knock: no
@@ -311,10 +319,13 @@ export const SOUNDS = {
     s.drum(o, t + 0.11, 115, 90, 0.12, 0.35, 0.3);
   }],
   relic: [0.6, (s, o, t) => {
-    // a harp glissando up the dorian scale, voices swelling under it, a bell on top
-    arpeggio(s, o, t, [D.D4, D.E4, D.F4, D.G4, D.A4, D.B4, D.C5, D.D5], 0.045, 0.3, 1.8, 0.4);
-    s.choir(o, t + 0.05, [D.D3, D.A3, D.D4, D.F4], 1.8, 0.12, 0.3);
-    s.bell(o, t + 0.36, D.D5, 2.2, 0.35);
+    // a reliquary unsealed: a deep chapel bell, a low minor chord rising out of the dark, dust glittering
+    s.drum(o, t, 70, 44, 0.6, 0.28, 0);
+    s.bell(o, t, D.D3 * 2, 2.8, 0.28);
+    s.bell(o, t + 0.02, D.A3, 2.6, 0.14);
+    s.choir(o, t + 0.08, [D.D3, D.F3, D.A3, D.D4], 2.2, 0.13, 0.5);
+    s.sweep(o, t + 0.1, 'sine', D.D3, D.D4, 1.4, 0.05, 0, 0.6);
+    s.noise(o, t + 0.2, { type: 'highpass', f: [6000, 9000], gain: 0.045, attack: 0.4, dur: 1.4 });
   }],
   charged: [0.5, (s, o, t) => {
     s.bell(o, t, D.A5, 1.4, 0.25);
@@ -348,9 +359,11 @@ export const SOUNDS = {
     s.metal(o, t, 900 * p, 0.2, 0.1);
   }],
   secret: [0.65, (s, o, t) => {
-    // a little discovery: harp and a distant bell
-    arpeggio(s, o, t, [D.A3, D.D4, D.E4, D.A4, D.D5], 0.09, 0.32, 1.8, 0.35);
-    s.bell(o, t + 0.45, D.A4, 2.6, 0.3);
+    // a hidden way: stone grinding on stone, then a low bell somewhere far below
+    s.noise(o, t, { type: 'lowpass', f: [420, 110], q: 1.2, gain: 0.32, attack: 0.08, dur: 0.95 });
+    for (let i = 0; i < 7; i++) s.noise(o, t + i * 0.12 + Math.random() * 0.04, { type: 'bandpass', f: [260, 180], q: 5, gain: 0.12, dur: 0.06 });
+    s.bell(o, t + 0.75, D.D3 * 2, 3.2, 0.22);
+    s.choir(o, t + 0.8, [D.D3, D.A3], 1.6, 0.05, 0.6);
   }],
   // --- bosses & the run ---
   roar: [0.6, (s, o, t, p) => {

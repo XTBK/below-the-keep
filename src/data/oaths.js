@@ -34,7 +34,7 @@ export const OATHS = {
   },
   iron: {
     name: 'Oath of Iron',
-    text: 'Red hearts on the floor heal half as much.',
+    text: 'Healing draughts heal half as much.',
     heat: 1,
     // [Pickups]
     healing: 0.5,

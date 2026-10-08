@@ -51,7 +51,7 @@ export const POTIONS = {
 
 // What a potion LOOKS like. Each run shuffles which look hides which effect.
 export const POTION_LOOKS = [
-  { name: 'Murky Red Potion', glass: ['#3a0a10', '#7a1420', '#c02634', '#f07070'] },
+  { name: 'Bilious Potion', glass: ['#1e2206', '#4a5214', '#8a9a2a', '#d0e070'] }, // (red is only ever healing)
   { name: 'Bubbling Green Potion', glass: ['#0e2a10', '#2a6a20', '#4aa83a', '#a0f080'] },
   { name: 'Cloudy Blue Potion', glass: ['#0e1a3a', '#24447a', '#4a7ac0', '#a0c8ff'] },
   { name: 'Golden Potion', glass: ['#3a2a08', '#7a5a14', '#d0aa40', '#fff0a0'] },

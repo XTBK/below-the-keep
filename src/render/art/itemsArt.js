@@ -167,12 +167,12 @@ export function relicIcon(col) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Pickups (16 x 16): 0 penny, 1 purse, 2 heart, 3 half heart, 4 bomb, 5 key, 6 iron heart
+// Pickups (16 x 16): 0 penny, 1 purse, 2 healing draught, 3 half draught, 4 bomb, 5 key, 6 iron tonic
 // ---------------------------------------------------------------------------------------------
 export function pickupFrame(k) {
   const p = new Painter(16, 16);
   if (k === 6) {
-    ironHeartIcon(p);
+    ironTonic(p);
     p.outline(S.outline);
     return p;
   }
@@ -190,17 +190,7 @@ export function pickupFrame(k) {
     p.px(7, 4, S.silver[3], 4); // coins peeking out
     p.px(9, 4, S.silver[2], 4);
   } else if (k === 2 || k === 3) {
-    const shape = ['.##..##.', '########', '########', '.######.', '..####..', '...##...'];
-    for (let y = 0; y < shape.length; y++) {
-      for (let x = 0; x < 8; x++) {
-        if (shape[y][x] !== '#') continue;
-        if (k === 3 && x >= 4) continue;
-        let c = H[4];
-        if (y >= 3 || x >= 6) c = H[3];
-        if (y <= 1 && x <= 2) c = H[5];
-        p.px(x + 4, y + 5, c, 2.5 - y * 0.2);
-      }
-    }
+    healingDraught(p, k === 3);
   } else if (k === 4) {
     p.cyl(4, 7, 8, 7, S.wood.slice(1, 6), 3);
     p.hline(4, 11, 9, S.iron[3], 3.4);
@@ -218,6 +208,40 @@ export function pickupFrame(k) {
   }
   p.outline(S.outline);
   return p;
+}
+
+/**
+ * A healing draught: a tall, slim vial of glowing crimson with a wax-sealed cork (half: half full).
+ * Deliberately not the round flask of the mystery potions.
+ */
+function healingDraught(p, half) {
+  const GLASS = ['#2a2a34', '#4a4a5a', '#7a7a8a'];
+  const RED = ['#4a0a12', '#8a1424', '#d02a3a', '#ff6a6a'];
+  p.rect(7, 1, 3, 2, '#8a5a2a', 3); // cork
+  p.rect(6, 3, 5, 1, '#a02424', 3.2); // red wax over it
+  p.rect(7, 4, 3, 2, GLASS[1], 2.4); // the neck
+  // the body: tall, flat-shouldered
+  for (let y = 6; y <= 14; y++) {
+    const w = y === 6 || y === 14 ? 3 : 4;
+    p.hline(8 - w, 8 + w - 1, y, GLASS[y === 14 ? 0 : 1], 2.4);
+  }
+  const top = half ? 10 : 7;
+  for (let y = top; y <= 13; y++) {
+    p.hline(5, 10, y, RED[y === top ? 3 : y > 11 ? 1 : 2], 3);
+  }
+  p.vline(5, 7, 12, '#ffffff', 3.4); // a glint down the glass
+  p.glow(8, 11, RED[3], half ? 0.5 : 0.8);
+}
+
+/** An iron tonic (an iron heart): a squat steel flask bound with iron bands. */
+function ironTonic(p) {
+  const STEEL = S.iron.slice(1, 6);
+  p.rect(7, 2, 3, 2, '#8a5a2a', 3);
+  p.ellipse(8, 10, 5.5, 4.8, STEEL, 2.6);
+  p.hline(3, 13, 8, S.iron[1], 3);
+  p.hline(3, 13, 12, S.iron[1], 3);
+  p.px(5, 7, '#ffffff', 3.4);
+  p.px(8, 10, '#c8d0e0', 3.2);
 }
 
 /** A lit powder keg, 16 x 16: 0 normal, 1 flashing red (it blinks faster as the fuse burns down). */
