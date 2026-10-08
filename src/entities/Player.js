@@ -10,7 +10,7 @@ import { ACTIVE } from '../data/items.js';
 import { PERKS, onPlayerHurt } from '../items/Perks.js';
 import { CHARACTERS } from '../data/characters.js';
 import { DIFFICULTY } from '../data/difficulty.js';
-import { WEAPONS, ROLL, COMBAT } from '../data/config.js';
+import { WEAPONS, ROLL, COMBAT, SKILLS } from '../data/config.js';
 import * as THREE from 'three';
 
 const SLASH = new THREE.Color(2.2, 2.1, 1.8);
@@ -72,6 +72,9 @@ export class Player {
     this.rollT = 0; // > 0 while dodge-rolling
     this.rollCool = 0;
     this.rollDir = { x: 0, y: -1 };
+    this.chargeT = 0; // > 0 while shield-charging
+    this.stillT = 0; // how long he's stood still (Steady Aim)
+    this.steady = false;
     this.slashT = 0; // the sword arc, fading
     this.slashAngle = 0;
     this.chargeDir = { x: 1, y: 0 };
@@ -242,7 +245,7 @@ export class Player {
    * `source` names what hurt him (shown on the death screen).
    */
   hurt(halfHearts, fromX, fromY, source = 'the Dark') {
-    if (this.invuln > 0 || this.dead || this.buffs.warding > 0 || this.rollT > 0) return false;
+    if (this.invuln > 0 || this.dead || this.buffs.warding > 0 || this.rollT > 0 || this.chargeT > 0) return false;
     // deep down, every hit costs a whole heart
     if (halfHearts === 1 && this.game.floorNumber >= DIFFICULTY.fullHeartFrom) halfHearts = 2;
     if (this.shieldReady && this.perks.shield) {
@@ -302,6 +305,12 @@ export class Player {
       this.vx = this.rollDir.x * ROLL.speed;
       this.vy = this.rollDir.y * ROLL.speed;
       if (Math.random() < 0.5) this.game.effects.landDust(this.x, this.y, 1);
+    } else if (this.chargeT > 0) {
+      this.chargeT -= dt;
+      this.vx = this.rollDir.x * SKILLS.charge.speed;
+      this.vy = this.rollDir.y * SKILLS.charge.speed;
+      this._chargeHits();
+      if (Math.random() < 0.7) this.game.effects.landDust(this.x, this.y, 1);
     } else {
       this.vx = approach(this.vx, tx, rate);
       this.vy = approach(this.vy, ty, rate);
@@ -330,8 +339,22 @@ export class Player {
     // --- shooting ---
     this.fireCooldown -= dt;
     this.throwTimer -= dt;
-    if (this.rollT > 0) {
-      // no shooting mid-roll
+    // Steady Aim: stand still and the next bolt is a sure crit
+    if (this.character.steadyAim) {
+      if (Math.hypot(this.vx, this.vy) < 14 && this.rollT <= 0) {
+        this.stillT += dt;
+        if (!this.steady && this.stillT >= SKILLS.steady.still) {
+          this.steady = true;
+          this.game.audio.play('steady');
+          this.game.effects.sparkle(this.x, this.y + 20);
+        }
+      } else {
+        this.stillT = 0;
+        this.steady = false;
+      }
+    }
+    if (this.rollT > 0 || this.chargeT > 0) {
+      // no shooting mid-dodge
     } else if (this.perks.chargeShot) {
       // the Siege Crossbow: hold to draw, let go to loose one great bolt
       const full = Math.max(0.5, st.fireDelay * 2.5);
@@ -357,7 +380,7 @@ export class Player {
 
   /** Dodge roll: a quick tumble in the direction he's moving, untouchable while it lasts. */
   tryRoll(input) {
-    if (this.dead || this.rollT > 0 || this.rollCool > 0) return;
+    if (this.dead || this.rollT > 0 || this.chargeT > 0 || this.rollCool > 0) return;
     let dx = input.moveX;
     let dy = input.moveY;
     if (!dx && !dy) {
@@ -368,10 +391,96 @@ export class Player {
     const l = Math.hypot(dx, dy) || 1;
     this.rollDir.x = dx / l;
     this.rollDir.y = dy / l;
+    const kind = this.character.dodge || 'roll';
+    if (kind === 'blink') return this._blink();
+    if (kind === 'charge') return this._charge();
+    if (kind === 'reload') {
+      this.fireCooldown = 0; // the crossbow is wound mid-tumble
+      this.game.audio.play('reload');
+    }
     this.rollT = ROLL.time;
     this.rollCool = ROLL.time + ROLL.cooldown;
     this.game.audio.play('roll');
     this.game.effects.landDust(this.x, this.y, 6);
+  }
+
+  /** Wren's blink: vanish, and appear a little way off. */
+  _blink() {
+    const g = this.game;
+    const cfg = SKILLS.blink;
+    const room = g.room;
+    const r = PLAYER.radius;
+    const inside = (x, y, box) => x + r > box.x0 && x - r < box.x1 && y + r > box.y0 && y - r < box.y1;
+    const b = room.bounds;
+    let land = null;
+    // walk the line: pits and enemies can be passed over, walls and rocks can't
+    for (let d = 4; d <= cfg.distance; d += 4) {
+      const x = this.x + this.rollDir.x * d;
+      const y = this.y + this.rollDir.y * d;
+      if (x - r < b.x0 || x + r > b.x1 || y - r < b.y0 || y + r > b.y1) break;
+      let blocked = false;
+      let onPit = false;
+      for (const s of room.solids) {
+        if (!inside(x, y, s)) continue;
+        if (s.pit) onPit = true;
+        else blocked = true;
+      }
+      if (blocked) break;
+      if (!onPit) land = { x, y };
+    }
+    if (!land) return; // nowhere to go: the blink isn't spent
+    g.effects.spellImpact(this.x, this.y, 14); // where he was
+    g.effects.burst(g.effects.presets.holy, this.x, this.y, 14, 10, 60, 40);
+    // the sparks left behind sting anything crowding him
+    g.enemies.forEachAlive(room, (e) => {
+      if (!e.hittable) return;
+      const d = Math.hypot(e.x - this.x, e.y - this.y);
+      if (d > cfg.burstRadius + e.def.hitRadius) return;
+      const dmg = this.stats.damage * cfg.burst * this.damageScale;
+      const before = e.hp;
+      e.hit(dmg, (e.x - this.x) / (d || 1), (e.y - this.y) / (d || 1));
+      g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), false);
+    });
+    this.x = land.x;
+    this.y = land.y;
+    this.vx = this.rollDir.x * 60;
+    this.vy = this.rollDir.y * 60;
+    g.effects.spellImpact(this.x, this.y, 14); // where he lands
+    this.invuln = Math.max(this.invuln, cfg.invuln);
+    this.rollCool = cfg.cooldown;
+    g.audio.play('wizBlink');
+  }
+
+  /** Sir Aldwin's shield charge. */
+  _charge() {
+    const cfg = SKILLS.charge;
+    this.chargeT = cfg.time;
+    this.rollCool = cfg.time + cfg.cooldown;
+    this.chargeHit = new Set();
+    this.game.audio.play('shieldCharge');
+    this.game.effects.landDust(this.x, this.y, 6);
+  }
+
+  _chargeHits() {
+    const g = this.game;
+    const cfg = SKILLS.charge;
+    g.enemies.forEachAlive(g.room, (e) => {
+      if (!e.hittable || this.chargeHit.has(e)) return;
+      const ex = e.x - this.x;
+      const ey = e.y - this.y;
+      const d = Math.hypot(ex, ey) || 1;
+      if (d > PLAYER.radius + e.def.hitRadius + 8) return;
+      this.chargeHit.add(e);
+      const dmg = this.stats.damage * cfg.damage * this.damageScale;
+      const before = e.hp;
+      e.hit(dmg, ex / d, ey / d);
+      e.kbx += (ex / d) * (cfg.knockback / e.def.mass);
+      e.kby += (ey / d) * (cfg.knockback / e.def.mass);
+      e.stun(cfg.stun);
+      g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), false);
+      g.audio.play('shieldBash');
+      g.feel.shake(0.15);
+    });
   }
 
   /** The Iron Knight's swing: a mighty arc that also bats enemy shots out of the air. */
@@ -448,7 +557,12 @@ export class Player {
   }
 
   /** The sword's arc, drawn bright for a blink. */
-  drawOverlay(o) {
+  drawOverlay(o, time) {
+    // Steady Aim: a glint over his head when the next bolt will crit
+    if (this.steady) {
+      const a = 0.6 + 0.4 * Math.sin(time * 12);
+      for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]]) o.dot(this.x + dx, this.y + 38 + dy, 3, SLASH, a * (Math.abs(dx) + Math.abs(dy) > 1 ? 0.5 : 1));
+    }
     if (this.slashT <= 0) return;
     const w = WEAPONS.sword;
     const k = this.slashT / 0.16;
@@ -487,7 +601,13 @@ export class Player {
         const a = Math.atan2(dy, dx) + (i - extra / 2) * 0.22;
         const vx = Math.cos(a) * st.shotSpeed + this.vx * inherit;
         const vy = Math.sin(a) * st.shotSpeed + this.vy * inherit;
-        this.game.projectiles.spawn(this.x + hand[0], this.y + hand[1], hand[2], vx, vy, shot, 0, scale);
+        const p = this.game.projectiles.spawn(this.x + hand[0], this.y + hand[1], hand[2], vx, vy, shot, 0, scale);
+        if (p && this.steady) p.sureCrit = true;
+      }
+      if (this.steady) {
+        this.steady = false;
+        this.stillT = -0.15; // a moment before it steadies again
+        this.game.audio.play('aimedShot');
       }
       if (this.perks.rearShot) this.game.projectiles.spawn(this.x, this.y, hand[2], -dx * st.shotSpeed, -dy * st.shotSpeed, shot, 0, scale * 0.7);
       this.game.familiars.onPlayerFire(dx, dy);
@@ -534,6 +654,8 @@ export class Player {
     if (this.rollT > 0) {
       const k = Math.sin((1 - this.rollT / ROLL.time) * Math.PI);
       this.sprite.mesh.scale.set(1 + 0.25 * k, 1 - 0.35 * k, 1);
+    } else if (this.chargeT > 0) {
+      this.sprite.mesh.scale.set(1.12, 0.92, 1); // braced behind the shield
     } else if (this.sprite.mesh.scale.x !== 1) this.sprite.mesh.scale.set(1, 1, 1);
     // transformations tint him
     if (this.transforms.size) {

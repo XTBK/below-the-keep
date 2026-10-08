@@ -131,6 +131,25 @@ export class Synth {
     this.noise(out, t, { type: 'highpass', f: [3000, 2000], q: 0.7, gain: gain * 0.5, dur: 0.02 });
   }
 
+  /** A tone gliding from f0 to f1 (zaps, swells, the hum of magic). Optional lowpass `cut`. */
+  sweep(out, t, type, f0, f1, dur, gain, cut = 0, attack = 0.003) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    let node = o;
+    if (cut) {
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = cut;
+      node = o.connect(f);
+    }
+    node.connect(env(ctx, out, t, gain, attack, dur));
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  }
+
   /** A drum or heavy thump: a sine that drops in pitch, plus a slap of noise. */
   drum(out, t, f0, f1, dur, gain, slap = 0.4) {
     const ctx = this.ctx;

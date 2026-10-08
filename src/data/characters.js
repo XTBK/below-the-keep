@@ -8,6 +8,9 @@
 //   weapon       'wand' (spell bolts), 'crossbow' (heavy piercing bolts), 'sword' (a strong melee
 //                swing plus a weak short sword-wave), or 'sling' (stones, the default)
 //   starter      true: can be chosen from the very first run
+//   dodge        what the dodge button does: 'roll' (the default), 'blink', 'reload' (roll + reload),
+//                'charge' (shield charge). See SKILLS in data/config.js
+//   steadyAim    standing still makes the next shot a sure critical hit
 //   recolor      swaps colours of Wren's sprite: { tunic, hair, skin } -> new colour ramps
 //   unlock       how to unlock them (shown on the title screen while locked)
 
@@ -21,6 +24,8 @@ export const CHARACTERS = {
     relics: [],
     looks: ['wizard'],
     weapon: 'wand', // casts spell bolts instead of slinging stones
+    mods: { homing: 0.3 }, // the bolts lean gently toward foes
+    dodge: 'blink',
     starter: true,
   },
   ranger: {
@@ -29,7 +34,7 @@ export const CHARACTERS = {
     flavour: 'Warden of the royal forest. Slow to reload, slower to miss.',
     halfHearts: 6,
     // heavy bolts: hit hard, fly fast and far, pass through a foe - but the crossbow is slow to wind
-    stats: { damage: 2.4, range: 70 },
+    stats: { damage: 2.8, range: 70 },
     statsMult: { fireDelay: 1.75, shotSpeed: 1.45 },
     mods: { pierce: 1 },
     pickups: { pennies: 0, bombs: 1, keys: 2 },
@@ -40,6 +45,8 @@ export const CHARACTERS = {
       hair: ['#2a1608', '#4a2a10', '#6a4018', '#8a5a26'],
     },
     weapon: 'crossbow',
+    dodge: 'reload',
+    steadyAim: true,
     starter: true,
   },
   ironknight: {
@@ -58,6 +65,7 @@ export const CHARACTERS = {
       hair: ['#2a2a2e', '#3e3e44', '#56565e', '#707078'],
     },
     weapon: 'sword',
+    dodge: 'charge',
     starter: true,
   },
   knight: {

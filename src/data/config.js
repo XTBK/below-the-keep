@@ -96,9 +96,9 @@ export const WEAPONS = {
   sword: {
     reach: 40, // how far the swing reaches
     arc: 1.25, // half the width of the swing (radians)
-    damage: 3.2, // x Wren's damage
+    damage: 2.5, // x his damage stat
     knockback: 300,
-    cooldown: 1.5, // x his fire delay
+    cooldown: 1.65, // x his fire delay
     lunge: 70, // a step forward into the swing
     waveDamage: 0.35, // the thrown sword-wave: weak...
     waveRange: 80, //            ...and short
@@ -120,6 +120,17 @@ export const ROLL = {
   time: 0.3,
   speed: 270,
   cooldown: 0.7,
+};
+
+// Each starting hero's own take on the dodge button (see 'dodge' in data/characters.js).
+export const SKILLS = {
+  // Wren: a short teleport. Passes enemies and pits, stops at walls and rocks.
+  blink: { distance: 84, cooldown: 1.2, invuln: 0.25, burst: 1.5, burstRadius: 36 }, // burst: sparks left behind (x damage)
+  // Rowan: a normal roll that also reloads the crossbow at once...
+  // ...and standing still steadies the aim: the next bolt is a sure critical hit.
+  steady: { still: 0.5 },
+  // Sir Aldwin: a short shield-first dash that knocks foes aside and stuns them.
+  charge: { time: 0.22, speed: 330, cooldown: 1.1, damage: 1, knockback: 260, stun: 0.8 },
 };
 
 export const PLAYER = {

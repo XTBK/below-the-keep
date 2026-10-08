@@ -18,7 +18,7 @@ npm run dev     # then open the http://localhost:5173 link it prints
 |---|---|---|
 | Move | WASD | Left stick |
 | Shoot (or swing, for the Iron Knight) | Arrow keys | Right stick |
-| Dodge roll (can't be hurt mid-roll) | Shift | B |
+| Dodge (each hero has their own: roll, blink, shield charge) | Shift | B |
 | Active relic / scroll or potion / powder keg | Space / Q / E | RB / LB / LT (or A) |
 | Title screen: choose character / begin / seeded run / collection | A, D (or ← →) / Enter / F / C | D-pad / A / — / X |
 | Collection page: browse / next page / back | Arrows / Tab (or Q) / Esc | D-pad / RB / Start |
@@ -38,10 +38,16 @@ sides to change character, the bottom for the collection, anywhere else to begin
 
 Three are open from the first run; three more unlock through deeds.
 
-- **Wren, the Wandering Wizard** - casts quick spell bolts from a wand.
-- **Rowan, the Ranger Knight** - a crossbow: slow to reload, but heavy bolts that fly far and pass through foes.
-- **Sir Aldwin, the Iron Knight** - a mighty sword swing that knocks enemies back and bats their shots out of
-  the air; his thrown sword-wave is weak and short, so he has to get close. Extra heart, a little slower.
+Each has their own weapon and their own dodge:
+
+| Hero | Weapon | Dodge (Shift) | Best at | Worst at |
+|---|---|---|---|---|
+| **Wren, the Wandering Wizard** | Quick spell bolts that lean toward foes | **Blink** - teleports past enemies and over pits, leaving stinging sparks behind | Escaping crowds | Low damage per bolt |
+| **Rowan, the Ranger Knight** | Crossbow: slow to reload, heavy bolts that fly far and pierce | **Roll** that reloads the crossbow. **Steady Aim:** stand still for half a second and the next bolt is a sure critical hit (a glint shows over his head) | Patient fights, lines of foes | Being swarmed |
+| **Sir Aldwin, the Iron Knight** | Sword swing that knocks foes back and bats shots out of the air; a weak, short sword-wave | **Shield charge** - dashes forward, bashing and stunning whatever he hits | Brawling, fast kills | Taking hits; foes that keep their distance |
+
+The three were balanced with a bot that plays each hero through the same fights on every chapter: they
+take about the same damage for their health (within ~10%); the Iron Knight kills fastest but takes the most.
 
 ## Sound and music
 

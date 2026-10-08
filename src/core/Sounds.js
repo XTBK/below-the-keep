@@ -18,30 +18,91 @@ function arpeggio(s, out, t, notes, step, gain, dur = 1.4, bright = 0.45) {
 export const SOUNDS = {
   // --- Wren ---
   wand: [0.35, (s, o, t, p) => {
-    // a bright, airy spell: a rising shimmer and a soft whoosh
-    s.bell(o, t, 1320 * p, 0.35, 0.12);
-    s.bell(o, t + 0.03, 1980 * p, 0.25, 0.06);
-    s.noise(o, t, { type: 'bandpass', f: [900 * p, 3600 * p], q: 2.5, gain: 0.16, attack: 0.02, dur: 0.14 });
+    // a spell cracks loose: a zap that falls, a thump of force, sparks of glass
+    s.sweep(o, t, 'sawtooth', 2400 * p, 380 * p, 0.11, 0.09, 3200);
+    s.sweep(o, t, 'sine', 900 * p, 2600 * p, 0.06, 0.06);
+    s.drum(o, t, 190 * p, 70, 0.09, 0.28, 0.2);
+    s.noise(o, t, { type: 'bandpass', f: [4200 * p, 1500], q: 1.8, gain: 0.16, dur: 0.1 });
+    s.bell(o, t + 0.015, 2640 * p, 0.22, 0.035);
   }],
   crit: [0.4, (s, o, t, p) => {
-    s.metal(o, t, 1500 * p, 0.35, 0.22);
-    s.drum(o, t, 200 * p, 90, 0.12, 0.35, 0.5);
+    // a critical hit: a heavy smack and a high ring that hangs in the air
+    s.drum(o, t, 220 * p, 45, 0.2, 0.6, 0.7);
+    s.noise(o, t, { type: 'lowpass', f: [5000, 600], gain: 0.3, dur: 0.08 });
+    s.metal(o, t + 0.01, 1500 * p, 0.5, 0.2);
+    s.bell(o, t + 0.02, 1760 * p, 0.7, 0.06);
   }],
-  roll: [0.15, (s, o, t, p) => s.noise(o, t, { type: 'lowpass', f: [900 * p, 300], gain: 0.22, attack: 0.03, dur: 0.22 })],
+  wizBlink: [0.5, (s, o, t, p) => {
+    // Wren folds space: air rushes in, a pop, a glassy shimmer where he lands
+    s.sweep(o, t, 'sine', 220 * p, 1800 * p, 0.12, 0.12, 0, 0.04);
+    s.noise(o, t, { type: 'bandpass', f: [600, 5000], q: 2, gain: 0.18, attack: 0.08, dur: 0.12 });
+    s.drum(o, t + 0.11, 260 * p, 90, 0.08, 0.3, 0.4);
+    s.bell(o, t + 0.12, 1975 * p, 0.6, 0.06);
+    s.bell(o, t + 0.16, 2637 * p, 0.5, 0.04);
+  }],
+  reload: [0.15, (s, o, t, p) => {
+    // the windlass cranks, the latch catches
+    for (let i = 0; i < 3; i++) s.noise(o, t + 0.05 + i * 0.045, { type: 'bandpass', f: [2200 * p, 1900], q: 6, gain: 0.35, dur: 0.02 });
+    s.drum(o, t + 0.2, 600 * p, 300, 0.05, 0.25, 0.5);
+    s.noise(o, t + 0.2, { type: 'highpass', f: [4000, 3000], gain: 0.15, dur: 0.015 });
+  }],
+  steady: [0.4, (s, o, t, p) => {
+    // the aim settles: a held breath, a faint glint
+    s.bell(o, t, 2093 * p, 0.6, 0.05);
+    s.pluck(o, t, 196 * p, 0.3, 0.06, 0.8, 0.99); // the string creaks taut
+  }],
+  aimedShot: [0.4, (s, o, t, p) => {
+    // a perfect shot: an extra crack on top of the crossbow
+    s.noise(o, t, { type: 'highpass', f: [7000, 5000], gain: 0.25, dur: 0.03 });
+    s.sweep(o, t, 'square', 1200 * p, 300 * p, 0.12, 0.05, 2500);
+  }],
+  shieldCharge: [0.25, (s, o, t, p) => {
+    // armour lurches into a run: iron rattles, boots pound, a war-grunt
+    s.drum(o, t, 90 * p, 40, 0.2, 0.45, 0.6);
+    clicks(s, o, t, 8, 0.2, 3200, 0.12);
+    s.noise(o, t, { type: 'lowpass', f: [400, 1400], q: 1, gain: 0.25, attack: 0.05, dur: 0.22 });
+    s.growl(o, t + 0.01, 150 * p, 110 * p, 0.18, 0.1, [500, 800]);
+  }],
+  shieldBash: [0.35, (s, o, t, p) => {
+    // the shield meets a body: a great booming clang
+    s.drum(o, t, 120 * p, 36, 0.3, 0.8, 0.8);
+    s.metal(o, t, 330 * p, 0.6, 0.25);
+    s.noise(o, t, { type: 'lowpass', f: [2400, 300], gain: 0.4, dur: 0.12 });
+  }],
+  roll: [0.15, (s, o, t, p) => {
+    // cloth and leather whipping round, then boots hitting stone
+    s.noise(o, t, { type: 'bandpass', f: [500 * p, 1700 * p], q: 1.1, gain: 0.3, attack: 0.04, dur: 0.2 });
+    s.noise(o, t + 0.05, { type: 'lowpass', f: [700, 250], gain: 0.2, attack: 0.03, dur: 0.18 });
+    s.drum(o, t + 0.24, 120 * p, 55, 0.12, 0.34, 0.5);
+    clicks(s, o, t + 0.25, 4, 0.06, 2600, 0.12); // grit underfoot
+  }],
   xbow: [0.3, (s, o, t, p) => {
-    s.pluck(o, t, 92 * p, 0.4, 0.7, 0.95, 0.982); // the string snaps
-    s.drum(o, t, 160 * p, 80, 0.1, 0.35, 0.5); // the stock thumps your shoulder
-    s.noise(o, t, { type: 'bandpass', f: [3000, 1200], q: 1.6, gain: 0.25, dur: 0.1 });
+    // the latch clacks, the string slams forward, the stock kicks, the bolt hisses away
+    s.noise(o, t, { type: 'highpass', f: [5000, 4000], q: 1, gain: 0.25, dur: 0.015 });
+    s.pluck(o, t, 82 * p, 0.35, 0.5, 1, 0.975);
+    s.drum(o, t, 140 * p, 42, 0.18, 0.4, 0.6);
+    s.drum(o, t + 0.005, 700 * p, 380, 0.04, 0.2, 0.3); // wood knock
+    s.noise(o, t + 0.02, { type: 'bandpass', f: [3800, 900], q: 2.2, gain: 0.22, dur: 0.16 });
   }],
   sword: [0.3, (s, o, t, p) => {
-    s.noise(o, t, { type: 'bandpass', f: [500 * p, 2600 * p], q: 1.3, gain: 0.4, attack: 0.04, dur: 0.2 }); // the whoosh
-    s.metal(o, t + 0.02, 2400 * p, 0.12, 0.05);
+    // a heavy blade cuts the air: the whoosh rises and falls; the edge sings
+    s.noise(o, t, { type: 'bandpass', f: [300 * p, 2200 * p], q: 1.6, gain: 0.85, attack: 0.05, dur: 0.12 });
+    s.drum(o, t + 0.04, 90 * p, 50, 0.12, 0.18, 0); // weight behind it
+    s.noise(o, t + 0.1, { type: 'bandpass', f: [2200 * p, 600 * p], q: 1.6, gain: 0.6, dur: 0.12 });
+    s.sweep(o, t, 'sine', 3200 * p, 2700 * p, 0.25, 0.025);
   }],
   slash: [0.3, (s, o, t, p) => {
-    s.drum(o, t, 180 * p, 70, 0.14, 0.5, 0.6); // the blow lands
-    s.metal(o, t, 760 * p, 0.3, 0.2);
+    // the blow lands: a meaty crunch, a deep thud, iron ringing
+    s.drum(o, t, 150 * p, 40, 0.22, 0.7, 0.8);
+    s.noise(o, t, { type: 'lowpass', f: [3000, 400], q: 1.2, gain: 0.35, dur: 0.1 });
+    s.metal(o, t + 0.005, 520 * p, 0.35, 0.16);
   }],
-  parry: [0.4, (s, o, t, p) => s.metal(o, t, 1800 * p, 0.45, 0.25)],
+  parry: [0.45, (s, o, t, p) => {
+    // steel turns a shot aside: a bright ring and a spray of sparks
+    s.metal(o, t, 1700 * p, 0.6, 0.3);
+    s.bell(o, t, 2400 * p, 0.5, 0.05);
+    crackle(s, o, t, 0.1, 6, 0.2);
+  }],
   spellHit: [0.4, (s, o, t, p) => {
     s.noise(o, t, { type: 'bandpass', f: [3000 * p, 1200], q: 2, gain: 0.18, dur: 0.08 });
     s.bell(o, t, 880 * p, 0.25, 0.08);

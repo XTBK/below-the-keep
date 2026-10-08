@@ -142,6 +142,7 @@ export class Projectiles {
     p.g = shot.tint[1];
     p.b = shot.tint[2];
     p.homing = shot.homing;
+    p.sureCrit = false;
     p.pierce = shot.pierce * MODS.pierce.hits;
     p.bounce = shot.bounce * MODS.bounce.bounces;
     p.spectral = shot.spectral;
@@ -380,7 +381,7 @@ export class Projectiles {
 
   _hitEnemy(p, enemy, dx, dy) {
     // a critical hit now and then: double damage, a gold flash, a harder freeze
-    const crit = this.game.rollCrit();
+    const crit = p.sureCrit || this.game.rollCrit();
     const dmg = p.damage * (crit ? COMBAT.critMultiplier : 1);
     const hpBefore = enemy.hp;
     enemy.hit(dmg, dx, dy);

@@ -18,7 +18,8 @@
 | 7 | All remaining items, special rooms and secrets | Done |
 | 8 | Final boss, unlocks, characters, collection page, polish & performance pass | Done |
 | E1 | Expansion: 20 enemies, 20 bosses, 25 relics, random scaled bosses, depth difficulty, Isaac-style systems | Done |
-| E2 | Its own soul: songs per place, new title, Ranger + Iron Knight, parchment map, weighty combat, dodge roll | **Done — awaiting OK** |
+| E2 | Its own soul: songs per place, new title, Ranger + Iron Knight, parchment map, weighty combat, dodge roll | Done |
+| E3 | Hero skills (blink / steady aim + reload roll / shield charge), bot-tested balance, punchier attack sounds | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -458,7 +459,7 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
   Alchemist or the Beastmaster (`data/sets.js`, `items/Sets.js`); the **Trial Chamber** (three waves for a
   relic) and the **Gambler's Den** (dice table, a beggar who repays kindness).
 
-### Expansion 2 — its own soul (awaiting OK)
+### Expansion 2 — its own soul — done
 
 Goal: keep the Isaac skeleton (rooms, relics, floors) but give the game its own feel.
 
@@ -486,3 +487,27 @@ Goal: keep the Isaac skeleton (rooms, relics, floors) but give the game its own 
   enemies squash when struck, base knockback 140 -> 190, recoil per weapon.
 - **Dodge roll** (`ROLL` in config; Shift / gamepad B / touch ROLL): 0.3 s tumble at 270 px/s, untouchable,
   can't shoot mid-roll, 0.7 s cooldown. The biggest change in how fights play.
+
+### Expansion 3 — hero skills (awaiting OK)
+
+Each starting hero gets their own dodge (`dodge` in `data/characters.js`, numbers in `SKILLS` in config):
+- **Wren - Blink:** teleports 84 px (passes enemies and pits, stops at walls and rocks; nothing happens if there's
+  nowhere to land), 0.25 s untouchable, 1.2 s cooldown. The sparks left behind hit foes within 36 px for x1.5
+  damage. Her bolts also home gently (`mods: { homing: 0.3 }`).
+- **Rowan - Reload roll + Steady Aim:** the normal roll, which also reloads the crossbow at once. Standing still
+  for 0.5 s steadies his aim (a glint over his head, a soft chime): the next bolt is a sure critical hit. Damage
+  stat +2.8.
+- **Sir Aldwin - Shield charge:** a 0.22 s dash at 330 px/s, untouchable; foes it hits take x1 damage, are knocked
+  back and stunned for 0.8 s. 1.1 s cooldown. Sword swing tuned to x2.5 damage, recovery x1.65 fire delay.
+
+**Balance bot** (test script `balance.mjs`): each hero fights the same 8 encounters (an enemy group and a boss on
+floors 1, 3, 5 and 7), 3 runs each, using a simple AI (keep range / close in, line up, dodge incoming shots).
+Final results, damage taken as a share of starting health: Wren 1.60, Rowan 1.65, Aldwin 1.80; average clear
+time: 24.7 s, 25.1 s, 15.2 s. Before tuning, the Knight was clearing twice as fast with no extra risk, and Wren
+was the weakest.
+
+**Sounds** redone in layers (new `Synth.sweep` for zaps and swells): the spell bolt (falling zap + thump +
+glass sparks), crossbow (latch clack, string slam, stock kick, hiss), sword (rising-falling whoosh with weight),
+blow landing (crunch, thud, iron ring), parry, crit, roll (cloth whip + boots on stone + grit), blink (air
+rushing in, pop, shimmer), reload (windlass clicks + latch), steady chime, aimed-shot crack, shield charge (armour
+rattle, pounding, grunt) and shield bash (booming clang).
