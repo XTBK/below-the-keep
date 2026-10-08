@@ -312,7 +312,7 @@ export class Rug {
     const g = this.game;
     // a way down to the Forgotten Vault - once a run, and never from the Vault itself
     if (!g.inVault && !g.vaultVisited) {
-      this.trapdoor = new Trapdoor(g, this.x, this.y, true);
+      this.trapdoor = new Trapdoor(g, this.x, this.y, true, !fresh);
       if (fresh) {
         g.audio.play('secret');
         Save.data.stats.secretsFound++;

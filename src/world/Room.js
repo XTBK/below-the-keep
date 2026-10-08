@@ -642,7 +642,7 @@ export class Room {
       }
     }
 
-    // a beaten boss leaves a trapdoor down and a relic
+    // a beaten boss leaves a stairway down and a relic
     if (this.data.type === 'boss' && this.data.cleared) this.addBossRewards();
 
     this._spawnDoors();
@@ -817,7 +817,8 @@ export class Room {
       if (!this.game.player.seals[0]) this.game.pickups.spawn(this, 'curio', c.x - 40, c.y, true, { type: 'seal', id: 0 });
     }
     const c = this.slotCenter(7, 6);
-    this.trapdoor = new Trapdoor(this.game, c.x, c.y);
+    this.trapdoor = new Trapdoor(this.game, c.x, c.y, false, !!this.data.stairOpen); // grinds open once
+    this.data.stairOpen = true;
     const top = this.slotCenter(7, 3);
     // the tougher the boss, the better the spoils (and a Deadly or Legendary one offers a choice)
     const reward = this.data.type === 'boss' ? TIER_INFO[this.game.bossTierOf(this.game.bossForFloor())].reward : {};

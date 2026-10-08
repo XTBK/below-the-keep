@@ -663,3 +663,18 @@ Three systems so a run feels like this game's own, not a borrowed loop.
   flickers in as she arrives.
 - **Dodge feel**: the roll and the shield charge burst out and ease off, steer a little, buffer an early press
   (0.2 s); the roll tumbles with a hop; cooldowns 0.42 s (roll) and 0.68 s (charge).
+
+### Expansion 8b — draughts, the stairway, the story (awaiting OK)
+
+- **Healing draughts**: the heart / half-heart pickups are drawn as a tall crimson vial (full / half), the iron heart
+  as an iron tonic flask (`itemsArt.js` `healingDraught`, `ironTonic`). The red mystery potion became Bilious so red
+  only ever means healing. New sounds: heart (cork, gulps), relic (deep bell + low minor chord), secret (stone
+  grinding + far bell), buy (coins + a nod). No rising harp runs.
+- **The stairway** (`stairway` sheet, 8 frames; `entities/Trapdoor.js`): grinds open over 1.3 s (stairOpen sound,
+  shake, dust) and only works once open; opens once per boss room (`data.stairOpen`); the Gatehouse's is open.
+- **The story and cutscenes** (`ui/Cutscenes.js`): a `Stage` lays real tiles (`<ts>_floor`, `<ts>_wall_top`), props,
+  hero sheets (`characterPreview`), creature and boss sheets at 1:1, then a torchlight pass (a dark overlay with the
+  lights cut out, coloured glow added). `CLOSE` shows chosen scenes at 2x around a focus. A scene keeps playing
+  across consecutive lines. Lines may have a `voice` (THE CROWN in purple, BEATRIX in pale red). New: a 7-panel intro
+  (the tomb, the crown's whisper, the procession of the five, Beatrix), a Crown line for each chapter, the endings
+  `endKing` / `endCrown` (played by `Game.win`) and `beatrix` (the first Stalked run).

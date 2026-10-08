@@ -16,6 +16,12 @@ function arpeggio(s, out, t, notes, step, gain, dur = 1.4, bright = 0.45) {
 }
 
 export const SOUNDS = {
+  // the way down grinds open: stone dragged over stone, settling with a boom
+  stairOpen: [0.55, (s, o, t, p) => {
+    s.noise(o, t, { type: 'lowpass', f: [520 * p, 140], q: 1.4, gain: 0.38, attack: 0.1, dur: 1.25 });
+    for (let i = 0; i < 10; i++) s.noise(o, t + i * 0.11 + Math.random() * 0.05, { type: 'bandpass', f: [300, 200], q: 5, gain: 0.13, dur: 0.07 });
+    s.drum(o, t + 1.2, 70, 34, 0.6, 0.45, 0);
+  }],
   // --- Beatrix the Wandering ---
   heartbeat: [0.15, (s, o, t) => {
     s.drum(o, t, 62, 38, 0.14, 0.55, 0.05); // lub

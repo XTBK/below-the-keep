@@ -160,8 +160,19 @@ realm has its own colours, music and story scene.
 
 ## The story
 
-Each hero's first descent opens with the tale of the Keep (five small animated pixel scenes), and each new place
-below - the Catacombs, the Hollow, the Burning Halls, the throne, the hidden Vault - gets its own scene on arrival.
+Under the Keep of Hollowmere lies the Hollow, sealed behind the Deep Door by the First King with a crown forged
+from fallen-star iron. King Aldric dug for silver and found the First King's tomb instead. The **Hollow Crown** on
+the skull whispered to him to take it home, down to the door it was made to lock. He sent his people down to dig
+(the five prisoners among them) and his bride **Beatrix** followed with a single candle. None came back. Now the
+Keep is sinking, and your hero goes down.
+
+The cutscenes are staged with the game's own art (the same tiles, props, heroes, creatures and bosses, lit by
+torchlight), with close-ups for the important moments. The Crown speaks to you in purple as you reach each new
+place, and both endings have their own scenes. The first Stalked run tells who Beatrix is.
+
+Beaten bosses open a **stairway** in the floor (two stone slabs grind apart) instead of a trapdoor, and healing
+comes from **healing draughts** (crimson vials; half-full ones heal half a heart), never from hearts lying around.
+
 Any key moves on, Esc skips; they can be switched off in Settings (`src/ui/Cutscenes.js`).
 
 ## Every run counts

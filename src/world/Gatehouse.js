@@ -147,7 +147,7 @@ class TheWayDown {
     const c = room.slotCenter(7, 7);
     this.x = c.x;
     this.y = c.y;
-    room.trapdoor = new Trapdoor(room.game, c.x, c.y);
+    room.trapdoor = new Trapdoor(room.game, c.x, c.y, false, true); // home: the stair is always open
   }
 
   update() {

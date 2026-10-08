@@ -235,6 +235,13 @@ export class Game {
       seen.push(this.characterId);
       this.playCutscene('intro', () => (this.floorTitleT = 2.2));
     }
+    // the first Stalked run: who Beatrix is
+    if (this.mode === 'stalked' && !Save.data.unlocks.beatrixSeen) {
+      Save.data.unlocks.beatrixSeen = true;
+      const after = this.cutscene ? this.cutscene.onDone : null;
+      if (this.cutscene) this.cutscene.onDone = () => { if (after) after(); this.playCutscene('beatrix'); };
+      else this.playCutscene('beatrix');
+    }
     this.hud.markDirty();
     console.info(`Below the Keep - run seed ${seed}`);
   }
@@ -979,6 +986,7 @@ export class Game {
     if (this.state !== 'play') return;
     this.earnEmbers(EMBERS.victory);
     this.state = 'victory';
+    this.playCutscene(this.ending === 'crown' ? 'endCrown' : 'endKing'); // the ending, told
     Save.data.stats.victories++;
     // the best heat beaten, per hero
     if (this.heat > (Save.data.heatRecord[this.characterId] || 0)) Save.data.heatRecord[this.characterId] = this.heat;

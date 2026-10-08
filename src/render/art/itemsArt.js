@@ -334,3 +334,51 @@ export function rockRubble() {
   p.outline(S.outline);
   return p;
 }
+
+/**
+ * The way down: a stairway that grinds open out of the floor when a boss falls. 48 x 48, 8 frames:
+ * 0 the floor cracks, 1-5 two slabs slide apart, 6 open (dust still falling), 7 open.
+ * Seen from above: steps go down toward the top of the frame, into the dark.
+ */
+export const STAIRWAY_FRAMES = 8;
+export function stairwayFrame(k) {
+  const p = new Painter(48, 48);
+  const X0 = 9;
+  const X1 = 39; // the opening, 30 wide
+  const Y0 = 8;
+  const Y1 = 40; // and 32 deep
+  // a worn stone surround, flush with the floor
+  p.bevelRect(X0 - 4, Y0 - 4, X1 - X0 + 8, Y1 - Y0 + 8, STONE.slice(2, 7), 1, 2);
+  // the stairwell: side walls, then the steps, each lower and darker going up the frame
+  p.rect(X0, Y0, X1 - X0, Y1 - Y0, '#030304', -8);
+  const steps = 7;
+  for (let i = 0; i < steps; i++) {
+    const f = i / (steps - 1); // 0 near (bottom), 1 deep (top)
+    const y = Y1 - 4 - i * 4;
+    const inset = Math.round(f * 3);
+    const tread = STONE[Math.max(0, 5 - Math.round(f * 5))];
+    const riser = STONE[Math.max(0, 3 - Math.round(f * 3))];
+    p.rect(X0 + 2 + inset, y, X1 - X0 - 4 - inset * 2, 3, tread, -1 - i * 1.2);
+    p.hline(X0 + 2 + inset, X1 - 3 - inset, y + 3, riser, -1.5 - i * 1.2);
+    if (i < 3) p.hline(X0 + 2 + inset, X1 - 3 - inset, y, STONE[6], -0.8 - i); // the lip of the step catches light
+  }
+  for (let y = Y0; y < Y0 + 14; y++) for (let x = X0; x < X1; x++) p.tint(x, y, '#000000', 0.55 - (y - Y0) * 0.035); // the dark below
+  p.vline(X0, Y0, Y1 - 1, STONE[1], -2);
+  p.vline(X1 - 1, Y0, Y1 - 1, STONE[1], -2);
+  // the slabs over it, sliding apart
+  const open = [0, 0.12, 0.3, 0.5, 0.72, 0.9, 1, 1][k];
+  if (open < 1) {
+    const half = (X1 - X0) / 2;
+    const w = Math.round(half * (1 - open));
+    p.bevelRect(X0, Y0, w, Y1 - Y0, STONE.slice(1, 6), 1.5, 1);
+    p.bevelRect(X1 - w, Y0, w, Y1 - Y0, STONE.slice(1, 6), 1.5, 1);
+    if (k === 0) {
+      // a crack runs down the seam
+      for (let y = Y0 + 1; y < Y1 - 1; y++) p.px(24 + ((y * 7) % 3) - 1, y, '#050406', 1);
+    }
+  }
+  // dust falling into the opening, just after it opens
+  if (k >= 3 && k <= 6) for (let i = 0; i < 10 - (k - 3) * 2; i++) p.px(X0 + 3 + ((i * 11 + k * 5) % 24), Y0 + 4 + ((i * 7 + k * 9) % 26), STONE[5], 0.5);
+  p.outline(S.outline);
+  return p;
+}

@@ -1,72 +1,211 @@
 import { RENDER } from '../data/config.js';
 import { drawText } from './PixelFont.js';
 import { TitleBackdrop } from './TitleBackdrop.js';
-import { drawCharacter } from './Collection.js';
+import { characterPreview } from './Collection.js';
+import { getSheet } from '../render/Assets.js';
+import { TILESETS } from '../render/art/tilesets.js';
+import { RELIC_IDS } from '../data/items.js';
+import { CURIO_FRAME } from '../data/curios.js';
 
-// Little pixel-art cutscenes: the story of the Keep when a hero first descends, and a vignette each
-// time the descent reaches a new place. Each panel is a small animated scene painted live (no image
-// files) with a line of text typed out beneath it. Any key / tap moves on; Esc skips the lot.
+// The story, told in little scenes staged with the game's own art: the same floor and wall tiles,
+// the same props, heroes, creatures and bosses, at the same pixel scale, lit by torchlight the way
+// the Keep is. A line of text types out beneath each scene. Any key / tap moves on; Esc skips.
 //
 // THE STORY
-// The Keep of Hollowmere stood over its valley for three hundred years. Then a new king dug too deep
-// and found a crown on a skull in the catacombs - a hollow crown that whispers. It told him to send
-// his people down. He did, and none came up. Now the keep is sinking, the deep places are waking,
-// and the only way out is down: to the throne at the bottom, and the thing that wears the king.
+// Under the Keep of Hollowmere lies the Hollow: the dark the valley was built on. The First King
+// sealed it behind the Deep Door with a crown forged from fallen-star iron, and was buried with it.
+// Three hundred years later King Aldric dug for silver and found the First King's tomb instead. The
+// crown on the skull - the Hollow Crown - whispers. It wants to go home, down to the door it was made
+// to lock, and open it. Aldric sent his people down to dig (the smith, the quartermaster, a sister of
+// the chapel, the mapmaker, the old archivist - hundreds more). His bride Beatrix went after him with
+// a single candle. None came back. Now the Keep is sinking, and the only way out is down.
 
 const W = RENDER.width;
 const H = RENDER.height;
-const PX = 80; // the panel's place on screen
-const PY = 26;
+const PX = 80; // the scene's place on screen: exactly as wide as a room
+const PY = 22;
 const PW = 480;
 const PH = 216;
 
+const CROWN = '#c49aff'; // the crown's voice
+const BEATRIX_VOICE = '#e89a9a';
+
 // --------------------------------------------------------------------------------------------
-// painting helpers (all coordinates inside the panel)
+// the stage: places the game's own sprites and tiles
 // --------------------------------------------------------------------------------------------
-function rect(g, x, y, w, h, c) {
-  g.fillStyle = c;
-  g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+function hash(a, b, s) {
+  let h = (a * 374761393 + b * 668265263 + s * 1442695041) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
-function glowAt(g, x, y, r, rgb, a) {
-  const gr = g.createRadialGradient(x, y, 1, x, y, r);
-  gr.addColorStop(0, `rgba(${rgb},${a})`);
-  gr.addColorStop(1, `rgba(${rgb},0)`);
-  g.fillStyle = gr;
-  g.fillRect(x - r, y - r, r * 2, r * 2);
+
+function pickWeighted(weights, r) {
+  let total = 0;
+  for (const w of weights) total += w;
+  let x = r * total;
+  for (let i = 0; i < weights.length; i++) {
+    x -= weights[i];
+    if (x <= 0) return i;
+  }
+  return 0;
 }
-function band(g, y0, y1, colors) {
-  // a stepped, dithered vertical gradient
-  for (let y = y0; y < y1; y++) {
-    const t = (y - y0) / Math.max(1, y1 - y0 - 1);
-    const f = t * (colors.length - 1);
-    const i = Math.floor(f);
-    for (let x = 0; x < PW; x += 2) {
-      const d = ((x >> 1) & 1) * 0.5 + (y & 1) * 0.25 + 0.125;
-      g.fillStyle = colors[Math.min(colors.length - 1, i + (f - i > d ? 1 : 0))];
-      g.fillRect(x, y, 2, 1);
+
+let shadeCanvas = null;
+
+class Stage {
+  constructor(g, t, pan = 0) {
+    this.g = g;
+    this.t = t;
+    this.ox = -Math.round(pan);
+    this.lights = [];
+  }
+
+  /** Floor tiles from a chapter's tileset, from y0 down. */
+  floor(ts, y0 = 56, seed = 1) {
+    const s = getSheet(`${ts}_floor`);
+    const weights = TILESETS[ts].floorWeights || [1];
+    const c0 = Math.floor(-this.ox / 32) - 1;
+    for (let r = 0; r * 32 + y0 < PH; r++) {
+      for (let c = c0; c < c0 + 17; c++) {
+        const f = pickWeighted(weights, hash(c, r, seed));
+        this.g.drawImage(s.colorCanvas, f * 32, 0, 32, 32, c * 32 + this.ox, y0 + r * 32, 32, 32);
+      }
     }
   }
-}
-function flame(g, x, y, t, s = 1) {
-  const f = Math.floor(t * 10 + x) % 3;
-  rect(g, x - 1 * s, y - 2 * s, 3 * s, 4 * s, '#a03008');
-  rect(g, x - 1 * s + (f === 1 ? s : 0), y - 4 * s, 2 * s, 4 * s, '#f68c2c');
-  rect(g, x, y - 2 * s, s, 2 * s, '#ffe8a0');
-}
-function figure(g, x, y, c, h = 14, chained = false, t = 0, rimC = '#8a6a4a') {
-  // a little walking silhouette (prisoner or guard), its back edge caught by torchlight
-  const step = Math.floor(t * 4 + x) % 2;
-  rect(g, x - 3, y - h, 6, h - 4, c);
-  rect(g, x - 2, y - h - 5, 5, 5, c);
-  rect(g, x - 2 + step, y - 4, 2, 4, c);
-  rect(g, x + 1 - step, y - 4, 2, 4, c);
-  rect(g, x - 3, y - h, 1, h - 4, rimC);
-  rect(g, x - 2, y - h - 5, 1, 5, rimC);
-  if (chained) {
-    rect(g, x - 8, y - h + 7, 8, 1, '#8a8a96');
-    rect(g, x - 5, y - h + 6, 1, 1, '#b0b0bc');
+
+  /** The top wall (brick face), its foot at y. */
+  wall(ts, y = 56, seed = 2) {
+    const s = getSheet(`${ts}_wall_top`);
+    const c0 = Math.floor(-this.ox / 32) - 1;
+    for (let c = c0; c < c0 + 17; c++) {
+      const f = Math.floor(hash(c, 9, seed) * 4);
+      this.g.drawImage(s.colorCanvas, f * 32, 0, 32, 64, c * 32 + this.ox, y - 64, 32, 64);
+    }
+  }
+
+  /** A frame of any sprite sheet, its feet at (x, ground). */
+  sprite(key, col, row, x, ground, flip = false) {
+    const s = getSheet(key);
+    const { frameW: fw, frameH: fh } = s.def;
+    this._blit(s.colorCanvas, col * fw, row * fh, fw, fh, x, ground, flip);
+  }
+
+  /** A hero (the same sheet the game builds for them). dir: 0 down, 1 up, 2 right, 3 left. */
+  hero(id, col, dir, x, ground) {
+    this._blit(characterPreview(id), col * 32, dir * 32, 32, 32, x, ground + 2, false);
+  }
+
+  /** A 16 x 16 icon (a relic or a curio), centred on (x, y). */
+  icon(key, col, x, y) {
+    const s = getSheet(key);
+    this.g.drawImage(s.colorCanvas, col * 16, 0, 16, 16, Math.round(x - 8 + this.ox), Math.round(y - 8), 16, 16);
+  }
+
+  _blit(canvas, sx, sy, fw, fh, x, ground, flip) {
+    const g = this.g;
+    const dx = Math.round(x - fw / 2 + this.ox);
+    const dy = Math.round(ground - fh);
+    if (flip) {
+      g.save();
+      g.translate(dx + fw, dy);
+      g.scale(-1, 1);
+      g.drawImage(canvas, sx, sy, fw, fh, 0, 0, fw, fh);
+      g.restore();
+    } else g.drawImage(canvas, sx, sy, fw, fh, dx, dy, fw, fh);
+  }
+
+  /** A wall torch: a flame and its light. */
+  torch(x, y) {
+    const f = Math.floor(this.t * 11 + x) % 4;
+    const s = getSheet('flame');
+    this.g.fillStyle = '#3a2614';
+    this.g.fillRect(Math.round(x - 1 + this.ox), y, 3, 9);
+    this.g.drawImage(s.colorCanvas, f * 10, 0, 10, 16, Math.round(x - 5 + this.ox), y - 14, 10, 16);
+    this.light(x, y - 4, 110, '255,150,70', 0.5);
+  }
+
+  /** A brazier on the floor, lit. */
+  brazier(x, ground) {
+    this.sprite('brazier', 0, 0, x, ground);
+    const f = Math.floor(this.t * 11 + x) % 4;
+    const s = getSheet('flame');
+    this.g.drawImage(s.colorCanvas, f * 10, 0, 10, 16, Math.round(x - 5 + this.ox), ground - 40, 10, 16);
+    this.light(x, ground - 30, 130, '255,150,70', 0.55);
+  }
+
+  candles(x, ground) {
+    this.sprite('candles', 0, 0, x, ground);
+    this.light(x, ground - 14, 70, '255,200,120', 0.4);
+  }
+
+  light(x, y, r, rgb = '255,160,80', a = 0.5) {
+    this.lights.push({ x: x + this.ox, y, r: r * (0.96 + 0.04 * Math.sin(this.t * 9 + x)), rgb, a });
+  }
+
+  /** Shallow water across the floor, from y down. */
+  water(y, rgb = '20,70,90') {
+    const g = this.g;
+    g.fillStyle = `rgba(${rgb},0.62)`;
+    g.fillRect(0, y, PW, PH - y);
+    g.fillStyle = 'rgba(120,200,220,0.5)';
+    for (let i = 0; i < 26; i++) {
+      const x = (i * 53 + this.t * (8 + (i % 3) * 4)) % (PW + 30) - 15;
+      g.fillRect(Math.round(x), y + 6 + ((i * 17) % (PH - y - 8)), 6 + (i % 4) * 2, 1);
+    }
+    g.fillRect(0, y, PW, 1);
+  }
+
+  /** Motes drifting in the air (dust, spores, embers). */
+  motes(color, n = 30, rise = -6) {
+    const g = this.g;
+    g.fillStyle = color;
+    for (let i = 0; i < n; i++) {
+      const x = ((i * 97 + this.t * 7 * ((i % 3) - 1)) % PW + PW) % PW;
+      const y = ((i * 61 + this.t * rise) % PH + PH) % PH;
+      g.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+  }
+
+  /** The dark, with holes where the lights are, and their colour on top. */
+  shade(level = 0.6, tint = '4,3,8') {
+    if (!shadeCanvas) {
+      shadeCanvas = document.createElement('canvas');
+      shadeCanvas.width = PW;
+      shadeCanvas.height = PH;
+    }
+    const sc = shadeCanvas.getContext('2d');
+    sc.globalCompositeOperation = 'source-over';
+    sc.clearRect(0, 0, PW, PH);
+    sc.fillStyle = `rgba(${tint},${level})`;
+    sc.fillRect(0, 0, PW, PH);
+    sc.globalCompositeOperation = 'destination-out';
+    for (const l of this.lights) {
+      const gr = sc.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.r);
+      gr.addColorStop(0, 'rgba(0,0,0,1)');
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      sc.fillStyle = gr;
+      sc.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+    }
+    const g = this.g;
+    g.drawImage(shadeCanvas, 0, 0);
+    g.globalCompositeOperation = 'lighter';
+    for (const l of this.lights) {
+      const gr = g.createRadialGradient(l.x, l.y, 1, l.x, l.y, l.r * 0.8);
+      gr.addColorStop(0, `rgba(${l.rgb},${(l.a * 0.35).toFixed(3)})`);
+      gr.addColorStop(1, `rgba(${l.rgb},0)`);
+      g.fillStyle = gr;
+      g.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+    }
+    g.globalCompositeOperation = 'source-over';
   }
 }
+
+// animation helpers (frame columns on the creature sheets: 0-1 idle, 2-5 walk, 6 windup, 7 attack,
+// 8-10 death, 11 cast on the bosses)
+const idle = (t, off = 0) => Math.floor(t * 1.6 + off) % 2;
+const walk = (t, off = 0) => 2 + (Math.floor(t * 8 + off) % 4);
+const heroWalk = (t) => 2 + (Math.floor(t * 9) % 4);
+const crownIcon = () => RELIC_IDS.indexOf('first_crown');
 
 // --------------------------------------------------------------------------------------------
 // the scenes
@@ -75,375 +214,342 @@ const backdrop = new TitleBackdrop();
 let keepCanvas = null;
 
 const SCENES = {
-  // the Keep on its crag, under the moon
+  // the Keep on its crag, under the moon (the title's own painting)
   keep(g, t, dt) {
     if (!keepCanvas) {
       keepCanvas = document.createElement('canvas');
       keepCanvas.width = W;
       keepCanvas.height = H;
     }
-    const kc = keepCanvas.getContext('2d');
-    backdrop.draw(kc, t, dt);
+    backdrop.draw(keepCanvas.getContext('2d'), t, dt);
     g.drawImage(keepCanvas, 80, 60, PW, PH, 0, 0, PW, PH);
   },
 
-  // the king on his throne; the crown glows and whispers
-  throne(g, t) {
-    band(g, 0, PH, ['#07040a', '#0e0812', '#160a18', '#1e0c1c', '#240e1e']);
-    // pillars receding
-    for (let i = 0; i < 4; i++) {
-      for (const side of [-1, 1]) {
-        const x = 240 + side * (60 + i * 52);
-        const w = 26 - i * 4;
-        rect(g, x - w / 2, 20 + i * 6, w, PH - 40 - i * 6, ['#1a1218', '#150e14', '#100a10', '#0c080c'][i]);
-        rect(g, x - w / 2 + (side > 0 ? 0 : w - 2), 20 + i * 6, 2, PH - 40 - i * 6, '#2a1e28');
-        // banners
-        rect(g, x - w / 2 + 3, 40 + i * 6, w - 6, 40 - i * 4, ['#5a1018', '#4a0e14', '#3a0a10', '#2a080c'][i]);
-      }
-    }
-    // the dais and the throne
-    rect(g, 170, 170, 140, 12, '#1a1418');
-    rect(g, 190, 160, 100, 12, '#221a20');
-    rect(g, 214, 70, 52, 92, '#2a1c14');
-    rect(g, 220, 76, 40, 60, '#4a1018');
-    rect(g, 210, 60, 8, 20, '#3a2818');
-    rect(g, 262, 60, 8, 20, '#3a2818');
-    // the king: a dark cloaked shape, slumped
-    rect(g, 226, 104, 28, 50, '#0c080c');
-    rect(g, 232, 92, 16, 14, '#d0b090');
-    rect(g, 234, 98, 4, 2, '#1a0a0a');
-    rect(g, 242, 98, 4, 2, '#1a0a0a');
-    // the crown, too bright, and its whisper
-    const pulse = 0.6 + 0.4 * Math.sin(t * 3);
-    glowAt(g, 240, 88, 44, '176,90,255', 0.35 * pulse);
-    rect(g, 230, 86, 20, 5, '#c49a38');
-    for (const x of [230, 236, 242, 248]) rect(g, x, 82, 2, 4, '#ecd078');
-    rect(g, 239, 87, 2, 2, '#c070ff');
-    for (let i = 0; i < 14; i++) {
-      const a = t * 0.8 + i * 0.9;
-      const r = 30 + ((t * 20 + i * 17) % 60);
-      g.globalAlpha = 0.5 * (1 - r / 90);
-      rect(g, 240 + Math.cos(a) * r, 88 + Math.sin(a) * r * 0.6, 2, 2, '#c070ff');
-    }
-    g.globalAlpha = 1;
-    // braziers either side
-    for (const x of [160, 320]) {
-      rect(g, x - 6, 150, 12, 20, '#1a1418');
-      flame(g, x, 146, t, 2);
-      glowAt(g, x, 140, 50, '255,140,60', 0.25);
-    }
+  // the First King's tomb: King Aldric lifts the crown from the skull
+  tomb(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, 10 + t * 3);
+    s.wall('catacombs');
+    s.floor('catacombs', 56, 7);
+    s.candles(150, 150);
+    s.candles(330, 150);
+    s.sprite('chapel_altar', 0, 0, 240, 150);
+    // the crown, floating up off the skull, whispering
+    const bob = Math.sin(t * 2) * 2;
+    s.icon('relics', crownIcon(), 240, 104 + bob - Math.min(12, t * 3));
+    s.light(240, 100, whisper ? 150 : 90, '176,110,255', whisper ? 0.9 : 0.55);
+    // Aldric, reaching for it
+    s.sprite('madking1', whisper ? 6 : 11, 0, 182, 176);
+    s.motes('rgba(200,180,255,0.5)', 18, -4);
+    s.shade(whisper ? 0.72 : 0.6);
+  },
+  whisper(g, t, dt, f) {
+    SCENES.tomb(g, t, dt, f, true);
   },
 
-  // the people led down the stair into the dark
+  // the procession: the king's people led down the cells in chains
   procession(g, t) {
-    band(g, 0, PH, ['#0a0808', '#0e0b0a', '#100c0a', '#0a0706', '#050404', '#020202']);
-    // the stair, stepping down to the right into blackness
-    for (let i = 0; i < 16; i++) {
-      const x = 20 + i * 28;
-      const y = 70 + i * 9;
-      rect(g, x, y, 30, PH - y, i < 10 ? ['#3a3028', '#332a23', '#2c241e'][i % 3] : '#0c0a08');
-      rect(g, x, y, 30, 2, '#5a4a3a');
-    }
-    // the walk
-    const off = (t * 10) % 28;
-    for (let i = 0; i < 9; i++) {
-      const s = i * 28 + off;
-      const x = 30 + s;
-      const y = 70 + (s / 28) * 9;
-      const guard = i % 4 === 0;
-      figure(g, x + 12, y, guard ? '#3a3a46' : '#241c16', guard ? 18 : 14, !guard, t, guard ? '#9a9aa8' : '#a07850');
-      if (guard) rect(g, x + 10, y - 23, 5, 2, '#6a6a76'); // a helm
-      if (guard) {
-        rect(g, x + 15, y - 22, 1, 8, '#4a3020');
-        flame(g, x + 15, y - 23, t);
-        glowAt(g, x + 15, y - 22, 40, '255,150,70', 0.3);
-      }
-    }
-    // the dark swallowing them
-    const fade = g.createLinearGradient(260, 0, PW, 0);
-    fade.addColorStop(0, 'rgba(0,0,0,0)');
-    fade.addColorStop(1, 'rgba(0,0,0,0.95)');
-    g.fillStyle = fade;
-    g.fillRect(260, 0, PW - 260, PH);
-  },
-
-  // the hero at the top of the last stair
-  hero(g, t, dt, ctx) {
-    band(g, 0, PH, ['#0a0808', '#0c0a0a', '#0a0808', '#060505', '#030303']);
-    // a round shaft going down, with steps spiralling into it
-    for (let r = 0; r < 7; r++) {
-      const ry = 120 + r * 12;
-      const rx = 150 - r * 14;
-      g.fillStyle = ['#2a2420', '#221d1a', '#1a1614', '#141110', '#0e0c0b', '#080707', '#040404'][r];
-      g.beginPath();
-      g.ellipse(300, ry, rx, rx * 0.3, 0, 0, Math.PI * 2);
-      g.fill();
-    }
-    // far below, something glows
-    glowAt(g, 300, 200, 60, '176,90,255', 0.18 + 0.08 * Math.sin(t * 2));
-    // a torch on the wall beside the hero
-    rect(g, 90, 60, 3, 18, '#4a3020');
-    flame(g, 91, 58, t, 2);
-    glowAt(g, 100, 80, 90, '255,150,70', 0.32);
-    ctx.hero = true;
-  },
-
-  // the catacombs: niches of skulls, a candle, something stirring
-  catacombs(g, t) {
-    band(g, 0, PH, ['#0c0a06', '#14110a', '#1a160e', '#120f0a', '#0a0806']);
-    for (let row = 0; row < 4; row++) {
-      for (let i = 0; i < 9; i++) {
-        const x = 18 + i * 52;
-        const y = 16 + row * 46;
-        rect(g, x, y, 40, 28, '#050403');
-        for (let k = 0; k < 3; k++) {
-          const sx = x + 6 + k * 11;
-          rect(g, sx, y + 12, 8, 8, '#b8ab8a');
-          rect(g, sx + 1, y + 14, 2, 2, '#0a0806');
-          rect(g, sx + 5, y + 14, 2, 2, '#0a0806');
-        }
-      }
-    }
-    // a candle, and one skull whose eyes light up
-    rect(g, 236, 150, 6, 16, '#d8ccaa');
-    flame(g, 239, 148, t, 2);
-    glowAt(g, 239, 150, 80, '255,200,120', 0.3);
-    if (Math.sin(t * 1.5) > 0.2) {
-      rect(g, 70 + 6 + 11 + 1, 16 + 46 * 2 + 14, 2, 2, '#9ad0ff');
-      rect(g, 70 + 6 + 11 + 5, 16 + 46 * 2 + 14, 2, 2, '#9ad0ff');
-    }
-  },
-
-  // the Hollow: a forest underground, roots and glowing caps, eyes in the dark
-  hollow(g, t) {
-    band(g, 0, PH, ['#040a08', '#06100c', '#081610', '#0a1a14', '#08120e']);
-    // trunks and roots coming down from the ceiling
-    for (let i = 0; i < 8; i++) {
-      const x = 20 + i * 62 + (i % 2) * 14;
-      rect(g, x, 0, 18 - (i % 3) * 3, PH, ['#120c08', '#1a120c', '#0e0a06'][i % 3]);
-      rect(g, x, 0, 2, PH, '#2a1e14');
-    }
-    for (let i = 0; i < 6; i++) {
-      g.strokeStyle = '#1e140c';
-      g.lineWidth = 4;
-      g.beginPath();
-      g.moveTo(i * 90, PH);
-      g.quadraticCurveTo(i * 90 + 40, PH - 60, i * 90 + 90, PH - 10);
-      g.stroke();
-    }
-    // glowing mushrooms
-    for (let i = 0; i < 14; i++) {
-      const x = 14 + ((i * 97) % 460);
-      const y = 170 + ((i * 37) % 40);
-      const c = i % 2 ? '74,224,200' : '176,74,224';
-      rect(g, x, y, 2, 6, '#c8c0a0');
-      rect(g, x - 3, y - 2, 8, 3, i % 2 ? '#4ae0c8' : '#b04ae0');
-      glowAt(g, x + 1, y, 18, c, 0.35 + 0.15 * Math.sin(t * 2 + i));
-    }
-    // eyes in the dark between the trunks
-    const blink = Math.sin(t * 0.9) > -0.9;
-    if (blink) for (const [x, y] of [[150, 90], [340, 70], [410, 120]]) {
-      rect(g, x, y, 2, 2, '#ffe060');
-      rect(g, x + 6, y, 2, 2, '#ffe060');
-    }
-  },
-
-  // the Burning Halls: arches aflame
-  halls(g, t) {
-    band(g, 0, PH, ['#120404', '#200606', '#2e0a06', '#3a0e06', '#200604']);
+    const s = new Stage(g, t, t * 22); // the camera walks with them
+    s.wall('cells');
+    s.floor('cells', 56, 3);
+    for (let x = 60; x < 1100; x += 180) s.torch(x, 24);
+    const lead = 330 + t * 22;
+    s.sprite('gaoler', walk(t), 0, lead, 150);
+    s.light(lead + 10, 128, 70, '255,170,90', 0.4); // his lantern
+    // the five, chained in a line (the same people you can free, deep below)
     for (let i = 0; i < 5; i++) {
-      const x = 20 + i * 96;
-      rect(g, x, 30, 14, PH - 30, '#0e0606');
-      rect(g, x + 74, 30, 14, PH - 30, '#0e0606');
-      g.fillStyle = '#0e0606';
-      g.beginPath();
-      g.arc(x + 44, 40, 44, Math.PI, 0);
-      g.lineTo(x + 74, 40);
-      g.arc(x + 44, 40, 30, 0, Math.PI, true);
-      g.fill();
+      const x = lead - 40 - i * 34;
+      const bob = Math.floor(t * 4 + i) % 2;
+      s.sprite('npcs', i * 2 + bob, 0, x, 152);
+      g.fillStyle = '#8a8a96';
+      g.fillRect(Math.round(x + 8 + s.ox), 132, 26, 1); // the chain to the next
     }
-    // a floor of fire: tongues that lick up and fall back
-    for (let x = 0; x < PW; x += 6) {
-      const h = 14 + Math.sin(x * 0.13 + t * 7) * 6 + Math.sin(x * 0.31 - t * 11) * 5;
-      g.fillStyle = '#a03008';
-      g.beginPath();
-      g.moveTo(x - 4, PH);
-      g.lineTo(x + 3, PH - h - 6);
-      g.lineTo(x + 10, PH);
-      g.fill();
-      g.fillStyle = '#f68c2c';
-      g.beginPath();
-      g.moveTo(x - 1, PH);
-      g.lineTo(x + 3, PH - h);
-      g.lineTo(x + 7, PH);
-      g.fill();
-      rect(g, x + 2, PH - h * 0.5, 2, h * 0.5, '#ffe080');
-    }
-    // banners burning on the pillars
-    for (let i = 0; i < 5; i++) {
-      const x = 26 + i * 96;
-      rect(g, x - 2, 60, 18, 46, '#5a1018');
-      rect(g, x - 2, 60, 18, 3, '#c49a38');
-      flame(g, x + 7, 106, t + i, 2);
-    }
-    glowAt(g, PW / 2, PH, 260, '255,90,20', 0.35);
-    for (let i = 0; i < 24; i++) {
-      const y = PH - ((t * 30 + i * 37) % PH);
-      rect(g, (i * 71 + Math.sin(t + i) * 10) % PW, y, 1, 1, '#ffb060');
-    }
+    s.sprite('gaoler', walk(t, 2), 0, lead - 40 - 5 * 34, 150);
+    s.motes('rgba(220,200,160,0.35)', 20, -2);
+    s.shade(0.55);
   },
 
-  // before the throne: great doors, the Mad King far away, the crown burning purple
-  throneDoor(g, t) {
-    band(g, 0, PH, ['#08040a', '#0e0610', '#120814', '#0a050c']);
-    rect(g, 140, 20, 200, PH - 20, '#1a1016');
-    rect(g, 150, 30, 180, PH - 30, '#050306');
-    // the long carpet
-    g.fillStyle = '#3a0a10';
-    g.beginPath();
-    g.moveTo(210, PH);
-    g.lineTo(270, PH);
-    g.lineTo(246, 90);
-    g.lineTo(234, 90);
-    g.fill();
-    rect(g, 228, 70, 24, 22, '#1a1014'); // the throne, far
-    rect(g, 234, 74, 12, 14, '#0a0608'); // its king
-    const pulse = 0.6 + 0.4 * Math.sin(t * 2.4);
-    glowAt(g, 240, 72, 34, '176,90,255', 0.5 * pulse);
-    rect(g, 236, 70, 8, 2, '#ecd078');
-    for (const x of [170, 310]) {
-      flame(g, x, 110, t, 2);
-      glowAt(g, x, 110, 40, '255,140,60', 0.25);
-    }
+  // Beatrix, long ago, going down after her king with a single candle
+  beatrix(g, t) {
+    const s = new Stage(g, t, 40 - t * 3);
+    s.wall('cells');
+    s.floor('cells', 56, 11);
+    const x = 400 - t * 14;
+    s.sprite('beatrix', 2 + (Math.floor(t * 4) % 4), 0, x, 160, true);
+    s.light(x - 14, 120, 80, '255,210,150', 0.6); // her candle
+    g.fillStyle = '#f0e8d0';
+    g.fillRect(Math.round(x - 15 + s.ox), 122, 2, 4);
+    s.shade(0.82);
   },
 
-  // the Drowned Cistern: arches standing in black water, something long moving under it
-  cistern(g, t) {
-    band(g, 0, PH, ['#040a0c', '#06121a', '#081a24', '#0a1e2a', '#061016']);
-    for (let i = 0; i < 6; i++) {
-      const x = 10 + i * 86;
-      rect(g, x, 20, 16, 140, '#0e1c20');
-      rect(g, x, 20, 2, 140, '#1e3438');
-      g.strokeStyle = '#0e1c20';
-      g.lineWidth = 8;
-      g.beginPath();
-      g.arc(x + 51, 40, 35, Math.PI, 0);
-      g.stroke();
+  // the hero at the Gatehouse, at the top of the stair down
+  hero(g, t, dt, f, last = false) {
+    const s = new Stage(g, t, 0);
+    s.wall('gatehouse');
+    s.floor('gatehouse', 56, 5);
+    s.brazier(70, 120);
+    s.brazier(410, 120);
+    s.sprite('stairway', 7, 0, 300, 196);
+    s.light(300, 186, 60, '176,110,255', 0.3 + 0.15 * Math.sin(t * 2)); // something glows far below
+    const id = f.hero || 'wren';
+    if (last) s.hero(id, idle(t), 1, 300, 150); // looking down the stair
+    else {
+      const x = Math.min(250, 120 + t * 30);
+      s.hero(id, x < 250 ? heroWalk(t) : idle(t), x < 250 ? 2 : 0, x, 150);
     }
-    // the water, with ripples and a long shape gliding beneath it
-    band(g, 150, PH, ['#0e3442', '#0a2a36', '#08202a', '#061820']);
-    for (let i = 0; i < 18; i++) rect(g, ((i * 41 + t * 14) % (PW + 40)) - 20, 158 + (i % 5) * 11, 14, 1, '#3a8aa2');
-    const sx = ((t * 40) % (PW + 160)) - 80;
-    for (let k = 0; k < 10; k++) rect(g, sx - k * 9, 176 + Math.sin(t * 3 + k * 0.6) * 4, 10, 4, 'rgba(10,30,36,0.9)');
-    rect(g, sx + 8, 172 + Math.sin(t * 3) * 4, 2, 2, '#e0ff60');
-    // drips
-    for (let i = 0; i < 6; i++) {
-      const y = (t * 80 + i * 40) % 150;
-      rect(g, 40 + i * 77, 20 + y, 1, 3, '#7ac0d0');
-    }
+    s.shade(0.45, '10,6,4');
+  },
+  heroLast(g, t, dt, f) {
+    SCENES.hero(g, t, dt, f, true);
   },
 
-  // the Starless Chapel: pews in violet dark, a gilded altar, a robed figure with no face
-  chapel(g, t) {
-    band(g, 0, PH, ['#06040a', '#0c0812', '#120c1a', '#0c0812']);
-    // a great dark window with no stars in it
-    rect(g, 210, 14, 60, 90, '#1a1226');
-    rect(g, 214, 18, 52, 82, '#020104');
-    rect(g, 238, 18, 4, 82, '#1a1226');
-    rect(g, 214, 56, 52, 4, '#1a1226');
-    // pews
-    for (let r = 0; r < 4; r++) for (const side of [-1, 1]) rect(g, 240 + side * (40 + 70) - 35 + side * r * 6, 130 + r * 18, 70, 6, '#1e1428');
-    // the altar, gilded, and a nun standing before it
-    rect(g, 200, 120, 80, 26, '#3a2a18');
-    rect(g, 200, 120, 80, 3, '#e0c070');
-    glowAt(g, 240, 112, 60, '192,112,255', 0.25 + 0.1 * Math.sin(t * 2));
-    rect(g, 234, 80, 12, 34, '#0c0a12');
-    rect(g, 233, 76, 14, 10, '#dcd6e6');
-    rect(g, 236, 79, 8, 6, '#000000');
-    rect(g, 237, 81, 1, 1, '#c070ff');
-    rect(g, 242, 81, 1, 1, '#c070ff');
-    for (const x of [190, 290]) {
-      flame(g, x, 116, t);
-      glowAt(g, x, 114, 30, '200,140,255', 0.25);
+  // the catacombs: the dead of a hundred kings, getting up
+  catacombs(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 3);
+    s.wall('catacombs');
+    s.floor('catacombs', 56, 21);
+    s.candles(60, 110);
+    s.candles(420, 110);
+    for (let i = 0; i < 4; i++) {
+      const x = 110 + i * 85;
+      const k = t * 1.2 - i * 0.6;
+      // rising: the death frames backwards, then standing
+      const col = k < 0 ? 10 : k < 1.5 ? 10 - Math.floor(k * 2) : idle(t, i);
+      s.sprite('skeleton', col, whisper ? 1 : 0, x, 170 + (i % 2) * 14, false);
     }
+    if (whisper) s.light(240, 120, 300, '150,90,240', 0.35);
+    s.motes('rgba(220,210,170,0.35)', 22, -3);
+    s.shade(whisper ? 0.7 : 0.58);
+  },
+  catacombsWhisper(g, t, dt, f) {
+    SCENES.catacombs(g, t, dt, f, true);
   },
 
-  // the First King's Forge: a furnace mouth, a giant anvil, sparks
-  forge(g, t) {
-    band(g, 0, PH, ['#0c0806', '#140c08', '#1e100a', '#140a06']);
-    // the furnace: a great arch of brick full of fire
-    rect(g, 150, 30, 180, 130, '#2a1810');
-    g.fillStyle = '#ff9a30';
-    g.beginPath();
-    g.arc(240, 120, 60, Math.PI, 0);
-    g.lineTo(300, 160);
-    g.lineTo(180, 160);
-    g.fill();
-    glowAt(g, 240, 120, 140, '255,140,40', 0.45 + 0.1 * Math.sin(t * 9));
-    for (let i = 0; i < 12; i++) {
-      const x = 190 + i * 9;
-      const h = 20 + Math.sin(t * 8 + i) * 10;
-      rect(g, x, 160 - h, 6, h, i % 2 ? '#ffe080' : '#ff9a30');
-    }
-    // the anvil in front, and sparks leaping off it
-    rect(g, 200, 176, 80, 14, '#2e2e34');
-    rect(g, 190, 170, 100, 8, '#46464e');
-    rect(g, 178, 170, 14, 4, '#46464e');
-    rect(g, 230, 190, 20, 26, '#2e2e34');
-    for (let i = 0; i < 20; i++) {
-      const a = i * 0.7 + t * 3;
-      const r = (t * 60 + i * 13) % 70;
-      rect(g, 240 + Math.cos(a) * r, 168 - Math.abs(Math.sin(a)) * r, 1, 1, '#ffd060');
-    }
+  // the Hollow: the lost queen's garden, grown wild in the dark
+  hollow(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 4);
+    s.wall('hollow');
+    s.floor('hollow', 56, 31);
+    s.sprite('treant', idle(t), 0, 120, 176);
+    s.sprite('treant', idle(t, 1), 1, 380, 168);
+    s.sprite('thornling', walk(t), 0, 60 + ((t * 20) % 420), 196);
+    s.sprite('puffcap', idle(t, 0.5), 0, 250, 150);
+    s.light(250, 136, 90, '120,220,140', 0.45);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.3);
+    s.motes('rgba(150,240,170,0.55)', 40, -5);
+    s.shade(whisper ? 0.72 : 0.62);
+  },
+  hollowWhisper(g, t, dt, f) {
+    SCENES.hollow(g, t, dt, f, true);
   },
 
-  // the Forgotten Vault: gold in the dust, a sealed door
+  // the Burning Halls: fire that never goes out, and the king's knights still on watch
+  halls(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 4);
+    s.wall('halls');
+    s.floor('halls', 56, 41);
+    for (let x = 40; x < 700; x += 200) s.brazier(x, 112);
+    s.sprite('war_banner', 0, 0, 140, 104);
+    s.sprite('war_banner', 0, 0, 340, 104);
+    s.sprite('blackknight', walk(t), 0, -20 + ((t * 18) % 520), 178);
+    s.sprite('bannerman', idle(t), 1, 400, 196);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.3);
+    s.motes('rgba(255,170,90,0.7)', 30, -14);
+    s.shade(whisper ? 0.6 : 0.48, '10,4,2');
+  },
+  hallsWhisper(g, t, dt, f) {
+    SCENES.halls(g, t, dt, f, true);
+  },
+
+  // the throne: Aldric at the bottom of everything
+  throne(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, 0);
+    s.wall('halls');
+    s.floor('halls', 56, 51);
+    s.brazier(120, 120);
+    s.brazier(360, 120);
+    s.sprite('war_banner', 0, 0, 60, 104);
+    s.sprite('war_banner', 0, 0, 420, 104);
+    s.sprite('madking1', whisper ? 11 : idle(t), 0, 240, 170);
+    s.light(240, 100, whisper ? 200 : 110, '176,110,255', whisper ? 0.8 : 0.45);
+    s.shade(0.62, '8,2,6');
+  },
+  throneWhisper(g, t, dt, f) {
+    SCENES.throne(g, t, dt, f, true);
+  },
+
+  // the Forgotten Vault: the Keeper, and three seals
   vault(g, t) {
-    band(g, 0, PH, ['#0a0806', '#14100a', '#1c160c', '#120e08']);
-    for (let i = 0; i < 30; i++) {
-      const x = 40 + ((i * 61) % 400);
-      const y = 150 + ((i * 17) % 50);
-      rect(g, x, y, 6, 3, '#c49a38');
-      rect(g, x + 1, y, 3, 1, '#ecd078');
+    const s = new Stage(g, t, 0);
+    s.wall('catacombs');
+    s.floor('catacombs', 56, 61);
+    s.sprite('keeper', idle(t), 0, 240, 170);
+    for (let i = 0; i < 3; i++) {
+      const a = t * 0.8 + (i * Math.PI * 2) / 3;
+      const x = 240 + Math.cos(a) * 90;
+      const y = 120 + Math.sin(a) * 22;
+      s.icon('curios', CURIO_FRAME.seal(i), x, y);
+      s.light(x, y, 50, ['230,220,180', '255,150,70', '120,220,120'][i], 0.5);
     }
-    rect(g, 190, 30, 100, 130, '#2a2216');
-    rect(g, 200, 40, 80, 120, '#14100a');
-    for (const [x, y] of [[214, 80], [240, 64], [266, 80]]) {
-      rect(g, x - 4, y - 4, 8, 8, '#3a3022');
-      glowAt(g, x, y, 14, '200,220,255', 0.2 + 0.1 * Math.sin(t * 2 + x));
+    s.shade(0.7);
+  },
+
+  // the secret realms
+  cistern(g, t) {
+    const s = new Stage(g, t, t * 3);
+    s.wall('cistern');
+    s.floor('cistern', 56, 71);
+    s.torch(100, 24);
+    s.torch(380, 24);
+    s.sprite('drowned', walk(t), 0, 60 + ((t * 12) % 300), 140);
+    s.water(150);
+    s.sprite('leviathan', idle(t), 1, 380, 236); // rising out of the black water
+    s.sprite('eel', idle(t, 1), 0, 160, 212);
+    s.light(380, 170, 70, '200,255,100', 0.3);
+    s.shade(0.68, '2,8,12');
+  },
+  chapel(g, t) {
+    const s = new Stage(g, t, 0);
+    s.wall('chapel');
+    s.floor('chapel', 56, 81);
+    s.sprite('chapel_altar', 0, 0, 240, 120);
+    s.candles(170, 120);
+    s.candles(310, 120);
+    s.sprite('nun', idle(t), 0, 120, 186);
+    s.sprite('nun', idle(t, 1), 1, 360, 186);
+    s.sprite('acolyte', walk(t), 0, 80 + ((t * 14) % 320), 206);
+    s.light(240, 100, 140, '190,120,255', 0.5);
+    s.shade(0.7, '6,2,10');
+  },
+  forge(g, t) {
+    const s = new Stage(g, t, t * 2);
+    s.wall('forge');
+    s.floor('forge', 56, 91);
+    s.sprite('anvil', 0, 0, 240, 150);
+    s.light(240, 110, 220, '255,140,50', 0.75);
+    s.sprite('anvilknight', idle(t), 0, 160, 176);
+    for (let i = 0; i < 3; i++) {
+      const hop = Math.abs(Math.sin(t * 4 + i)) * 10;
+      s.sprite('bellows', idle(t, i), i % 2, 320 + i * 40, 190 - hop);
     }
-    glowAt(g, 240, 100, 120, '255,210,120', 0.12);
+    s.motes('rgba(255,180,90,0.8)', 36, -18);
+    s.shade(0.5, '10,3,1');
+  },
+
+  // the endings
+  kingFalls(g, t) {
+    const s = new Stage(g, t, 0);
+    s.wall('halls');
+    s.floor('halls', 56, 101);
+    s.brazier(80, 120);
+    s.brazier(400, 120);
+    s.sprite('madking3', Math.min(10, 8 + Math.floor(t * 1.4)), 0, 200, 170);
+    // the crown rolls away and lies whispering
+    const x = Math.min(330, 220 + t * 40);
+    s.icon('relics', crownIcon(), x, 160 - Math.abs(Math.sin(Math.min(t, 2.75) * 4)) * 6);
+    s.light(x, 160, 70, '176,110,255', 0.6);
+    s.shade(0.6);
+  },
+  crownBreaks(g, t) {
+    const s = new Stage(g, t, 0);
+    s.wall('halls');
+    s.floor('halls', 56, 111);
+    s.sprite('crownwraith', Math.min(10, 8 + Math.floor(t * 1.4)), 0, 240, 170);
+    const flash = Math.max(0, 1 - t * 0.6);
+    s.light(240, 120, 260, '255,240,200', 0.4 + flash * 0.6);
+    s.motes('rgba(255,240,200,0.8)', 40, -20);
+    s.shade(0.55 - flash * 0.4);
+  },
+  dawn(g, t, dt, f) {
+    const s = new Stage(g, t, 0);
+    s.wall('gatehouse');
+    s.floor('gatehouse', 56, 121);
+    // the five, home at last, and the hero among them
+    for (let i = 0; i < 5; i++) s.sprite('npcs', i * 2 + idle(t, i), 0, 90 + i * 70 + (i > 1 ? 40 : 0), 160 + (i % 2) * 10);
+    s.hero(f.hero || 'wren', idle(t), 0, 270, 168);
+    // light pouring down from above
+    s.light(240, 0, 340, '255,220,160', 0.9);
+    s.motes('rgba(255,240,200,0.6)', 30, 4);
+    s.shade(0.25, '20,12,6');
   },
 };
 
+// Close-ups: some scenes are shown at 2x (the same pixels, nearer), centred on what matters.
+// [zoom, focus x (t) , focus y]
+const CLOSE = {
+  tomb: [2, () => 220, 132],
+  whisper: [2, () => 236, 118],
+  beatrix: [2, (t) => 360 - 11 * t, 128],
+  hero: [2, () => 255, 150],
+  heroLast: [2, () => 300, 160],
+  catacombsWhisper: [2, () => 250, 150],
+  hollowWhisper: [2, () => 200, 140],
+  hallsWhisper: [2, () => 240, 140],
+  throne: [2, () => 240, 132],
+  throneWhisper: [2, () => 240, 120],
+  kingFalls: [2, () => 255, 140],
+  crownBreaks: [2, () => 240, 132],
+};
+
 // --------------------------------------------------------------------------------------------
-// the cutscenes themselves
+// the words
 // --------------------------------------------------------------------------------------------
 const HERO_LINES = {
-  wren: 'Wren laughed at the wrong king, and was thrown below for it. He is going further down - to unmake the crown that called it treason.',
-  ranger: "The royal forest is dying from the roots up. Rowan followed the rot down through the cells. Whatever is eating the trees lives below.",
+  wren: 'Wren laughed at the wrong king, and was thrown below for it. Now he goes further down - to unmake the crown that called it treason.',
+  ranger: 'The royal forest is dying from the roots up. Rowan followed the rot down through the cells. Whatever is eating the trees lives below.',
   ironknight: 'Sir Aldwin swore an oath to guard the king. Tonight he breaks it, one step at a time, all the way to the bottom.',
   knight: "Maud's lord went down into the Burning Halls and never came back. She carries his sword the rest of the way.",
   witch: 'They burned the queen for a witch. Her garden is still growing in the dark below, and it is calling Agnes home.',
   ghost: 'The Nameless died in the cells, and did not stop. Death was only the first door. There are more, further down.',
 };
 
+const crown = (scene, text) => ({ scene, text, color: CROWN, voice: 'THE CROWN' });
+
 export const CUTSCENES = {
   intro: (hero) => [
-    { scene: 'keep', text: 'For three hundred years the Keep of Hollowmere stood over its valley, and the valley slept safe beneath it.' },
-    { scene: 'throne', text: 'Then a new king dug too deep. On a skull in the catacombs he found a crown - hollow, and whispering.' },
-    { scene: 'procession', text: 'It told him to send his people down. He did. None of them came back up.' },
+    { scene: 'keep', text: 'For three hundred years the Keep of Hollowmere stood over its valley. Beneath it, behind an iron door, slept the Hollow.' },
+    { scene: 'tomb', text: "King Aldric dug for silver. He found the First King's tomb instead - and on the skull inside, a crown of black iron." },
+    crown('whisper', 'TAKE ME HOME. DOWN. TO THE DOOR I WAS MADE TO LOCK.'),
+    { scene: 'procession', text: 'So the king sent his people down to dig: a smith, a quartermaster, a sister of the chapel, a mapmaker, an old archivist. Hundreds more.' },
+    { scene: 'beatrix', text: 'His bride Beatrix went after him with a single candle. None of them came back up.' },
     { scene: 'hero', text: HERO_LINES[hero] || HERO_LINES.wren, hero },
-    { scene: 'hero', text: 'Now the Keep is sinking into the dark it woke. There is no way back. The only way out is down.', hero },
+    { scene: 'heroLast', text: 'Now the Keep is sinking into the dark it woke. Some of the lost may still be alive. The only way out is down.', hero },
   ],
-  catacombs: () => [{ scene: 'catacombs', text: 'Below the cells lie the dead of a hundred kings. Something has taught them to stand.' }],
-  hollow: () => [{ scene: 'hollow', text: "Deeper still grows the queen's lost garden: a forest that has never seen the sun. It is hungry." }],
-  halls: () => [{ scene: 'halls', text: "The old halls burn and never burn out. Here the crown's whisper is almost a voice." }],
-  throne: () => [{ scene: 'throneDoor', text: 'The throne of the Mad King. He is waiting - and so is the thing that wears him.' }],
+  catacombs: () => [
+    { scene: 'catacombs', text: 'Below the cells lie the dead of a hundred kings. Something has taught them to stand.' },
+    crown('catacombsWhisper', 'THEY SERVED THE FIRST KING. NOW THEY SERVE ME. SO WILL YOU.'),
+  ],
+  hollow: () => [
+    { scene: 'hollow', text: "Deeper still grows the burned queen's garden: a forest that has never seen the sun. It is hungry." },
+    crown('hollowWhisper', 'SHE HEARD ME TOO. SHE LISTENED. LOOK HOW SHE BLOOMS.'),
+  ],
+  halls: () => [
+    { scene: 'halls', text: "The old halls burn and never burn out. The king's knights still keep their watch, long after they stopped being men." },
+    crown('hallsWhisper', 'YOU ARE CLOSE NOW. CLOSER THAN HE EVER WAS. PUT ME ON.'),
+  ],
+  throne: () => [
+    { scene: 'throne', text: 'At the bottom of the Keep sits King Aldric, wearing what is left of himself - and the crown wearing him.' },
+    crown('throneWhisper', 'KNEEL, OR TAKE HIS PLACE. EITHER WAY, I GO HOME.'),
+  ],
+  vault: () => [{ scene: 'vault', text: 'A vault no king remembers, sealed with bone, flame and thorn. The First King hid the way to break his crown here.' }],
   cistern: () => [{ scene: 'cistern', text: 'Under the cells, a cistern no one remembers digging. The water is black, and it is not still.' }],
-  chapel: () => [{ scene: 'chapel', text: 'A chapel built for a god that never answered. Something else did.' }],
+  chapel: () => [{ scene: 'chapel', text: 'A chapel built for a god that never answered. Something else did, and its sisters kept the faith.' }],
   forge: () => [{ scene: 'forge', text: "Here the First King forged the Keep's iron, and his own crown. The fire was never put out." }],
-  vault: () => [{ scene: 'vault', text: 'A vault no king remembers, sealed with bone, flame and thorn. Someone hid something here.' }],
+  // Stalked: who she is
+  beatrix: () => [
+    { scene: 'beatrix', text: 'Beatrix went down to find her king. She has been looking ever since, in the dark, with her candle long gone out.' },
+    { scene: 'beatrix', text: 'ALDRIC...? IS THAT YOU...?', color: BEATRIX_VOICE, voice: 'BEATRIX' },
+  ],
+  // the endings
+  endKing: () => [
+    { scene: 'kingFalls', text: 'Aldric falls. For a moment the whisper stops, and the Keep is very quiet.' },
+    crown('kingFalls', 'ANOTHER WILL COME. ANOTHER ALWAYS COMES.'),
+    { scene: 'kingFalls', text: 'The crown endures. They say three seals, hidden in the deep, could break it for good.' },
+  ],
+  endCrown: () => [
+    { scene: 'crownBreaks', text: "The Hollow Crown breaks. Three hundred years of whispering end in a sound like a bell cracking." },
+    { scene: 'crownBreaks', text: 'The Deep Door stays shut. Far above, the Keep stops sinking.' },
+    { scene: 'dawn', text: 'And the people of Hollowmere climb up out of the dark, into the first dawn in years.' },
+  ],
 };
 
 export class Cutscene {
@@ -453,6 +559,7 @@ export class Cutscene {
     this.i = 0;
     this.t = 0; // time on this panel
     this.time = 0;
+    this.sceneT = 0; // a scene keeps playing across consecutive lines
     this.hero = hero;
     this.onDone = onDone;
     this.done = false;
@@ -467,22 +574,24 @@ export class Cutscene {
 
   /** How many letters of the line are showing. */
   get shown() {
-    return Math.floor(this.t * 42);
+    return Math.floor(this.t * 40);
   }
 
   /** A key or tap: finish typing the line, or move to the next panel. */
   advance() {
     if (this.done) return;
     if (this.shown < this.panel.text.length) {
-      this.t = this.panel.text.length / 42 + 0.01;
+      this.t = this.panel.text.length / 40 + 0.01;
       return;
     }
     this.next();
   }
 
   next() {
+    const was = this.panel && this.panel.scene;
     this.i++;
     this.t = 0;
+    if (this.panel && this.panel.scene !== was) this.sceneT = 0;
     if (this.i >= this.panels.length) this.finish();
   }
 
@@ -495,9 +604,10 @@ export class Cutscene {
   update(dt) {
     if (this.done) return;
     this.t += dt;
+    this.sceneT += dt;
     this.time += dt;
     // a panel moves on by itself once its line has been up for a while
-    if (this.t > this.panel.text.length / 42 + 4.5) this.next();
+    if (this.t > this.panel.text.length / 40 + 4.5) this.next();
   }
 
   draw(ctx, dt) {
@@ -505,16 +615,24 @@ export class Cutscene {
     const p = this.panel;
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, W, H);
-    // the scene, faded in
+    // the scene (the same panel keeps its own clock, so a scene continues across its lines)
     const g = this.canvas.getContext('2d');
     g.imageSmoothingEnabled = false;
     g.clearRect(0, 0, PW, PH);
-    const flags = {};
-    SCENES[p.scene](g, this.time, dt, flags);
-    const fadeIn = Math.min(1, this.t * 2.5);
+    SCENES[p.scene](g, this.sceneT + 0.0001, dt, { hero: p.hero || this.hero });
+    const fadeIn = Math.min(1, this.sceneT * 2.2);
     ctx.globalAlpha = fadeIn;
-    ctx.drawImage(this.canvas, PX, PY);
-    if (flags.hero && p.hero) drawCharacter(ctx, p.hero, PX + 100, PY + 100, 2, false);
+    const close = CLOSE[p.scene];
+    if (close) {
+      // a close-up: the middle of the scene at 2x, crisp
+      const [z, fx, fy] = close;
+      const vw = PW / z;
+      const vh = PH / z;
+      const sx = Math.round(Math.max(0, Math.min(PW - vw, fx(this.sceneT) - vw / 2)));
+      const sy = Math.round(Math.max(0, Math.min(PH - vh, fy - vh / 2)));
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(this.canvas, sx, sy, vw, vh, PX, PY, PW, PH);
+    } else ctx.drawImage(this.canvas, PX, PY);
     ctx.globalAlpha = 1;
     // a frame of dark iron around the picture
     ctx.fillStyle = '#2a2a32';
@@ -524,16 +642,21 @@ export class Cutscene {
     ctx.fillRect(PX + PW, PY, 4, PH);
     ctx.fillStyle = '#5a5a66';
     ctx.fillRect(PX - 4, PY - 4, PW + 8, 1);
-    // the words, typed out
+    // the words, typed out (a voice speaks in its own colour)
+    let y = PY + PH + 16;
+    if (p.voice) {
+      drawText(ctx, p.voice, W / 2, y, p.color, { align: 'center' });
+      y += 12;
+    }
     const text = p.text.slice(0, this.shown);
     const lines = wrapWords(text, 70);
-    lines.forEach((l, k) => drawText(ctx, l.toUpperCase(), W / 2, PY + PH + 18 + k * 12, '#e8e0d0', { align: 'center' }));
+    lines.forEach((l, k) => drawText(ctx, l.toUpperCase(), W / 2, y + k * 12, p.color || '#e8e0d0', { align: 'center' }));
     // progress pips and the hint
     for (let k = 0; k < this.panels.length; k++) {
       ctx.fillStyle = k === this.i ? '#e8c46c' : '#3a3640';
-      ctx.fillRect(W / 2 - this.panels.length * 5 + k * 10, H - 26, 6, 3);
+      ctx.fillRect(W / 2 - this.panels.length * 5 + k * 10, H - 22, 6, 3);
     }
-    if (Math.floor(this.time * 2) % 2 === 0) drawText(ctx, 'ANY KEY - NEXT      ESC - SKIP', W / 2, H - 16, '#5d606c', { align: 'center' });
+    if (Math.floor(this.time * 2) % 2 === 0) drawText(ctx, 'ANY KEY - NEXT      ESC - SKIP', W / 2, H - 13, '#5d606c', { align: 'center' });
   }
 }
 

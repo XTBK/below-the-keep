@@ -18,7 +18,7 @@ import { TILESETS, FLOOR_VARIANTS, WALL_TOP_VARIANTS, WALL_SIDE_VARIANTS, PIT_VA
 import { CHAPTERS } from './palettes.js';
 import { doorTop, doorLeft, doorRight, doorBottom, DOOR_FRAMES } from '../render/art/doorsArt.js';
 import { ratFrame, gaolerFrame, prisonerFrame, impFrame, ghoulFrame, flyFrame, crossbowmanFrame, mimicFrame, boltFrame, fireballFrame, splatFrame, chainAnchor, ENEMY_COLS, animsFor } from '../render/art/enemiesArt.js';
-import { relicIcon, pickupFrame, bombLitFrame, stoneFrame, orbFrame, shopStand, trapdoor, rockRubble } from '../render/art/itemsArt.js';
+import { relicIcon, pickupFrame, bombLitFrame, stoneFrame, orbFrame, shopStand, trapdoor, rockRubble, stairwayFrame, STAIRWAY_FRAMES } from '../render/art/itemsArt.js';
 import { ratMotherFrame, wardenFrame, BOSS_COLS, bossAnims } from '../render/art/bossesArt.js';
 import { RELIC_IDS } from './items.js';
 import { CURIO_FRAMES } from './curios.js';
@@ -98,6 +98,7 @@ export const ASSETS = {
   web: { frameW: 32, frameH: 32, cols: 1, rows: 1, generate: () => E2.webDecal() },
   shop_stand: { frameW: 32, frameH: 32, cols: 1, rows: 1, generate: () => shopStand() },
   trapdoor: { frameW: 48, frameH: 48, cols: 1, rows: 1, generate: () => trapdoor() },
+  stairway: { frameW: 48, frameH: 48, cols: STAIRWAY_FRAMES, rows: 1, generate: (c) => stairwayFrame(c) }, // the way down, opening
   rock_rubble: { frameW: 32, frameH: 32, cols: 1, rows: 1, generate: () => rockRubble() },
 
   // --- Effects (unlit / glowing) ---
