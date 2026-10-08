@@ -23,12 +23,12 @@ A dark medieval roguelike: descend beneath a sinking castle, gather relics, and 
 
 Now the Keep is sinking into the dark it woke. Descend through the Cells, the Catacombs, the Hollow and the Burning Halls to the throne at the bottom of the world, and break the thing that wears the king.
 
-**Every run is different.** Floors are built fresh each time, from the room layouts to the relics on the pedestals to which of the 40 bosses waits at the bottom.
+**Every run is different.** Floors are built fresh each time, from the room layouts to the relics on the pedestals to which of the 50 bosses waits at the bottom.
 
 **Features**
 - **6 heroes**, each with their own weapon *and* their own dodge: a wizard who blinks through crowds, a ranger whose steadied crossbow bolts always crit, a knight who swings, parries shots and shield-charges.
-- **100 relics** that stack and combine — homing, piercing, splitting, chain lightning, burning, freezing, companions and more. Every relic is ranked Common to Legendary.
-- **50 enemies** and **40 bosses**, ranked Normal, Hard, Deadly and Legendary. The deadlier the boss, the better the spoils.
+- **125 relics** that stack and combine — homing, piercing, splitting, chain lightning, burning, freezing, companions and more. Every relic is ranked Common to Legendary.
+- **70 enemies** and **50 bosses**, ranked Normal, Hard, Deadly and Legendary. The deadlier the boss, the better the spoils.
 - **Fewer dead runs**: bad-luck protection, choice pedestals, and the Blacksmith's Anvil that forges a weak relic into a better one.
 - **Oaths**: after your first win, swear oaths to make the descent harder — and its rewards richer.
 - **The Daily Descent**: one seed and one hero for everyone, every day, with a global leaderboard.

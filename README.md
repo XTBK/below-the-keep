@@ -213,11 +213,11 @@ Any key moves on, Esc skips; they can be switched off in Settings (`src/ui/Cutsc
 
 ## Every run counts
 
-- **100 relics.** Every one is Common, Fine, Rare or Legendary (`src/data/quality.js`). After two weak relics in a row
+- **125 relics.** Every one is Common, Fine, Rare or Legendary (`src/data/quality.js`). After two weak relics in a row
   the next pedestal is guaranteed Rare or better (bad-luck protection).
 - **Choices.** Some treasure rooms offer two relics: take one and the other crumbles.
 - **The Blacksmith's Anvil** (in every merchant's room): stand beside it to melt your newest relic and forge one a step better.
-- **Boss ranks.** All 40 bosses are ranked **Normal**, **Hard**, **Deadly** or **Legendary** (skulls on the title card). Higher
+- **Boss ranks.** All 50 bosses are ranked **Normal**, **Hard**, **Deadly** or **Legendary** (skulls on the title card). Higher
   ranks hit harder and only appear deeper - and drop better relics; Deadly and Legendary ones offer a choice of two, and a
   Legendary also leaves an iron chest.
 - **Oaths** (after your first win): swear oaths before a run - more health or speed on foes, more champions, deadlier bosses,
