@@ -812,7 +812,7 @@ export class Room {
 
   addBossRewards() {
     if (this.trapdoor) return;
-    if (this.game.chapterKey === 'throne') return; // the end of the road: no way further down
+    if (this.game.chapterKey === 'throne' && !this.game.deep) return; // the end of the road (unless you hunt the crown below)
     if (this.game.chapterKey === 'vault' && !this.data.sealDropped) {
       // the Keeper guarded the Seal of Bone
       this.data.sealDropped = true;

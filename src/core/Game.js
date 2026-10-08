@@ -52,7 +52,7 @@ import { shufflePotions, useConsumable, randomCurio, nextPage, curioInfo } from 
 import { SEALS } from '../data/curios.js';
 import { CHARACTERS, CHARACTER_IDS } from '../data/characters.js';
 import { COLLECTION_TABS } from '../ui/Collection.js';
-import { CHAPTER_INFO, chapterForFloor, floorInChapter, floorSize, LAST_NORMAL_FLOOR, THRONE_FLOOR, REALMS, realmForFloor } from '../data/chapters.js';
+import { CHAPTER_INFO, chapterForFloor, floorInChapter, floorSize, LAST_NORMAL_FLOOR, THRONE_FLOOR, REALMS, realmForFloor, DEEP_LAST } from '../data/chapters.js';
 
 // The Game owns every system and runs the main loop:
 //   input -> update the current STATE -> sync visuals -> render
@@ -211,6 +211,8 @@ export class Game {
     this.sealsGiven = new Set(); // Seal Fragments already handed out this run
     this.vaultVisited = false;
     this.route = null; // the road taken to this floor (data/routes.js)
+    this.deep = false; // hunting the crown below the throne (floors 10-19)
+    this.beyondT = 0;
     this.realm = null; // the secret realm we're in, if any (data/chapters.js REALMS)
     this.realmsVisited = new Set();
     this.secretBossesUsed = new Set();
@@ -448,9 +450,26 @@ export class Game {
       this.hud.banner(SEALS_INFO);
       this.feel.shake(0.6);
       this.rebuildCurrentRoom();
-    } else {
+    } else if (this.daily) {
       this.victoryT = 3.2;
+    } else {
+      this.beyondT = 2.4; // ...then: go home, or follow the crown down?
     }
+  }
+
+  /** The choice after the Mad King: hunt the crown below. A stairway opens in the throne room. */
+  enterDeep() {
+    this.deep = true;
+    this.setPaused(false);
+    this.room.addBossRewards(); // the stairway down (and a relic for the road)
+    this.hud.banner({ name: 'The Deep', flavour: 'Ten more floors. The crown is waiting at the bottom.' });
+    this.audio.play('horn');
+  }
+
+  /** ...or go home a hero. */
+  returnHome() {
+    this.setPaused(false);
+    this.victoryT = 0.4;
   }
 
   /** Is this blow a critical hit? (luck helps) */
@@ -508,7 +527,7 @@ export class Game {
 
   _setChapter(key) {
     const from = this.chapterKey;
-    if (this.state === 'play' && from && from !== key && ['catacombs', 'hollow', 'halls', 'throne', 'vault', 'cistern', 'chapel', 'forge'].includes(key)) {
+    if (this.state === 'play' && from && from !== key && ['catacombs', 'hollow', 'halls', 'throne', 'vault', 'cistern', 'chapel', 'forge', 'rootdeep', 'frozen', 'sunken', 'amethyst', 'heart'].includes(key)) {
       this.playCutscene(key, () => (this.floorTitleT = 2.4));
     }
     this.chapterKey = key;
@@ -527,6 +546,16 @@ export class Game {
 
   _drawBoss(rng) {
     if (this.chapterKey === 'throne' || this.chapterKey === 'vault') return this.chapterInfo.bosses[0];
+    if (this.chapterInfo.deep) {
+      // the Deep: each place's second floor ends with its own guardian (the last, with the Hollow);
+      // its first floor with a Deadly boss from the whole roster
+      if (floorInChapter(this.floorNumber) === 2) return this.chapterInfo.bosses[0];
+      const tough = BOSS_ROSTER.filter((b) => bossTier(b) === 3 && !this.bossesUsed.has(b));
+      const pool = tough.length ? tough : BOSS_ROSTER.filter((b) => bossTier(b) === 3);
+      const b = pool[Math.floor(rng.next() * pool.length)];
+      this.bossesUsed.add(b);
+      return b;
+    }
     if (this.realm) {
       // one of the five secret bosses, never twice in a run
       const ids = this.chapterInfo.bosses;
@@ -630,7 +659,7 @@ export class Game {
   _routeDue(d) {
     if (d.toVault || d.toRealm || this.inVault) return false;
     const next = this.floorNumber + 1;
-    return next <= LAST_NORMAL_FLOOR && this.chapterKey !== 'throne' && this.chapterKey !== 'gatehouse' && !d.toFloor;
+    return (next <= LAST_NORMAL_FLOOR || (this.deep && next <= DEEP_LAST)) && this.chapterKey !== 'throne' && this.chapterKey !== 'gatehouse' && !d.toFloor;
   }
 
   _nextFloorName() {
@@ -704,7 +733,7 @@ export class Game {
         this.floorNumber = d.toFloor - 1; // Ambrose's stair skips ahead
         this.shortcutGift = true;
       }
-      if (!d.toVault && !d.toRealm) this.floorNumber = Math.min(THRONE_FLOOR, this.floorNumber + 1);
+      if (!d.toVault && !d.toRealm) this.floorNumber = Math.min(this.deep ? DEEP_LAST : THRONE_FLOOR, this.floorNumber + 1);
       // the Hidden Way: straight down into the secret realm under the next floor
       if (road && ROUTES[road].realm && !d.toVault && !d.toRealm) {
         const realm = realmForFloor(this.floorNumber);
@@ -957,6 +986,11 @@ export class Game {
         this.earnEmbers(earned, !this.tookDamageThisFloor ? 'FLAWLESS' : null);
         Save.write();
         if (this.chapterKey === 'throne') this._throneCleared(); // the Mad King falls
+        else if (this.deep && this.floorNumber === DEEP_LAST) {
+          // the Hollow is slain: the true end of the descent
+          this.ending = 'deep';
+          this.victoryT = 3.6;
+        }
         else {
           this.bossRewardT = 1.4; // let the death animation play first
         }
@@ -972,6 +1006,16 @@ export class Game {
         this.dropFrom(ROOM_DROPS, c.x, c.y, 1);
         const page = this.dropRng.chance(PAGE_DROP_CHANCE) ? nextPage() : null;
         if (page) this.pickups.spawn(room, 'curio', c.x, c.y, true, page);
+      }
+    }
+    if (this.beyondT > 0) {
+      this.beyondT -= dt;
+      if (this.beyondT <= 0) {
+        this.paused = true;
+        this.menus.reset(null);
+        this.menus.open('beyond');
+        this.touch.setPaused(true);
+        this.hud.markDirty();
       }
     }
     if (this.victoryT > 0) {
@@ -1020,9 +1064,10 @@ export class Game {
   /** The run is won. */
   win() {
     if (this.state !== 'play') return;
-    this.earnEmbers(EMBERS.victory);
+    this.earnEmbers(EMBERS.victory + (this.ending === 'deep' ? EMBERS.deepVictory : 0));
+    if (this.ending === 'deep') Save.data.stats.deepVictories = (Save.data.stats.deepVictories || 0) + 1;
     this.state = 'victory';
-    this.playCutscene(this.ending === 'crown' ? 'endCrown' : 'endKing'); // the ending, told
+    this.playCutscene(this.ending === 'deep' ? 'endDeep' : this.ending === 'crown' ? 'endCrown' : 'endKing'); // the ending, told
     Save.data.stats.victories++;
     // the best heat beaten, per hero
     if (this.heat > (Save.data.heatRecord[this.characterId] || 0)) Save.data.heatRecord[this.characterId] = this.heat;

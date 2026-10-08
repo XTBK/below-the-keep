@@ -890,6 +890,12 @@ function rng4(x, y) {
 }
 
 // the secret realms reuse a chapter's tiles in their own palette
+// the Deep: each borrows a chapter's way of building (tiles, walls, pits) in its own colours
+const ROOTDEEP = { ...HOLLOW, key: 'rootdeep', seed: 800, pal: CHAPTERS.rootdeep };
+const FROZEN = { ...CATA, key: 'frozen', seed: 900, pal: CHAPTERS.frozen, accent: CHAPTERS.frozen.moss };
+const SUNKEN = { ...HALLS, key: 'sunken', seed: 1000, pal: CHAPTERS.sunken };
+const AMETHYST = { ...CATA, key: 'amethyst', seed: 1100, pal: CHAPTERS.amethyst, accent: CHAPTERS.amethyst.moss };
+const HEART = { ...HOLLOW, key: 'heart', seed: 1200, pal: CHAPTERS.heart };
 const GATEHOUSE = { ...CELLS, key: 'gatehouse', seed: 700, pal: CHAPTERS.gatehouse, accent: CHAPTERS.gatehouse.moss };
 const CISTERN = { ...CELLS, key: 'cistern', seed: 400, pal: CHAPTERS.cistern, accent: CHAPTERS.cistern.moss };
 const CHAPEL = { ...CATA, key: 'chapel', seed: 500, pal: CHAPTERS.chapel, accent: CHAPTERS.chapel.moss };
@@ -898,6 +904,11 @@ const FORGE = { ...HALLS, key: 'forge', seed: 600, pal: CHAPTERS.forge, accent: 
 export const TILESETS = {
   cistern: makeTileset(CISTERN),
   gatehouse: makeTileset(GATEHOUSE),
+  rootdeep: makeTileset(ROOTDEEP),
+  frozen: makeTileset(FROZEN),
+  sunken: makeTileset(SUNKEN),
+  amethyst: makeTileset(AMETHYST),
+  heart: makeTileset(HEART),
   chapel: makeTileset(CHAPEL),
   forge: makeTileset(FORGE),
   cells: makeTileset(CELLS),

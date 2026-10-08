@@ -20,12 +20,23 @@ import { MODS, CHAMPION_DROPS } from '../data/items.js';
 
 const _dir = { x: 0, y: 0 };
 
+/**
+ * Set just before building a creature that borrows an older one's behaviour (the Deep's creatures):
+ * the constructor takes this type - its data and its sprite - instead of the one its class names.
+ */
+export const VARIANT = { type: null };
+
 export class Enemy {
   /**
    * @param sheet   asset key of the sprite sheet
    * @param look    { anchorY, shadow (size 0-3), blood ('blood'|'goo'|'ash'|'iron') }
    */
   constructor(game, type, sheet, look, def = ENEMIES[type]) {
+    if (VARIANT.type) {
+      type = sheet = VARIANT.type;
+      def = ENEMIES[type];
+      VARIANT.type = null;
+    }
     this.game = game;
     this.type = type;
     this.def = def;

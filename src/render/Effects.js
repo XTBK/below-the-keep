@@ -14,9 +14,21 @@ const ATMOSPHERES = {
   fog: { keep: 70, preset: 'fog' },
   spores: { keep: 40, preset: 'dust', rate: 3, glowPreset: 'spore' }, // sparse: glowing motes must not be mistaken for shots
   embers: { keep: 30, preset: 'ash', rate: 6, glowPreset: 'risingEmber' },
+  // the Deep
+  sap: { keep: 30, preset: 'dust', rate: 3, glowPreset: 'sapMote' }, // amber motes drifting up from the roots
+  snow: { keep: 60, preset: 'snowflake', rate: 7 }, // frost falling in the dark
+  drowned: { keep: 60, preset: 'fog', rate: 2, glowPreset: 'tideMote' }, // still water-mist and pale glints
+  crystal: { keep: 30, preset: 'dust', rate: 3, glowPreset: 'crystalGlint' }, // violet glints in the air
+  heart: { keep: 40, preset: 'dust', rate: 3, glowPreset: 'bloodMote' }, // slow crimson motes, like a pulse
 };
 
 export const PRESETS = {
+  // the Deep's air
+  sapMote: { life: [3, 6], size: [1, 1], colors: linearColors(['#ffb030', '#ffd060', '#ff8a20'], 1.8), alpha: 0.9, fadeInOut: true, gravity: -4, wander: 6 },
+  snowflake: { life: [5, 9], size: [1, 2], colors: linearColors(['#e8f4ff', '#c8e0f8', '#ffffff']), alpha: 0.55, fadeInOut: true, gravity: 7, wander: 5 },
+  tideMote: { life: [4, 7], size: [1, 1], colors: linearColors(['#60e0d0', '#a0fff0', '#40b0a0'], 1.5), alpha: 0.7, fadeInOut: true, gravity: -1, wander: 4 },
+  crystalGlint: { life: [1.5, 3], size: [1, 1], colors: linearColors(['#e090ff', '#ffd0ff', '#b060ff'], 2.0), alpha: 0.9, fadeInOut: true, gravity: 0, wander: 2 },
+  bloodMote: { life: [3, 6], size: [1, 1], colors: linearColors(['#ff3a50', '#c01830', '#ff8090'], 1.6), alpha: 0.8, fadeInOut: true, gravity: -2, wander: 5 },
   dust: {
     life: P.dust.life,
     size: P.dust.size,

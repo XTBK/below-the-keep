@@ -219,9 +219,15 @@ const CHAPTER_ARENAS = {
   cistern: ['flooded'],
   chapel: ['altar'],
   forge: ['braziers'],
+  // the Deep
+  rootdeep: ['round', 'chasm'],
+  frozen: ['pillared', 'round'],
+  sunken: ['flooded', 'pillared'],
+  amethyst: ['chasm', 'pillared'],
+  heart: ['round', 'chasm'],
 };
 // a few bosses have a home that can't be anywhere else
-const BOSS_ARENAS = { leviathan: 'flooded', organist: 'altar', facelesssaint: 'altar', firstking: 'pillared' };
+const BOSS_ARENAS = { leviathan: 'flooded', organist: 'altar', facelesssaint: 'altar', firstking: 'pillared', worldroot: 'round', sunkenking: 'flooded', rimequeen: 'pillared', crystalwyrm: 'chasm', hollow: 'round' };
 
 /** The arena a boss fights in, or null for the plain old Arena. */
 export function arenaFor(bossId, chapterKey) {

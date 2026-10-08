@@ -148,4 +148,4 @@ const HALLS = [
   },
 ];
 
-export const ROCKS = { cells: CELLS, catacombs: CATA, hollow: HOLLOW, halls: HALLS, cistern: CELLS, gatehouse: CELLS, chapel: CATA, forge: HALLS };
+export const ROCKS = { cells: CELLS, catacombs: CATA, hollow: HOLLOW, halls: HALLS, cistern: CELLS, gatehouse: CELLS, rootdeep: HOLLOW, frozen: CATA, sunken: HALLS, amethyst: CATA, heart: HOLLOW, chapel: CATA, forge: HALLS };

@@ -8,7 +8,7 @@ The full design lives in [GAME_DESIGN.md](GAME_DESIGN.md).
 > For three hundred years the Keep of Hollowmere stood over its valley. Then a new king dug too deep, and found a
 > crown that whispers. Now the Keep is sinking into the dark it woke - and the only way out is down.
 
-6 heroes · 19 weapons · 100 relics · 56 enemies · 45 bosses · 3 secret realms · a story told in pixel cutscenes · a Daily Descent leaderboard.
+6 heroes · 28 weapons · 100 relics · 66 enemies · 50 bosses · 3 secret realms · the Deep · a story told in pixel cutscenes · a Daily Descent leaderboard.
 
 ## Run it
 
@@ -109,6 +109,24 @@ straight at you, through rocks and walls. If you keep your distance too long, sh
 - A **dodge** passes through her unharmed. A **bomb** beside her drives her off.
 - Leave the room and she follows, a few seconds behind. She won't enter a boss's room while the boss lives.
 - Embers x1.5.
+
+## The Deep (after the Mad King)
+
+When the Mad King falls, his crown rolls away into the dark beneath the throne. You choose: **return to the
+Gatehouse** (the run ends, a win) or **hunt the crown below** - ten more floors, five places no one has seen:
+
+| Floors | Place | Its creatures | Its guardian |
+|---|---|---|---|
+| 10-11 | **The Rootdeep** - the roots of the world, amber sap glowing in them | Root Hounds, Sap Bulbs | The World-Root |
+| 12-13 | **The Frozen Deep** - a kingdom that froze itself rather than fall | Rime Wraiths, Ice Golems | The Rime Queen |
+| 14-15 | **The Sunken Kingdom** - the drowned kingdom that stood before the Keep | Drowned Knights, Tide Sirens | The Sunken King |
+| 16-17 | **The Amethyst Caverns** - violet crystal, and something coiled round the light | Crystal Spiders, Shard Magi | The Crystal Wyrm |
+| 18-19 | **The Hollow Heart** - the living dark at the bottom of everything | Heart Leeches, Hollowborn | **The Hollow** |
+
+Each place has its own colours, air, music and arrival scene (with the Crown's whisper). Each first floor ends with
+a Deadly boss from the whole roster; each second floor with the place's own guardian; floor 19 with the Hollow, in
+three phases, wearing the crown at last. Beating it is the deepest ending (and +50 embers). Forks in the road
+continue between the Deep's floors. (Not on the Daily Descent.)
 
 ## Encounters
 

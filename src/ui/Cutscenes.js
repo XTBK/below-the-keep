@@ -436,6 +436,97 @@ const SCENES = {
     s.shade(0.5, '10,3,1');
   },
 
+  // ---------------------------------------------------------------- the Deep
+  rootdeep(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 4);
+    s.wall('rootdeep');
+    s.floor('rootdeep', 56, 131);
+    s.sprite('sapbulb', idle(t), 0, 90, 150);
+    s.sprite('sapbulb', idle(t, 1), 0, 380, 140);
+    s.light(90, 138, 70, '255,176,48', 0.6);
+    s.light(380, 128, 70, '255,176,48', 0.6);
+    s.sprite('roothound', walk(t), 0, -20 + ((t * 30) % 520), 196);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.3);
+    s.motes('rgba(255,190,80,0.7)', 30, -5);
+    s.shade(whisper ? 0.7 : 0.6, '10,5,0');
+  },
+  rootdeepWhisper(g, t, dt, f) {
+    SCENES.rootdeep(g, t, dt, f, true);
+  },
+  frozen(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 3);
+    s.wall('frozen');
+    s.floor('frozen', 56, 141);
+    s.torch(100, 24);
+    s.torch(380, 24);
+    s.sprite('icegolem', idle(t), 0, 300, 176);
+    s.sprite('rimewraith', walk(t), 1, 140, 150);
+    s.light(140, 130, 60, '200,235,255', 0.4);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.3);
+    s.motes('rgba(235,245,255,0.75)', 50, 9);
+    s.shade(whisper ? 0.62 : 0.5, '2,6,14');
+  },
+  frozenWhisper(g, t, dt, f) {
+    SCENES.frozen(g, t, dt, f, true);
+  },
+  sunken(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 3);
+    s.wall('sunken');
+    s.floor('sunken', 56, 151);
+    s.sprite('war_banner', 0, 0, 120, 104);
+    s.sprite('war_banner', 0, 0, 360, 104);
+    s.sprite('drownedknight', walk(t), 0, 60 + ((t * 16) % 340), 160);
+    s.sprite('tidesiren', idle(t), 1, 380, 170);
+    s.water(176, '20,80,80');
+    s.light(380, 150, 80, '96,224,208', 0.5);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.3);
+    s.motes('rgba(140,255,230,0.5)', 26, -2);
+    s.shade(whisper ? 0.65 : 0.55, '0,8,8');
+  },
+  sunkenWhisper(g, t, dt, f) {
+    SCENES.sunken(g, t, dt, f, true);
+  },
+  amethyst(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 3);
+    s.wall('amethyst');
+    s.floor('amethyst', 56, 161);
+    s.sprite('shardmagus', idle(t), 0, 240, 150);
+    s.light(240, 120, 110, '208,112,255', 0.6);
+    for (let i = 0; i < 3; i++) s.sprite('crystalspider', walk(t, i), i % 2, 60 + i * 150 + Math.sin(t + i) * 20, 196);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.4);
+    s.motes('rgba(240,170,255,0.85)', 30, 0);
+    s.shade(whisper ? 0.65 : 0.55, '6,0,10');
+  },
+  amethystWhisper(g, t, dt, f) {
+    SCENES.amethyst(g, t, dt, f, true);
+  },
+  heart(g, t, dt, f, whisper = false) {
+    const s = new Stage(g, t, t * 2);
+    s.wall('heart');
+    s.floor('heart', 56, 171);
+    // the walls beat: the light swells and fades like a pulse
+    const beat = Math.pow(Math.max(0, Math.sin(t * 2.4)), 6);
+    s.light(240, 80, 260 + beat * 60, '255,58,80', 0.35 + beat * 0.3);
+    s.sprite('hollowborn', idle(t), 0, 320, 180);
+    for (let i = 0; i < 3; i++) s.sprite('heartleech', walk(t, i), 0, 80 + i * 60 + Math.sin(t * 2 + i) * 14, 110 + Math.cos(t * 2 + i) * 10);
+    if (whisper) s.light(240, 110, 300, '150,90,240', 0.4);
+    s.motes('rgba(255,80,100,0.6)', 30, -3);
+    s.shade(0.6, '10,0,2');
+  },
+  heartWhisper(g, t, dt, f) {
+    SCENES.heart(g, t, dt, f, true);
+  },
+  hollowFalls(g, t) {
+    const s = new Stage(g, t, 0);
+    s.wall('heart');
+    s.floor('heart', 56, 181);
+    s.sprite('hollow', Math.min(10, 8 + Math.floor(t * 1.2)), 0, 240, 200);
+    const flash = Math.max(0, 1 - t * 0.5) * (VISUAL.calm ? 0.3 : 1);
+    s.light(240, 120, 260, '255,220,230', 0.3 + flash * 0.5);
+    s.motes('rgba(255,90,110,0.7)', 40, -18);
+    s.shade(0.6 - flash * 0.3, '10,0,2');
+  },
+
   // the endings
   kingFalls(g, t) {
     const s = new Stage(g, t, 0);
@@ -489,6 +580,12 @@ const CLOSE = {
   throneWhisper: [2, () => 240, 120],
   kingFalls: [2, () => 255, 140],
   crownBreaks: [2, () => 240, 132],
+  rootdeepWhisper: [2, () => 240, 150],
+  frozenWhisper: [2, () => 300, 140],
+  sunkenWhisper: [2, () => 360, 140],
+  amethystWhisper: [2, () => 240, 130],
+  heartWhisper: [2, () => 260, 140],
+  hollowFalls: [2, () => 240, 140],
 };
 
 // --------------------------------------------------------------------------------------------
@@ -535,6 +632,32 @@ export const CUTSCENES = {
   cistern: () => [{ scene: 'cistern', text: 'Under the cells, a cistern no one remembers digging. The water is black, and it is not still.' }],
   chapel: () => [{ scene: 'chapel', text: 'A chapel built for a god that never answered. Something else did, and its sisters kept the faith.' }],
   forge: () => [{ scene: 'forge', text: "Here the First King forged the Keep's iron, and his own crown. The fire was never put out." }],
+  // the Deep
+  rootdeep: () => [
+    { scene: 'rootdeep', text: "Below the throne the Keep's foundations give way to roots - roots of trees that died before the first king was born. They still remember the sun." },
+    crown('rootdeepWhisper', 'FOLLOW. I AM ALMOST HOME.'),
+  ],
+  frozen: () => [
+    { scene: 'frozen', text: 'A kingdom that froze itself rather than fall. Its queen is still keeping it, alone, in the cold.' },
+    crown('frozenWhisper', 'SHE WORE ME ONCE, FOR A WINTER. THE WINTER NEVER ENDED.'),
+  ],
+  sunken: () => [
+    { scene: 'sunken', text: 'Here is the kingdom that stood before the Keep - drowned on the night the Hollow first woke.' },
+    crown('sunkenWhisper', 'THEY BUILT THE DOOR. THEY COULD NOT HOLD IT.'),
+  ],
+  amethyst: () => [
+    { scene: 'amethyst', text: 'Down here the light grows in the stone, violet and cold. Something long and patient sleeps coiled around it.' },
+    crown('amethystWhisper', 'LISTEN. CAN YOU HEAR IT BREATHING?'),
+  ],
+  heart: () => [
+    { scene: 'heart', text: 'At the bottom of everything, the walls are warm. They beat.' },
+    crown('heartWhisper', 'YOU BROUGHT ME HOME. THANK YOU.'),
+  ],
+  endDeep: () => [
+    { scene: 'hollowFalls', text: 'The Hollow comes apart like smoke in a wind.' },
+    { scene: 'hollowFalls', text: 'The crown cracks. It is only iron, and then it is only ash.' },
+    { scene: 'dawn', text: 'Far above, the Keep stops sinking. For the first time in three hundred years, nothing is whispering.' },
+  ],
   // Stalked: who she is
   beatrix: () => [
     { scene: 'beatrix', text: 'Beatrix went down to find her king. She has been looking ever since, in the dark, with her candle long gone out.' },

@@ -1,3 +1,4 @@
+import { VARIANT } from './Enemy.js';
 import * as B3 from './bestiary3.js';
 import { BeamFX } from '../render/BeamFX.js';
 import * as THREE from 'three';
@@ -130,6 +131,23 @@ const CLASSES = {
   acolyte: B3.CenserAcolyte,
   bellows: B3.BellowsImp,
   anvilknight: B3.AnvilKnight,
+  // the Deep's creatures: older behaviours in new bodies (see VARIANTS)
+  roothound: HOLLOW.DireWolf,
+  sapbulb: B2.Puffcap,
+  rimewraith: CATACOMBS.MourningSpectre,
+  icegolem: CATACOMBS.OssuaryGolem,
+  drownedknight: HALLS.BlackKnight,
+  tidesiren: B2.Banshee,
+  crystalspider: CATACOMBS.CryptSpider,
+  shardmagus: HALLS.CourtMagus,
+  heartleech: B2.CryptBat,
+  hollowborn: HALLS.Executioner,
+  // the Deep's bosses
+  worldroot: patternBossClass('worldroot', { anchorY: 6, shadow: 3, blood: 'goo' }),
+  rimequeen: patternBossClass('rimequeen', { anchorY: 4, shadow: 2, blood: 'ash' }),
+  sunkenking: patternBossClass('sunkenking', { anchorY: 4, shadow: 2, blood: 'goo' }),
+  crystalwyrm: patternBossClass('crystalwyrm', { anchorY: 4, shadow: 3, blood: 'ash' }),
+  hollow: patternBossClass('hollow', { anchorY: 6, shadow: 3, blood: 'ash' }),
   // the secret bosses
   leviathan: patternBossClass('leviathan', { anchorY: 4, shadow: 3, blood: 'goo' }),
   mirrorqueen: patternBossClass('mirrorqueen', { anchorY: 4, shadow: 2, blood: 'ash' }),
@@ -147,6 +165,9 @@ const CLASSES = {
   dreadknight: patternBossClass('dreadknight', { anchorY: 2, shadow: 3, blood: 'iron' }),
   abyssaleye: patternBossClass('abyssaleye', { anchorY: 6, shadow: 2, blood: 'goo' }),
 };
+
+// creatures that borrow another's class: built with their own data and sprite
+const VARIANTS = new Set(['roothound', 'sapbulb', 'rimewraith', 'icegolem', 'drownedknight', 'tidesiren', 'crystalspider', 'shardmagus', 'heartleech', 'hollowborn']);
 
 export class EnemyManager {
   constructor(game) {
@@ -189,6 +210,8 @@ export class EnemyManager {
       }
     }
     if (!e) {
+      // a Deep creature borrows an older behaviour: build it as itself (see VARIANT in Enemy.js)
+      if (VARIANTS.has(type)) VARIANT.type = type;
       e = new CLASSES[type](this.game);
       pool.push(e);
     }

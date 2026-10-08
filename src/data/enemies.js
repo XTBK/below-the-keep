@@ -371,6 +371,21 @@ export const CHAMPION = {
 
 // Which enemy each digit (and 9 0 j k v, the second bestiary) in a room layout spawns, per chapter.
 // 'e' picks from SPAWN_POOLS instead.
+// ================================================================ the Deep's creatures (floors 10-19)
+// Each fights like an older creature (the behaviour named in brackets) with a body of its own.
+Object.assign(ENEMIES, {
+  roothound: { ...ENEMIES.direwolf, name: 'Root Hound', hp: 20, speed: 118 }, // (Dire Wolf) circles, then pounces
+  sapbulb: { ...ENEMIES.puffcap, name: 'Sap Bulb', hp: 18, spores: 12, sporeSpeed: 85 }, // (Puffcap) sinks into the floor, then sprays sap
+  rimewraith: { ...ENEMIES.spectre, name: 'Rime Wraith', hp: 15, speed: 80 }, // (Spectre) unseen while still, glides at you
+  icegolem: { ...ENEMIES.golem, name: 'Ice Golem', hp: 40, chargeSpeed: 290 }, // (Ossuary Golem) winds up and charges
+  drownedknight: { ...ENEMIES.blackknight, name: 'Drowned Knight', hp: 34, chargeSpeed: 310 }, // (Black Knight) lance charge
+  tidesiren: { ...ENEMIES.banshee, name: 'Tide Siren', hp: 22, ringCount: 20, gap: 5 }, // (Banshee) wails rings of water
+  crystalspider: { ...ENEMIES.spider, name: 'Crystal Spider', hp: 14 }, // (Crypt Spider) drops from the ceiling
+  shardmagus: { ...ENEMIES.magus, name: 'Shard Magus', hp: 22, ringCount: 12 }, // (Court Magus) blinks, casts rings
+  heartleech: { ...ENEMIES.bat, name: 'Heart Leech', hp: 7, swoopSpeed: 230 }, // (Crypt Bat) swoops in packs
+  hollowborn: { ...ENEMIES.executioner, name: 'Hollowborn', hp: 42 }, // (Executioner) slams waves across the floor
+});
+
 export const LAYOUT_DIGITS = {
   cells: { 1: 'rat', 2: 'gaoler', 3: 'prisoner', 4: 'imp', 5: 'ghoul', 6: 'crossbowman', 7: 'mimic', 9: 'hound', 0: 'torturer', j: 'ratnest', k: 'monk', v: 'slime' },
   catacombs: { 1: 'skeleton', 2: 'archer', 3: 'wraith', 4: 'golem', 5: 'spider', 6: 'worm', 7: 'doctor', 8: 'spectre', 9: 'skull', 0: 'banshee', j: 'necromancer', k: 'mummy', v: 'bat' },
@@ -380,6 +395,12 @@ export const LAYOUT_DIGITS = {
 // the secret realms borrow a chapter's room layouts; their digits call up the realm's own creatures
 LAYOUT_DIGITS.cistern = { ...LAYOUT_DIGITS.cells, 1: 'drowned', 2: 'drowned', 3: 'eel', 5: 'drowned', 9: 'eel', 0: 'eel', j: 'slime', k: 'drowned' };
 LAYOUT_DIGITS.chapel = { ...LAYOUT_DIGITS.catacombs, 1: 'acolyte', 3: 'nun', 4: 'acolyte', 5: 'nun', 9: 'nun', 0: 'acolyte', k: 'nun' };
+// the Deep borrows chapters' room layouts; their digits call up the Deep's creatures
+LAYOUT_DIGITS.rootdeep = { ...LAYOUT_DIGITS.hollow, 1: 'roothound', 2: 'sapbulb', 3: 'roothound', 5: 'sapbulb', 9: 'roothound', 0: 'sapbulb' };
+LAYOUT_DIGITS.frozen = { ...LAYOUT_DIGITS.catacombs, 1: 'rimewraith', 2: 'icegolem', 4: 'rimewraith', 5: 'icegolem', 9: 'rimewraith', 0: 'icegolem' };
+LAYOUT_DIGITS.sunken = { ...LAYOUT_DIGITS.halls, 1: 'drownedknight', 2: 'tidesiren', 3: 'tidesiren', 5: 'drownedknight', 9: 'tidesiren', v: 'drownedknight' };
+LAYOUT_DIGITS.amethyst = { ...LAYOUT_DIGITS.catacombs, 1: 'crystalspider', 2: 'shardmagus', 4: 'crystalspider', 5: 'shardmagus', 9: 'shardmagus', 0: 'crystalspider' };
+LAYOUT_DIGITS.heart = { ...LAYOUT_DIGITS.hollow, 1: 'heartleech', 2: 'hollowborn', 3: 'heartleech', 5: 'hollowborn', 9: 'heartleech', 0: 'hollowborn' };
 LAYOUT_DIGITS.forge = { ...LAYOUT_DIGITS.halls, 1: 'anvilknight', 2: 'bellows', 3: 'bellows', 5: 'anvilknight', 9: 'bellows', j: 'bellows', v: 'anvilknight' };
 
 // Weighted picks for 'e' spawn points, by the layout's difficulty pool.
@@ -419,6 +440,32 @@ export const SPAWN_POOLS = {
     easy: { livingarmour: 3, drake: 2, magus: 1, imp: 2, jester: 2 },
     medium: { livingarmour: 3, drake: 2, magus: 2, blackknight: 2, flailbrute: 1, gargoyle: 1, jester: 2, bannerman: 1, ballista: 1 },
     hard: { blackknight: 3, flailbrute: 2, magus: 3, drake: 2, executioner: 2, gargoyle: 2, hellhound: 2, moltengolem: 2, bannerman: 1 },
+  },
+  // the Deep
+  rootdeep: {
+    easy: { roothound: 3, sapbulb: 3, thornling: 1, wisp: 1 },
+    medium: { roothound: 3, sapbulb: 3, treant: 1, direwolf: 1, sapling: 1 },
+    hard: { roothound: 4, sapbulb: 3, treant: 2, boar: 1 },
+  },
+  frozen: {
+    easy: { rimewraith: 3, icegolem: 1, skull: 2, bat: 1 },
+    medium: { rimewraith: 3, icegolem: 2, banshee: 1, spectre: 1 },
+    hard: { rimewraith: 3, icegolem: 3, banshee: 2, livingarmour: 1 },
+  },
+  sunken: {
+    easy: { drownedknight: 2, tidesiren: 2, drowned: 2, eel: 1 },
+    medium: { drownedknight: 3, tidesiren: 2, eel: 2, magus: 1 },
+    hard: { drownedknight: 3, tidesiren: 3, executioner: 1, eel: 2 },
+  },
+  amethyst: {
+    easy: { crystalspider: 3, shardmagus: 1, bat: 2 },
+    medium: { crystalspider: 3, shardmagus: 2, gargoyle: 1, spectre: 1 },
+    hard: { crystalspider: 3, shardmagus: 3, gargoyle: 2, necromancer: 1 },
+  },
+  heart: {
+    easy: { heartleech: 3, hollowborn: 1, hellhound: 1 },
+    medium: { heartleech: 3, hollowborn: 2, hellhound: 2, banshee: 1 },
+    hard: { heartleech: 3, hollowborn: 3, hellhound: 2, moltengolem: 1 },
   },
 };
 

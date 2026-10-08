@@ -469,7 +469,7 @@ export class Hud {
 
     // boss health bar
     const boss = state.enemies.boss;
-    if (boss && state.state === 'play') {
+    if (boss && state.state === 'play' && !state.paused) {
       const bw = 300;
       const bx = Math.round((W - bw) / 2);
       const by = H - 18;
@@ -715,6 +715,17 @@ export class Hud {
     ctx.fillStyle = 'rgba(4,3,6,0.85)';
     ctx.fillRect(0, 0, W, H);
     const crown = state.ending === 'crown';
+    if (state.ending === 'deep') {
+      // the true end of the descent
+      drawText(ctx, 'THE HOLLOW IS SLAIN', W / 2, 46, '#c49aff', { scale: 2, align: 'center' });
+      drawText(ctx, 'THE DEEP DOOR IS SEALED FOREVER, AND THE CROWN IS ASH.', W / 2, 76, INK, { align: 'center' });
+      drawText(ctx, `${state.player.character.name.toUpperCase()} WENT FURTHER DOWN THAN ANYONE EVER HAS.`, W / 2, 90, DIM, { align: 'center' });
+      drawText(ctx, `TIME ${fmtTime(state.runTime)}      SEED ${state.seed}`, W / 2, 112, INK, { align: 'center' });
+      this._drawRelicRow(state, 140);
+      this._drawEmbersHome(state, H - 66);
+      drawText(ctx, state.input.touchMode ? 'TAP FOR A NEW RUN' : 'R  NEW RUN      ESC  TITLE', W / 2, H - 34, INK, { align: 'center' });
+      return;
+    }
     drawText(ctx, crown ? 'THE CROWN IS BROKEN' : 'THE MAD KING IS DEAD', W / 2, 46, GOLD, { scale: 2, align: 'center' });
     drawText(ctx, crown ? 'THE WHISPER THAT RULED THE KEEP IS SILENT AT LAST.' : 'THE KEEP FALLS QUIET. BUT SOMETHING IN HIS CROWN STILL WHISPERS...', W / 2, 76, INK, { align: 'center' });
     drawText(ctx, crown ? `${state.player.character.name.toUpperCase()} CLIMBS TOWARD THE DAWN.` : '(THREE SEALS MIGHT OPEN THE WAY TO IT)', W / 2, 90, DIM, { align: 'center' });

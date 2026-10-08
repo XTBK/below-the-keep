@@ -63,6 +63,8 @@ export const BOSS_TIERS = {
   // the third roster
   // the secret bosses: all Deadly
   leviathan: 3, mirrorqueen: 3, firstking: 3, organist: 3, facelesssaint: 3,
+  // the Deep: its guardians are Deadly; the Hollow is Legendary
+  worldroot: 3, rimequeen: 3, sunkenking: 3, crystalwyrm: 3, hollow: 4,
   turnkey: 1, bellringer: 1, widow: 2, hangedman: 2, fenhag: 2, wickerman: 3, inquisitor: 3, dreadknight: 4, abyssaleye: 4,
 };
 

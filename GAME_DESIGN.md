@@ -741,3 +741,23 @@ the training dummy against the first three (`scratchpad/shot/weapontest.mjs`):
 Looks and icons: `render/art/classWeapons.js`. Sounds: thrust, hexCast, soulCast, phase.
 Also: your shots are see-through with faint trails and enemy shots draw on top (readability); REDUCE FLASHING
 setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.
+
+### Expansion 10 — the Deep (awaiting OK)
+
+- **The choice** (`_throneCleared` -> `beyondT` -> the `beyond` menu): return home (victory) or `enterDeep()`:
+  `Game.deep = true`, the throne room gets a stairway and a boss pedestal (`addBossRewards` no longer stops at the
+  throne when hunting). Floors cap at `DEEP_LAST` (19) instead of `THRONE_FLOOR`. Forks continue between Deep floors.
+- **Five places** (`DEEP` / `DEEP_ORDER` in `data/chapters.js`, floors 10-19 via `chapterForFloor`; full-sized floors):
+  palettes in `palettes.js` (spread from a chapter, recoloured), tilesets (`ROOTDEEP` = HOLLOW style, `FROZEN` /
+  `AMETHYST` = CATA, `SUNKEN` = HALLS, `HEART` = HOLLOW), atmospheres (sap, snow, drowned, crystal, heart), songs
+  (Ambience), layouts borrowed (`BY_CHAPTER`), arenas (`CHAPTER_ARENAS` / `BOSS_ARENAS`), arrival scenes + Crown lines.
+- **Creatures** (art `enemiesArt6.js`): ten, each a new body on a proven behaviour (`VARIANTS` in EnemyManager +
+  `VARIANT` in Enemy.js build the old class with the new type's data and sheet): Root Hound (Dire Wolf), Sap Bulb
+  (Puffcap), Rime Wraith (Spectre), Ice Golem (Ossuary Golem), Drowned Knight (Black Knight), Tide Siren (Banshee),
+  Crystal Spider (Crypt Spider), Shard Magus (Court Magus), Heart Leech (Crypt Bat), Hollowborn (Executioner).
+- **Bosses** (`data/bosses5.js`, art `bossesArt9.js`, `deep: true` keeps them off the main roster): the World-Root,
+  the Rime Queen, the Sunken King, the Crystal Wyrm (Deadly) and the Hollow (Legendary, 3 phases). Deep first floors
+  draw a Deadly roster boss.
+- **The end**: the Hollow's death -> `ending = 'deep'`, the `endDeep` scene, its own victory screen,
+  +50 embers (`EMBERS.deepVictory`), `stats.deepVictories`.
+- Measured (`diffprobe_deep.mjs`): Deep bosses cost a strong build ~6-10 hearts, rising to the Hollow.

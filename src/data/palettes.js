@@ -153,3 +153,72 @@ CHAPTERS.gatehouse = {
   ambient: { color: 0xffc890, level: 0.42 },
   grade: { ...CHAPTERS.cells.grade, saturation: 0.95, shadowTint: [1.0, 0.94, 0.88], highlightTint: [1.08, 1.0, 0.88] },
 };
+
+// ================================================================ the Deep (floors 10-19, after the Mad King)
+// the Rootdeep: the roots of the world, amber sap glowing in them
+CHAPTERS.rootdeep = {
+  ...CHAPTERS.hollow,
+  name: 'The Rootdeep',
+  stone: ['#120a06', '#1e120a', '#2c1c10', '#3e2816', '#52361e', '#6a4628', '#845a34'],
+  mortar: ['#0a0604', '#120a06'],
+  earth: ['#2a1c10', '#3a2816', '#4c361e', '#604628'],
+  bark: ['#1a0e06', '#2e1a0c', '#4a2a14', '#6a3e1e', '#8a5428'],
+  moss: ['#2a1a06', '#4a300c', '#6e4a14', '#946a20'],
+  leaf: ['#3a2a0a', '#5a4010', '#7a5a1a'],
+  glowTeal: ['#3a2006', '#9a5a0a', '#ffb030', '#fff0a8'],
+  glowPurple: ['#3a1406', '#a03a0a', '#ff7a30', '#ffd8a0'],
+  ambient: { color: 0xc89048, level: 0.42 },
+  grade: { saturation: 1.02, contrast: 1.05, shadowTint: [1.0, 0.9, 0.82], highlightTint: [1.12, 1.0, 0.82], lift: 0.02 },
+};
+// the Frozen Deep: ice in the dark, pale blue and white
+CHAPTERS.frozen = {
+  ...CHAPTERS.catacombs,
+  name: 'The Frozen Deep',
+  stone: ['#0a1018', '#121c28', '#1c2a3a', '#283c50', '#385268', '#4c6c86', '#6a8ca8'],
+  mortar: ['#060a10', '#0c121a'],
+  bone: ['#6a88a8', '#98b8d4', '#c8e0f2', '#f2fbff'],
+  moss: ['#1e2c3a', '#3a5268', '#7a9ab4', '#c8e4f6'],
+  ambient: { color: 0x98c0e8, level: 0.44 },
+  grade: { saturation: 0.82, contrast: 1.06, shadowTint: [0.84, 0.94, 1.18], highlightTint: [1.02, 1.04, 1.1], lift: 0.02 },
+};
+// the Sunken Kingdom: an older kingdom's halls, verdigris bronze and drowned gold
+CHAPTERS.sunken = {
+  ...CHAPTERS.halls,
+  name: 'The Sunken Kingdom',
+  stone: ['#060e0c', '#0c1816', '#122420', '#1a322c', '#24443c', '#305a50', '#407466'],
+  mortar: ['#040a08', '#081210'],
+  marbleA: ['#10282a', '#183a3a', '#22504c', '#2e6860', '#3e8478'],
+  marbleB: ['#141a1e', '#1e262c', '#2a343c', '#38444e', '#4a5864'],
+  gold: ['#3a3010', '#6a5a20', '#a08a3a', '#d8c070'],
+  crimson: ['#0e2a2a', '#164242', '#1e5a58', '#2e7a74'],
+  lava: ['#0a3a3a', '#1a8080', '#40d0c0', '#c0fff0'],
+  ash: ['#121816', '#1c2422', '#283230', '#38443f'],
+  ambient: { color: 0x70b8a8, level: 0.42 },
+  grade: { saturation: 0.95, contrast: 1.05, shadowTint: [0.82, 1.0, 1.0], highlightTint: [1.04, 1.06, 0.92], lift: 0.02 },
+};
+// the Amethyst Caverns: violet crystal and magenta light
+CHAPTERS.amethyst = {
+  ...CHAPTERS.catacombs,
+  name: 'The Amethyst Caverns',
+  stone: ['#0e0816', '#180e24', '#241634', '#322046', '#422c5c', '#563a74', '#6e4c90'],
+  mortar: ['#08040e', '#100818'],
+  bone: ['#5a1e7a', '#9a3ad0', '#d070ff', '#f6d0ff'],
+  moss: ['#3a0e3a', '#6a1a6a', '#b03ab0', '#ff90f0'],
+  ambient: { color: 0xb07ae0, level: 0.44 },
+  grade: { saturation: 1.05, contrast: 1.06, shadowTint: [0.95, 0.84, 1.15], highlightTint: [1.1, 0.98, 1.12], lift: 0.02 },
+};
+// the Hollow Heart: the living dark at the bottom of everything
+CHAPTERS.heart = {
+  ...CHAPTERS.hollow,
+  name: 'The Hollow Heart',
+  stone: ['#0c0406', '#18080c', '#260c12', '#36121a', '#4a1a24', '#622430', '#7c3040'],
+  mortar: ['#060204', '#0c0406'],
+  earth: ['#2a0c12', '#3a121a', '#4c1a22', '#62222c'],
+  bark: ['#160408', '#280a10', '#3e1018', '#581824', '#742232'],
+  moss: ['#3a0a12', '#5a1220', '#8a1a30', '#c02a44'],
+  leaf: ['#1a0a1e', '#2a1030', '#3a1640'],
+  glowTeal: ['#3a0610', '#a01428', '#ff3a50', '#ffc0c8'],
+  glowPurple: ['#1a0624', '#4a0e5a', '#9a2ac0', '#e0a0ff'],
+  ambient: { color: 0xc04858, level: 0.4 },
+  grade: { saturation: 1.05, contrast: 1.1, shadowTint: [1.08, 0.82, 0.9], highlightTint: [1.14, 0.94, 0.96], lift: 0.015 },
+};

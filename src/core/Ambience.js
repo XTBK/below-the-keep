@@ -76,6 +76,47 @@ export const MOMENTS = {
     melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.08 },
     drums: '................', bellEvery: 2, bellGain: 0.09,
   },
+  // the Deep
+  // the Rootdeep: warm and slow, plucked like something growing
+  rootdeep: {
+    bpm: 66, root: 40, mode: 'dorian', progression: [0, 4, 5, 3], barsPerChord: 2,
+    pad: 'choir', padGain: 0.04, bass: 'R.....R.R.......', bassInst: 'pluck', bassGain: 0.14,
+    arp: '0.2.4.2.0.2.4.2.', arpInst: 'harp', arpGain: 0.05, arpOct: 1,
+    melody: { inst: 'pipe', rhythm: 'slow', octave: 1, gain: 0.05 },
+    drums: 'b.......b.......', drumGain: 0.1,
+  },
+  // the Frozen Deep: glassy bells over a cold drone
+  frozen: {
+    bpm: 58, root: 45, mode: 'aeolian', progression: [0, 5, 3, 6], barsPerChord: 2,
+    pad: 'drone', bass: 'R...............', bassInst: 'pluck', bassGain: 0.1,
+    arp: '0...4...2...4...', arpInst: 'bell', arpGain: 0.05, arpOct: 2,
+    melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.05 },
+    drums: '................', drumGain: 0, bellEvery: 8, bellGain: 0.06,
+  },
+  // the Sunken Kingdom: a drowned court's stately march
+  sunken: {
+    bpm: 76, root: 38, mode: 'harmonic', progression: [0, 3, 4, 0], barsPerChord: 2,
+    pad: 'choir', padGain: 0.05, bass: 'R...R...R...R.R.', bassInst: 'pluck', bassGain: 0.13,
+    arp: '0.1.2.1.0.1.2.1.', arpInst: 'harp', arpGain: 0.045, arpOct: 1,
+    melody: { inst: 'horn', rhythm: 'walk', octave: 1, gain: 0.055 },
+    drums: 'B.......t.......', drumGain: 0.12,
+  },
+  // the Amethyst Caverns: shimmering, strange intervals
+  amethyst: {
+    bpm: 84, root: 42, mode: 'phrygian', progression: [0, 1, 0, 6], barsPerChord: 1,
+    pad: 'choir', padGain: 0.045, bass: 'R.R.....R.R.....', bassInst: 'pluck', bassGain: 0.12,
+    arp: '0.2.4.6.4.2.0.2.', arpInst: 'bell', arpGain: 0.04, arpOct: 2,
+    melody: { inst: 'pipe', rhythm: 'walk', octave: 2, gain: 0.045 },
+    drums: 'b...t...b...t.t.', drumGain: 0.11,
+  },
+  // the Hollow Heart: a heartbeat for a drum, and the choir that never stopped
+  heart: {
+    bpm: 64, root: 36, mode: 'phrygian', progression: [0, 1, 6, 0], barsPerChord: 2,
+    pad: 'choir', padGain: 0.07, bass: 'R.R.............', bassInst: 'pluck', bassGain: 0.16,
+    arp: '0.......1.......', arpInst: 'bell', arpGain: 0.04, arpOct: 1,
+    melody: { inst: 'horn', rhythm: 'slow', octave: 1, gain: 0.05 },
+    drums: 'B.B.............', drumGain: 0.16,
+  },
   // the Gatehouse: home - a slow lute by the fire
   gatehouse: {
     bpm: 72, root: 43, mode: 'ionian', progression: [0, 5, 3, 4], barsPerChord: 2,

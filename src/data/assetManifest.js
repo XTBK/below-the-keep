@@ -1,3 +1,5 @@
+import * as B9 from '../render/art/bossesArt9.js'; // the Deep's bosses
+import * as E6 from '../render/art/enemiesArt6.js'; // the Deep's creatures
 import { beatrixFrame, BEATRIX_COLS } from '../render/art/beatrixArt.js'; // Beatrix the Wandering
 import { npcFrame } from '../render/art/gatehouseArt.js'; // the prisoners and the Gatehouse
 import * as B8 from '../render/art/bossesArt8.js'; // the secret bosses
@@ -220,6 +222,17 @@ const E3_SHEETS = {
 // the secret bestiary
 Object.assign(E3_SHEETS, {
   drowned: [30, 34, 11, E5.drownedFrame, E5.stdAnims(5)],
+  // the Deep (render/art/enemiesArt6.js): extra animations borrow standard frames
+  roothound: [36, 26, 11, E6.roothoundFrame, E5.stdAnims(9)],
+  sapbulb: [26, 24, 11, E6.sapbulbFrame, { ...E5.stdAnims(6), hidden: { start: 10, count: 1, fps: 1, loop: true } }],
+  rimewraith: [26, 32, 11, E6.rimewraithFrame, E5.stdAnims(6)],
+  icegolem: [38, 38, 11, E6.icegolemFrame, { ...E5.stdAnims(6), stunned: { start: 6, count: 1, fps: 1, loop: true } }],
+  drownedknight: [30, 36, 11, E6.drownedknightFrame, { ...E5.stdAnims(6), stunned: { start: 6, count: 1, fps: 1, loop: true } }],
+  tidesiren: [26, 34, 11, E6.tidesirenFrame, E5.stdAnims(5)],
+  crystalspider: [26, 20, 11, E6.crystalspiderFrame, E5.stdAnims(10)],
+  shardmagus: [26, 34, 11, E6.shardmagusFrame, { ...E5.stdAnims(6), blink: { start: 8, count: 3, fps: 8, loop: false } }],
+  heartleech: [22, 18, 11, E6.heartleechFrame, E5.stdAnims(10)],
+  hollowborn: [38, 40, 11, E6.hollowbornFrame, E5.stdAnims(5)],
   eel: [36, 28, 11, E5.eelFrame, E5.stdAnims(6)],
   nun: [26, 36, 11, E5.nunFrame, E5.stdAnims(5)],
   acolyte: [28, 34, 11, E5.acolyteFrame, E5.stdAnims(6)],
@@ -253,6 +266,14 @@ const B3_SHEETS = {
   ashwing: [96, 80, B6.ashwingFrame],
   burnedqueen: [64, 72, B6.burnedqueenFrame],
 };
+// the Deep's bosses
+Object.assign(B3_SHEETS, {
+  worldroot: [96, 80, B9.worldrootFrame],
+  rimequeen: [56, 76, B9.rimequeenFrame],
+  sunkenking: [64, 76, B9.sunkenkingFrame],
+  crystalwyrm: [96, 64, B9.crystalwyrmFrame],
+  hollow: [96, 96, B9.hollowFrame],
+});
 // the secret bosses
 Object.assign(B3_SHEETS, {
   leviathan: [96, 80, B8.leviathanFrame],

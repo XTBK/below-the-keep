@@ -297,6 +297,10 @@ function wrap(text, n) {
   return lines;
 }
 
+function g_hint2(menus) {
+  return menus.game.input.touchMode ? 'TAP YOUR CHOICE' : 'W/S CHOOSE    ENTER DECIDE';
+}
+
 function g_hint(menus) {
   return menus.game.input.touchMode ? 'TAP AN UPGRADE TO BUY IT' : 'W/S CHOOSE    ENTER BUY    ESC LEAVE';
 }
@@ -378,6 +382,38 @@ const SCREENS = {
         { label: 'COLLECTION', action: () => g.openCollection() },
         { label: 'SETTINGS', action: () => menus.open('settings') },
       ];
+    },
+  },
+
+  // the Mad King is dead: go home, or follow the crown down into the Deep
+  beyond: {
+    back() {}, // a choice must be made
+    items(g) {
+      return [
+        { label: 'RETURN TO THE GATEHOUSE', action: () => g.returnHome(), note: 'END THE RUN A HERO. YOUR EMBERS GO HOME WITH YOU.' },
+        { label: 'HUNT THE CROWN BELOW', action: () => g.enterDeep(), note: 'TEN MORE FLOORS: FIVE PLACES NO ONE HAS EVER SEEN. WHAT WAITS AT THE BOTTOM IS WORSE THAN THE KING.' },
+      ];
+    },
+    draw(ctx, menus, time, t) {
+      dimBackground(ctx, 0.82);
+      drawPanel(ctx, 110, 60, 420, 230, 'THE MAD KING IS DEAD');
+      const text = 'THE CROWN SLIPPED FROM HIS HEAD AND ROLLED AWAY INTO THE DARK BENEATH THE THRONE. IT IS STILL WHISPERING. YOU COULD GO HOME NOW. OR YOU COULD FOLLOW IT DOWN.';
+      wrap(text, 60).forEach((line, k) => drawText(ctx, line, W / 2, 86 + k * 12, C.ink, { align: 'center' }));
+      const items = menus.items();
+      menus.rows = [];
+      items.forEach((it, i) => {
+        const y = 160 + i * 26;
+        const sel = i === t.cursor;
+        if (sel) {
+          ctx.fillStyle = i === 1 ? 'rgba(192,112,255,0.16)' : 'rgba(232,196,108,0.14)';
+          ctx.fillRect(140, y - 6, 360, 20);
+        }
+        drawText(ctx, (sel ? '> ' : '') + it.label, W / 2, y, sel ? (i === 1 ? '#c49aff' : C.gold) : C.dim, { align: 'center' });
+        menus.rows.push({ x0: 140, x1: 500, y0: y - 6, y1: y + 14, i });
+      });
+      const note = items[t.cursor] && items[t.cursor].note;
+      if (note) wrap(note, 62).forEach((line, k) => drawText(ctx, line, W / 2, 226 + k * 11, C.dim, { align: 'center' }));
+      drawText(ctx, g_hint2(menus), W / 2, H - 30, C.faint, { align: 'center' });
     },
   },
 

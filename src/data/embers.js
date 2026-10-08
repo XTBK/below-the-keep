@@ -14,6 +14,7 @@ export const EMBERS = {
   champion: 1, // each champion slain
   realm: 6, // a secret realm's boss
   victory: 25, // the Mad King (or the Crown) falls
+  deepVictory: 50, // ...and the Hollow, at the bottom of the Deep
   heatBonus: 0.1, // x(1 + 0.1 per heat) on everything
   stalked: 1.5, // x1.5 in the Stalked mode (Beatrix is hunting you)
 };

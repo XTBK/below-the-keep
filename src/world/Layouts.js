@@ -15,6 +15,12 @@ const BY_CHAPTER = { cells: CELLS_LAYOUTS, ...LAYOUTS_BY_CHAPTER };
 BY_CHAPTER.cistern = BY_CHAPTER.cells;
 BY_CHAPTER.chapel = BY_CHAPTER.catacombs;
 BY_CHAPTER.forge = BY_CHAPTER.halls;
+// the Deep borrows room shapes too (its creatures and colours are its own)
+BY_CHAPTER.rootdeep = BY_CHAPTER.hollow;
+BY_CHAPTER.frozen = BY_CHAPTER.catacombs;
+BY_CHAPTER.sunken = BY_CHAPTER.halls;
+BY_CHAPTER.amethyst = BY_CHAPTER.catacombs;
+BY_CHAPTER.heart = BY_CHAPTER.hollow;
 // every chapter also gets the shaped rooms (chasms, bridges, water)
 for (const set of new Set(Object.values(BY_CHAPTER))) for (const pool of ['easy', 'medium', 'hard']) set[pool].push(...SHAPED_LAYOUTS[pool]);
 const BY_NAME = new Map();

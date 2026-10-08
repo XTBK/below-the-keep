@@ -9,6 +9,10 @@ export const CHAPTER_ORDER = ['cells', 'catacombs', 'hollow', 'halls'];
 export const FLOORS_PER_CHAPTER = 2;
 export const LAST_NORMAL_FLOOR = CHAPTER_ORDER.length * FLOORS_PER_CHAPTER; // 8
 export const THRONE_FLOOR = LAST_NORMAL_FLOOR + 1; // 9
+// the Deep: five more places, two floors each, for those who hunt the crown below the throne
+export const DEEP_ORDER = ['rootdeep', 'frozen', 'sunken', 'amethyst', 'heart'];
+export const DEEP_FIRST = THRONE_FLOOR + 1; // 10
+export const DEEP_LAST = DEEP_FIRST + DEEP_ORDER.length * FLOORS_PER_CHAPTER - 1; // 19
 
 export const CHAPTER_INFO = {
   cells: {
@@ -97,6 +101,16 @@ export const REALMS = {
 };
 Object.assign(CHAPTER_INFO, REALMS);
 
+// the Deep (floors 10-19): reached by choosing to hunt the crown below the Mad King's throne
+export const DEEP = {
+  rootdeep: { name: 'The Rootdeep', enemies: 'rootdeep', layouts: 'hollow', tileset: 'rootdeep', atmosphere: 'sap', torch: { color: 0xffa040, flame: 'flame' }, bosses: ['worldroot'] },
+  frozen: { name: 'The Frozen Deep', enemies: 'frozen', layouts: 'catacombs', tileset: 'frozen', atmosphere: 'snow', torch: { color: 0x9ad0ff, flame: 'flame_witch' }, bosses: ['rimequeen'] },
+  sunken: { name: 'The Sunken Kingdom', enemies: 'sunken', layouts: 'halls', tileset: 'sunken', atmosphere: 'drowned', torch: { color: 0x60e0c8, flame: 'flame_witch' }, bosses: ['sunkenking'] },
+  amethyst: { name: 'The Amethyst Caverns', enemies: 'amethyst', layouts: 'catacombs', tileset: 'amethyst', atmosphere: 'crystal', torch: { color: 0xd070ff, flame: 'flame_witch' }, bosses: ['crystalwyrm'] },
+  heart: { name: 'The Hollow Heart', enemies: 'heart', layouts: 'hollow', tileset: 'heart', atmosphere: 'heart', torch: { color: 0xff4050, flame: 'flame' }, bosses: ['hollow'] },
+};
+for (const [k, d] of Object.entries(DEEP)) CHAPTER_INFO[k] = { ...d, deep: true, grade: CHAPTERS[k].grade, ambient: CHAPTERS[k].ambient };
+
 // home: the Gatehouse above the Keep, where runs begin (world/Gatehouse.js)
 CHAPTER_INFO.gatehouse = {
   enemies: 'cells', name: 'The Gatehouse', tileset: 'gatehouse',
@@ -114,17 +128,20 @@ export function realmForFloor(n) {
 export function floorSize(key, n) {
   if (key === 'throne') return 2;
   if (REALMS[key]) return 2;
+  if (DEEP[key]) return LAST_NORMAL_FLOOR; // full-sized floors (the grid only grows so far)
   if (key === 'vault') return 1;
   return n;
 }
 
 /** Which chapter a floor number belongs to. */
 export function chapterForFloor(n) {
+  if (n >= DEEP_FIRST) return DEEP_ORDER[Math.min(DEEP_ORDER.length - 1, Math.floor((n - DEEP_FIRST) / FLOORS_PER_CHAPTER))];
   if (n >= THRONE_FLOOR) return 'throne';
   return CHAPTER_ORDER[Math.min(CHAPTER_ORDER.length - 1, Math.floor((n - 1) / FLOORS_PER_CHAPTER))];
 }
 
 /** 1 or 2: the first or second floor of its chapter. */
 export function floorInChapter(n) {
+  if (n >= DEEP_FIRST) return ((n - DEEP_FIRST) % FLOORS_PER_CHAPTER) + 1;
   return ((n - 1) % FLOORS_PER_CHAPTER) + 1;
 }
