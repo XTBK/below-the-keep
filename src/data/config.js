@@ -125,10 +125,17 @@ export const ATTACK_BUDGET = {
   rest: 0.6,
 };
 
+// It bursts out fast and eases off (speed x burst at the start, x settle at the end), can be steered
+// a little, carries its momentum out, and a press just before it's ready is remembered (buffer).
 export const ROLL = {
-  time: 0.3,
-  speed: 270,
-  cooldown: 0.7,
+  time: 0.28,
+  speed: 300,
+  burst: 1.3,
+  settle: 0.6,
+  steer: 7, // how fast the tumble bends toward the stick (per second)
+  cooldown: 0.42,
+  buffer: 0.2, // seconds a dodge press waits for the cooldown
+  hop: 5, // pixels of hop at the top of the tumble
 };
 
 // Each starting hero's own take on the dodge button (see 'dodge' in data/characters.js).
@@ -139,7 +146,7 @@ export const SKILLS = {
   // ...and standing still steadies the aim: the next bolt is a sure critical hit.
   steady: { still: 0.5 },
   // Sir Aldwin: a short shield-first dash that knocks foes aside and stuns them.
-  charge: { time: 0.22, speed: 330, cooldown: 1.1, damage: 1, knockback: 260, stun: 0.8 },
+  charge: { time: 0.25, speed: 350, cooldown: 0.68, damage: 1, knockback: 260, stun: 0.8, burst: 1.25, settle: 0.65, steer: 3.5 },
 };
 
 export const PLAYER = {

@@ -633,7 +633,7 @@ Three systems so a run feels like this game's own, not a borrowed loop.
   pedestal at the start); and 30% of the time, if the next floor's realm is unvisited, the Hidden Way (into that realm,
   skipping the ordinary floor). `Game.route` holds the road for the floor it leads to.
 - **Shaped rooms and arenas** (`data/rooms/shapedLayouts.js`): ten shaped layouts added to every chapter's pools
-  (pits carve crosses, rings, balconies, islands; `w` shallow water: walkable, x0.75 speed for the player unless
+  (pits carve crosses, rings, ledges over chasms, islands; `w` shallow water: walkable, x0.75 speed for the player unless
   rolling and for walking enemies; rendered as a pool with a rim, flat normals). Walkways between two pits get rope
   bridge planks. Six boss arenas chosen by `arenaFor(boss, chapter)` (some bosses have a fixed home, otherwise a
   stable pick from the chapter's list) and written into the boss room after the boss is drawn.

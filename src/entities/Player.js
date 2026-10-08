@@ -372,18 +372,33 @@ export class Player {
     const rate = (moving ? PLAYER.accel : PLAYER.friction) * dt;
     if (this.rollCool > 0) this.rollCool -= dt;
     if (this.slashT > 0) this.slashT -= dt;
+    // a dodge pressed a moment early goes off as soon as it can
+    if (this.dodgeQueued > 0) {
+      this.dodgeQueued -= dt;
+      if (this.rollT <= 0 && this.chargeT <= 0 && this.rollCool <= 0) {
+        this.dodgeQueued = 0;
+        this.tryRoll(input);
+      }
+    }
     if (this.rollT > 0) {
-      // mid-roll: a fixed burst of speed, a puff of dust
+      // mid-roll: bursts out fast and eases off; the stick bends it a little
       this.rollT -= dt;
-      this.vx = this.rollDir.x * ROLL.speed;
-      this.vy = this.rollDir.y * ROLL.speed;
-      if (Math.random() < 0.5) this.game.effects.landDust(this.x, this.y, 1);
+      this._steerDodge(input, ROLL.steer, dt);
+      const p = 1 - Math.max(0, this.rollT) / ROLL.time;
+      const v = ROLL.speed * (ROLL.burst + (ROLL.settle - ROLL.burst) * p);
+      this.vx = this.rollDir.x * v;
+      this.vy = this.rollDir.y * v;
+      if (Math.random() < 0.6) this.game.effects.landDust(this.x, this.y, 1);
     } else if (this.chargeT > 0) {
+      const cfg = SKILLS.charge;
       this.chargeT -= dt;
-      this.vx = this.rollDir.x * SKILLS.charge.speed;
-      this.vy = this.rollDir.y * SKILLS.charge.speed;
+      this._steerDodge(input, cfg.steer, dt);
+      const p = 1 - Math.max(0, this.chargeT) / cfg.time;
+      const v = cfg.speed * (cfg.burst + (cfg.settle - cfg.burst) * p);
+      this.vx = this.rollDir.x * v;
+      this.vy = this.rollDir.y * v;
       this._chargeHits();
-      if (Math.random() < 0.7) this.game.effects.landDust(this.x, this.y, 1);
+      if (Math.random() < 0.8) this.game.effects.landDust(this.x, this.y, 1);
     } else {
       this.vx = approach(this.vx, tx, rate);
       this.vy = approach(this.vy, ty, rate);
@@ -451,9 +466,25 @@ export class Player {
     this.sprite.update(dt);
   }
 
+  /** Bend the dodge toward the stick (a little: it's still a commitment). */
+  _steerDodge(input, rate, dt) {
+    if (!input.moveX && !input.moveY) return;
+    const l = Math.hypot(input.moveX, input.moveY) || 1;
+    const k = Math.min(1, rate * dt);
+    let x = this.rollDir.x + (input.moveX / l - this.rollDir.x) * k;
+    let y = this.rollDir.y + (input.moveY / l - this.rollDir.y) * k;
+    const n = Math.hypot(x, y) || 1;
+    this.rollDir.x = x / n;
+    this.rollDir.y = y / n;
+  }
+
   /** Dodge roll: a quick tumble in the direction he's moving, untouchable while it lasts. */
   tryRoll(input) {
-    if (this.dead || this.rollT > 0 || this.chargeT > 0 || this.rollCool > 0) return;
+    if (this.dead) return;
+    if (this.rollT > 0 || this.chargeT > 0 || this.rollCool > 0) {
+      this.dodgeQueued = ROLL.buffer; // remembered: it goes off the moment it's ready
+      return;
+    }
     let dx = input.moveX;
     let dy = input.moveY;
     if (!dx && !dy) {
@@ -473,8 +504,10 @@ export class Player {
     }
     this.rollT = ROLL.time;
     this.rollCool = ROLL.time + ROLL.cooldown;
+    // the tumble turns the way it's going (left or right; straight up or down follows the facing)
+    this.rollSpin = this.rollDir.x > 0.2 ? -1 : this.rollDir.x < -0.2 ? 1 : this.facing === 'left' ? 1 : -1;
     this.game.audio.play('roll');
-    this.game.effects.landDust(this.x, this.y, 6);
+    this.game.effects.landDust(this.x, this.y, 8);
   }
 
   /** Wren's blink: vanish, and appear a little way off. */
@@ -531,7 +564,8 @@ export class Player {
     this.rollCool = cfg.time + cfg.cooldown;
     this.chargeHit = new Set();
     this.game.audio.play('shieldCharge');
-    this.game.effects.landDust(this.x, this.y, 6);
+    this.game.effects.landDust(this.x, this.y, 8);
+    this.game.feel.shake(0.06);
   }
 
   _chargeHits() {
@@ -552,7 +586,8 @@ export class Player {
       e.stun(cfg.stun);
       g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), false);
       g.audio.play('shieldBash');
-      g.feel.shake(0.15);
+      g.feel.shake(0.18);
+      g.feel.hitStop(0.035); // a moment's weight on the blow
     });
   }
 
@@ -748,12 +783,25 @@ export class Player {
 
   sync() {
     this.sprite.place(this.x, this.y);
+    const mesh = this.sprite.mesh;
     if (this.rollT > 0) {
-      const k = Math.sin((1 - this.rollT / ROLL.time) * Math.PI);
-      this.sprite.mesh.scale.set(1 + 0.25 * k, 1 - 0.35 * k, 1);
+      // tuck, tumble head over heels once, land: squash at both ends, a small hop in the middle
+      const p = Math.min(1, Math.max(0, 1 - this.rollT / ROLL.time));
+      const ease = 1 - Math.pow(1 - p, 2.2);
+      const k = Math.sin(p * Math.PI);
+      const edge = Math.max(0, 1 - Math.min(p, 1 - p) * 6); // squash right at the start and the landing
+      mesh.rotation.z = this.rollSpin * ease * Math.PI * 2;
+      mesh.scale.set(1 + 0.18 * edge - 0.08 * k, 1 - 0.28 * edge - 0.1 * k, 1);
+      mesh.position.y += Math.round(k * ROLL.hop);
     } else if (this.chargeT > 0) {
-      this.sprite.mesh.scale.set(1.12, 0.92, 1); // braced behind the shield
-    } else if (this.sprite.mesh.scale.x !== 1) this.sprite.mesh.scale.set(1, 1, 1);
+      // braced behind the shield, leaning into the run
+      const lean = this.rollDir.x > 0.2 ? -0.16 : this.rollDir.x < -0.2 ? 0.16 : 0;
+      mesh.rotation.z = lean;
+      mesh.scale.set(1.14, 0.9, 1);
+    } else if (mesh.scale.x !== 1 || mesh.rotation.z !== 0) {
+      mesh.scale.set(1, 1, 1);
+      mesh.rotation.z = 0;
+    }
     // transformations tint him
     if (this.transforms.size) {
       const c = this.sprite.material.color;

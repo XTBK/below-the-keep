@@ -1,7 +1,7 @@
 // Shaped rooms and boss arenas, shared by every chapter.
 //
 // Same 13 x 7 grids as the chapter layouts. Two tiles matter most here:
-//   p  pit: a chasm. Rooms are carved into crosses, rings, bridges and balconies with them.
+//   p  pit: a chasm. Rooms are carved into crosses, rings, bridges and ledges with them.
 //   w  shallow water: walkable, but it drags at your feet (and at anything else that walks).
 // Shaped rooms use plain 'e' spawns, so each chapter fills them with its own creatures.
 
@@ -58,7 +58,7 @@ export const SHAPED_LAYOUTS = {
       ],
     },
     {
-      name: 'The Balcony',
+      name: 'The Ledge',
       grid: [
         '..e.......e..',
         'ppppp...ppppp',

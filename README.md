@@ -85,7 +85,7 @@ Old Stair is always there; the other two are drawn from:
 
 ## Rooms and arenas
 
-Rooms aren't all open boxes any more. Shaped rooms are carved with **chasms** (crosses, rings, balconies, islands,
+Rooms aren't all open boxes any more. Shaped rooms are carved with **chasms** (crosses, rings, ledges, islands,
 rope bridges with planks) and **shallow water** that slows anyone walking through it (dodge-rolling skims over it).
 Each boss fights in an **arena that suits it**: pillared halls, round pits, flooded chambers, chasm rims, rings of
 fire and candlelit altars (`src/data/rooms/shapedLayouts.js`).
