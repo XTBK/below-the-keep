@@ -36,6 +36,11 @@ export function recordEcho(game) {
 export function echoForFloor(game) {
   const e = Save.data.echo;
   if (!e || game.daily || game.realm || game.inVault) return null;
+  // an Echo that never turned up fades away after a while
+  if (Save.data.stats.runsStarted - (e.run || 0) > ECHO_DEF.lingerRuns) {
+    Save.data.echo = null;
+    return null;
+  }
   if (e.floor !== game.floorNumber || !CHARACTERS[e.hero]) return null;
   return e;
 }
@@ -59,6 +64,8 @@ export const ECHO_DEF = {
   contactDamage: 1,
   mass: 3,
   hpPerRelic: 0.035, // every relic it carries makes it a little harder to lay to rest
+  chance: 0.2, // reaching the floor where you fell, the Echo is there one run in five
+  lingerRuns: 5, // after this many runs without meeting it, it fades
   roll: { time: 0.24, speed: 250, cooldown: 1.7, sense: 52 },
 };
 

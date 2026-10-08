@@ -801,3 +801,5 @@ setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.
   Rolls aside from player shots within 52px (0.24 s, unhittable, 1.7 s cooldown), never mid-attack.
 - On death: a reward pedestal with the highest-quality relic it carried that the player doesn't hold (or a quality 2+
   armoury relic), embers x4 of a champion's, a banner, and the record is cleared. `stats.echoesLaid` counts them.
+- Rare by design: on the floor where you fell, the Echo appears with `ECHO_DEF.chance` (0.2, rolled from the run seed),
+  and a record older than `lingerRuns` (5) runs fades. `game.echoChance` overrides the chance for tests.

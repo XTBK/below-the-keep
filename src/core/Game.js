@@ -19,7 +19,7 @@ import { Bombs } from '../entities/Bombs.js';
 import { EnemyManager } from '../enemies/EnemyManager.js';
 import { Hud } from '../ui/Hud.js';
 import { TouchControls } from '../ui/TouchControls.js';
-import { recordEcho, echoForFloor } from '../enemies/Echo.js';
+import { recordEcho, echoForFloor, ECHO_DEF } from '../enemies/Echo.js';
 import { CHAPTERS } from '../data/palettes.js';
 import { SIM, DEBUG, TRANSITION, PLAYER, FEEL } from '../data/config.js';
 import { RELICS, RELIC_IDS, ROOM_DROPS, BOSS_DROPS, PRICES, SHOP_GOODS } from '../data/items.js';
@@ -514,6 +514,8 @@ export class Game {
   /** The Echo of your last hero waits in one ordinary room of the floor where they fell. */
   _placeEcho(rng) {
     if (!echoForFloor(this)) return;
+    // rare: most descents pass the place where you fell and nothing is waiting (echoChance: tests)
+    if (rng.next() >= (this.echoChance ?? ECHO_DEF.chance)) return;
     const f = this.floor;
     const rooms = f.rooms.filter((r) => r.type === 'normal' && r.id !== f.startId);
     if (!rooms.length) return;

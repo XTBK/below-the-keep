@@ -99,8 +99,8 @@ the tougher it is, a floor with no damage taken earns a bonus, champions drop on
 
 ## Echoes of your last run
 
-When a hero dies below, something of them stays where they fell. On a later descent, on **that same floor**, one
-ordinary room holds their **Echo**: a pale, glowing copy of that hero wearing what they wore and carrying the relics
+When a hero dies below, something of them stays where they fell. On a later descent, on **that same floor**, there is
+a **1 in 5 chance** that one ordinary room holds their **Echo** (and if it never turns up, it fades after 5 runs): a pale, glowing copy of that hero wearing what they wore and carrying the relics
 they died with. It opens with a title card (*The Echo of Rowan, slain here by the Gravedigger*) and fights the way
 that hero fights: a wizard's Echo circles and casts volleys, a ranger's takes aim and fires bolts, a knight's or
 squire's closes in and lunges, a witch's throws homing curses, the Nameless sends out rings of shadow. And it rolls
