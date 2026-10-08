@@ -38,6 +38,8 @@ const BEAM = {
   abyss: [new THREE.Color(0.6, 2.2, 0.8), new THREE.Color(1.8, 3.0, 1.6)],
 };
 const GUST = new THREE.Color(1.0, 1.2, 1.4);
+const FIRE_OUTER = new THREE.Color(2.2, 0.7, 0.15);
+const FIRE_INNER = new THREE.Color(3.0, 2.2, 0.9);
 
 function segDist(px, py, x0, y0, x1, y1) {
   const dx = x1 - x0;
@@ -867,21 +869,20 @@ export class PatternBoss extends Enemy {
     } else if (this.state === 'act' && this.pattern === 'pounce') {
       o.ring(this.tx, this.ty, p.radius, TELE.dangerHot, 0.8);
     } else if (this.state === 'act' && this.pattern === 'laser') {
-      // the beam itself: a hot core with a glow either side
+      // the beam itself: a flickering white-hot core in a coloured glow (render/BeamFX.js)
       const [glow, core] = BEAM[p.color] || BEAM.shadow;
       const beams = p.beams || 1;
+      const fadeIn = Math.min(1, this.stateTime * 6);
       for (let i = 0; i < beams; i++) {
         const ang = this.beamAngle + (i / beams) * Math.PI * 2;
         this.room.nav.raycast(this.x, this.y, Math.cos(ang), Math.sin(ang), p.length || 700, end);
-        const nx = -Math.sin(ang);
-        const ny = Math.cos(ang);
-        for (let w = -p.width; w <= p.width; w++) {
-          const edge = Math.abs(w) / p.width;
-          o.line(this.x + nx * w, this.y + 12 + ny * w, end.x + nx * w, end.y + 8 + ny * w, edge < 0.4 ? core : glow, 1 - edge * 0.7, 3, 0);
-        }
+        this.game.enemies.beams.beam(this.x + Math.cos(ang) * 10, this.y + 12 + Math.sin(ang) * 8, end.x, end.y + 8, p.width, glow, core, time, fadeIn);
       }
     } else if (this.state === 'act' && this.pattern === 'breath') {
-      o.arc(this.x, this.y, p.reach, this.beamAngle - p.cone, this.beamAngle + p.cone, TELE.dangerHot, 0.5, depthFor(this.y) + 0.001, 0.8);
+      // a roaring cone of fire, flickering
+      // from the mouth (well up the body), not the feet
+      const mouthH = Math.round(this.sprite.def.frameH * 0.55);
+      this.game.enemies.beams.cone(this.x + Math.cos(this.beamAngle) * 10, this.y + mouthH, this.beamAngle, p.cone, p.reach, FIRE_OUTER, FIRE_INNER, time, Math.min(1, this.stateTime * 5));
     } else if (this.state === 'act' && this.pattern === 'pull') {
       for (let r = 0; r < 3; r++) o.ring(this.x, this.y, (p.strength > 0 ? 90 - ((time * 90 + r * 30) % 90) : (time * 90 + r * 30) % 90) + 8, p.strength > 0 ? TELE.danger : GUST, 0.5);
     }

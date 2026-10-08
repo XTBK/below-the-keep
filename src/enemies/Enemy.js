@@ -104,7 +104,9 @@ export class Enemy {
 
   /** May this enemy start an attack yet? (short grace period after appearing) */
   get canAct() {
-    return this.grace <= 0;
+    if (this.grace > 0) return false;
+    if (this.isBoss) return true;
+    return this.game.enemies.mayAttack(this);
   }
 
   /** Half hearts dealt when Wren touches it (0 = harmless right now). */
@@ -381,12 +383,36 @@ export class Enemy {
     if (this.gildTime > 0) c.setRGB(1.9, 1.5, 0.5);
     if (this.fearTime > 0) c.setRGB(c.r * 0.8, c.g * 0.8, c.b * 1.1);
     this.sprite.place(this.x, this.y, this.h);
-    // a struck enemy squashes and springs back
+    // life in the body: a struck enemy squashes and springs back; otherwise it breathes when
+    // still and bounces in its stride when moving (scaled from the feet, so it never floats)
+    let sx = 1;
+    let sy = 1;
     if (this.squashT > 0) {
       this.squashT -= 1 / 60;
       const k = Math.max(0, this.squashT / COMBAT.squash);
-      this.sprite.mesh.scale.set(1 + 0.22 * k, 1 - 0.18 * k, 1);
-    } else if (this.sprite.mesh.scale.x !== 1) this.sprite.mesh.scale.set(1, 1, 1);
+      sx = 1 + 0.22 * k;
+      sy = 1 - 0.18 * k;
+    } else if (!this.dying && !this.def.mass99) {
+      const t = this.game.time + (this.animSeed ??= Math.random() * 10);
+      const moving = this.vx * this.vx + this.vy * this.vy > 64;
+      if (moving) {
+        const s = Math.abs(Math.sin(t * 9));
+        sy = 0.985 + 0.045 * s;
+        sx = 1.01 - 0.03 * s;
+      } else {
+        const s = Math.sin(t * 2.4);
+        sy = 1 + 0.022 * s;
+        sx = 1 - 0.016 * s;
+      }
+    }
+    const m = this.sprite.mesh;
+    m.scale.set(sx, sy, 1);
+    m.position.y += ((sy - 1) * this.sprite.def.frameH) / 2;
+    // winding up an attack: the body pulses with a warm glow (the telegraph reads on the creature too)
+    if (!this.dying && this.anim && this.anim.current === 'windup') {
+      const p = 0.5 + 0.5 * Math.sin(this.game.time * 22);
+      c.setRGB(c.r * (1 + 0.45 * p), c.g * (1 + 0.2 * p), c.b * (1 + 0.05 * p));
+    }
     this.shadow.place(this.x, this.y - this.shadowOffset, 0, LAYER.shadow);
   }
 

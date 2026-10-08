@@ -17,10 +17,11 @@
 | 6 | Chapters 2, 3, 4 (enemies, art, layouts, bosses) | Done |
 | 7 | All remaining items, special rooms and secrets | Done |
 | 8 | Final boss, unlocks, characters, collection page, polish & performance pass | Done |
-| E1 | Expansion: 20 enemies, 20 bosses, 25 relics, random scaled bosses, depth difficulty, Isaac-style systems | Done |
+| E1 | Expansion: 20 enemies, 20 bosses, 25 relics, random scaled bosses, depth difficulty, classic roguelike systems | Done |
 | E2 | Its own soul: songs per place, new title, Ranger + Iron Knight, parchment map, weighty combat, dodge roll | Done |
 | E3 | Hero skills (blink / steady aim + reload roll / shield charge), bot-tested balance, punchier attack sounds | Done |
-| E4 | Smooth hits, relic quality + anvil + choices, oaths, Daily Descent, 40 bosses with ranks, redrawn bosses, real menus, castle title | **Done — awaiting OK** |
+| E4 | Smooth hits, relic quality + anvil + choices, oaths, Daily Descent, 40 bosses with ranks, redrawn bosses, real menus, castle title | Done |
+| E5 | No stutter, readable fights (attack budget, glowing shots, brighter Hollow and Halls), story cutscenes, new obstacles, 100 relics, real beams and fire, balance pass, itch.io + link preview | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -31,7 +32,7 @@ After each phase: runs with no console errors, explain how to test, STOP and wai
 **Working title:** Below the Keep
 
 A top-down roguelike dungeon shooter (twin-stick, room-by-room) set entirely in a dark medieval world.
-**Use ONLY original names, characters, items and art.** Nothing copied from The Binding of Isaac (names, items, enemies, sprites, text).
+**Use ONLY original names, characters, items and art.** Nothing copied from any other game (names, items, enemies, sprites, text).
 
 **Premise (placeholder):** Wren, an old grey wandering wizard, is thrown into the dungeons beneath the castle of a paranoid, mad king.
 Armed with a wand (the other heroes with slings), he escapes by going *deeper*: the cells, the catacombs, a witch-haunted underground forest,
@@ -427,7 +428,7 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
 
 
 ### Expansion 1 — done
-- **Random bosses, Isaac-style:** every floor draws its boss from all 28 (seeded, no repeats in a run). Each boss
+- **Random bosses:** every floor draws its boss from all 28 (seeded, no repeats in a run). Each boss
   has a HOME floor; met elsewhere its health, tempo and shot speed scale from home to here, so an early boss
   late is dangerous and a late boss early is weaker and slower - a fair fight anywhere.
 - **Depth difficulty** (`data/difficulty.js`): enemies gain health (+12%/floor), speed (+2.5%/floor) and tempo
@@ -453,7 +454,7 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
   Crossbow's charge shot), Saint's Shroud, Martyr's Chain, Bottomless Purse, Dead Man's Hand, Wyrm Scale,
   Merchant's Seal, and actives (Powder Bag, Shepherd's Crook, Mirror of Truth, Censer, Horn of Plenty,
   Executioner's Sword, War Banner). 75 relics in all.
-- **Isaac-style systems with their own twist:** iron hearts (armour that soaks hits, can't be healed);
+- **Classic roguelike systems with their own twist:** iron hearts (armour that soaks hits, can't be healed);
   chests (wooden / iron with a key / cursed gamble) and gem-studded rocks; **omens** (curses of a floor:
   Darkness, the Maze, the Lost, the Unknown, the Blind, the Hunt); **transformations** - carry three relics of a
   set (Plague, Saint, Beast, Alchemy, Menagerie) to become the Plaguebearer, the Saint, the Beast, the
@@ -462,7 +463,7 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
 
 ### Expansion 2 — its own soul — done
 
-Goal: keep the Isaac skeleton (rooms, relics, floors) but give the game its own feel.
+Goal: keep the classic room-and-relic roguelike skeleton but give the game its own feel.
 
 - **Music** (`core/Ambience.js`): a small composer. Each moment is a song described as data: mode, tempo, chord
   progression, pad (choir or drone), bass rhythm, arpeggio, a melody grown from a 2-bar motif (A A' B A''; strong
@@ -513,7 +514,7 @@ blow landing (crunch, thud, iron ring), parry, crit, roll (cloth whip + boots on
 rushing in, pop, shimmer), reload (windlass clicks + latch), steady chime, aimed-shot crack, shield charge (armour
 rattle, pounding, grunt) and shield bash (booming clang).
 
-### Expansion 4 — every run counts (awaiting OK)
+### Expansion 4 — every run counts — done
 
 - **The hitch on hits, fixed.** Every landed blow used to freeze the game for ~2 frames (hit-stop), which read as stutter
   with fast fire. Ordinary hits no longer slow anything; crits and big blows dip into slow motion (x0.2) instead of a dead
@@ -547,3 +548,41 @@ rattle, pounding, grunt) and shield bash (booming clang).
   confirmations; keyboard, gamepad, mouse hover/click and touch. New menu sounds.
 - **The title**: a castle on a crag under a huge moon, mountains, layered pine forest, drifting mist, bats, flickering windows,
   distant lightning (`ui/TitleBackdrop.js`); the hero stands on a cliff to the right; the menu on the left.
+
+### Expansion 5 — a soul of its own (awaiting OK)
+
+- **The stutter, found and fixed.** Every new sprite cloned its sheet's texture and set `needsUpdate`, which in three.js
+  re-uploads the whole sheet image to the GPU - so every spawn (flies, rats, embers, summoned minions, bosses) and every
+  floor start pushed megabytes to the graphics card mid-game. Sprites now share the uploaded image (`shareTexture` in
+  `render/Assets.js`), and every sheet is uploaded once behind the title (`preloadTextures`). Measured against all 50
+  enemy types in real frames: no frame over 8 ms (it was 50-100 ms). Sounds are throttled too (the same sound can't
+  restart within 35 ms; at most 22 new sounds per 0.1 s).
+- **Readable fights.** An **attack budget** (`ATTACK_BUDGET` in config): at most 3 ordinary enemies (4 from floor 5) may be
+  in an attack at once, each turn lasting 1.4 s with a 0.6 s rest after, so crowded rooms take turns (bosses exempt;
+  `Enemy.canAct` -> `EnemyManager.mayAttack`). Enemy shots are unlit and glowing, so darkness never hides them. Your own
+  shots dim when there are many; impact sparks are capped per frame; damage numbers on one foe merge into one rising
+  total. The Hollow's floor and the Burning Halls' marble were lifted (they were near black), ambient light raised in the
+  Hollow, Halls, throne and Vault; the spores and embers in the air thinned out (they read like shots).
+- **The Hollow's walls fixed**: the great roots across its wall tiles had a random height and slope per tile, so they never
+  met; they now run continuously (height and wave depend only on the position across the tile).
+- **Obstacles of our own** (`render/art/rocksArt.js`): three per chapter, picked per tile - Cells: a masonry block with an
+  iron ring, a broken pillar drum, the stocks; Catacombs: a mound of skulls, a sarcophagus lid, a fallen gravestone;
+  Hollow: a mossy stump, a knot of roots, glowing toadstools; Halls: a crowned statue head, a column section, a golden urn.
+- **The story** (`ui/Cutscenes.js`): the Keep of Hollowmere, the new king, the hollow crown found on a skull in the
+  catacombs, the people sent down, and each hero's own reason to descend. Five animated pixel panels on each hero's first
+  run; one on arriving in the Catacombs, the Hollow, the Halls, the throne and the Vault. Settings: Story Scenes on/off.
+- **100 relics**: 25 more (`data/relics4.js`, icons `itemsArt4.js`) - 6 common, 10 fine, 6 rare, 3 legendary - built
+  from proven effects only. Sanity limits on stacking: at most 4 extra shots, damage >= 0.5, range >= 70, shot speed
+  130-560, move speed 60-230. The Collection shows each relic's quality.
+- **Boss attacks redrawn** (`render/BeamFX.js`): lasers were drawn dot by dot on the telegraph overlay and ran out of dots on
+  long beams (broken, flickering lines); they are now a white-hot core in a coloured glow with a flickering width, a flare
+  at the source and a splash where they hit. Breath fire is a fan of licking tongues of flame from the mouth.
+- **Animation polish**: every creature breathes when still and bounces in its stride (scaled from the feet); wind-ups pulse
+  a warm glow on the body; enemy shots pop into being and pulse.
+- **Balance pass**: a bot fought all 40 bosses on their floors with a typical build. Toned down: the Dread Knight (hp -18%,
+  gentler finale), the Eye Below (hp -16%, two beams not three), the Fen Hag (fewer pots and mines), and the long fights of
+  the Lich, the Court Jester and the Gravedigger (hp -15 to -20%).
+- **Our own name for everything**: no mention of other games anywhere in the project; the one relic name close to a
+  well-known item was renamed (Hare-Bone Charm).
+- **Sharing**: a 1200x630 link-preview image and Open Graph / Twitter tags; an itch.io package in `itch/` (relative-path
+  build, cover, page text, upload steps); the leaderboard API answers other sites (CORS) so the itch copy shares the board.

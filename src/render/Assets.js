@@ -50,6 +50,25 @@ export function makeTexture(canvas, isColor) {
   return t;
 }
 
+/**
+ * A texture that SHARES an already-made sheet's image on the GPU (with its own frame offset).
+ * Never use `clone().needsUpdate = true` for this: that re-uploads the whole image to the graphics
+ * card every time a sprite is made - a stutter each time an enemy spawns. Bumping only the texture's
+ * own version makes three.js set it up while reusing the uploaded image.
+ */
+export function shareTexture(tex) {
+  const t = tex.clone();
+  t.version++;
+  return t;
+}
+
+/** Upload every sheet to the GPU now (behind the title), so nothing uploads mid-fight. */
+export function preloadTextures(renderer) {
+  for (const s of sheets.values()) {
+    for (const t of [s.map, s.normalMap, s.emissiveMap]) if (t) renderer.initTexture(t);
+  }
+}
+
 export async function loadAssets() {
   let overrides = {};
   try {

@@ -77,13 +77,13 @@ export const PATTERN_BOSSES_3 = {
     summonOnHurt: ['toad', 0.06, 3],
     phases: [
       { below: 1, attacks: [
-        [3, 'lob', { windup: 0.7, count: 4, spread: 80, time: 0.9, patch: 'poison', patchRadius: 24, patchTime: 3.5, frame: 0 }],
-        [3, 'minefield', { windup: 0.5, count: 8, radius: 18, visual: 3, spread: [0.4, 1.5] }],
+        [3, 'lob', { windup: 0.7, count: 3, spread: 80, time: 0.95, patch: 'poison', patchRadius: 24, patchTime: 3.5, frame: 0 }],
+        [3, 'minefield', { windup: 0.5, count: 6, radius: 18, visual: 3, spread: [0.4, 1.5] }],
         [2, 'summon', { windup: 0.9, type: 'toad', count: 2, max: 3, anim: 'cast' }],
       ] },
       { below: 0.5, speedMult: 1.15, attacks: [
         [3, 'pull', { windup: 0.6, duration: 2.0, strength: 60, ring: 14, frame: 0 }],
-        [3, 'lob', { windup: 0.6, count: 6, spread: 100, time: 0.85, patch: 'poison', patchRadius: 26, patchTime: 3.5, frame: 0 }],
+        [3, 'lob', { windup: 0.6, count: 4, spread: 100, time: 0.9, patch: 'poison', patchRadius: 26, patchTime: 3.5, frame: 0 }],
         [2, 'homing', { windup: 0.6, count: 5, speed: 80, turn: 1.6, frame: 0 }],
       ] },
     ],
@@ -123,7 +123,7 @@ export const PATTERN_BOSSES_3 = {
   },
   dreadknight: {
     name: 'The Dread Knight', subtitle: 'He Swore An Oath To The Mad King', sheet: 'dreadknight', home: 8,
-    hp: 820, speed: 46, radius: 17, hitRadius: 20, contactDamage: 1, mass: 70, move: 'chase', restTime: [0.6, 1.0],
+    hp: 670, speed: 46, radius: 17, hitRadius: 20, contactDamage: 1, mass: 70, move: 'chase', restTime: [0.6, 1.0],
     phases: [
       { below: 1, attacks: [
         [4, 'dash', { windup: 0.5, count: 3, speed: 320, time: 0.3, gap: 0.3 }],
@@ -136,15 +136,15 @@ export const PATTERN_BOSSES_3 = {
         [2, 'summon', { windup: 0.8, type: 'blackknight', count: 1, max: 2, anim: 'cast' }],
       ] },
       { below: 0.33, speedMult: 1.3, attacks: [
-        [3, 'dash', { windup: 0.4, count: 5, speed: 360, time: 0.26, gap: 0.25 }],
+        [3, 'dash', { windup: 0.4, count: 4, speed: 330, time: 0.26, gap: 0.3 }],
         [3, 'sweep', { windup: 0.5, reach: 100, arc: 1.7 }],
-        [3, 'wall', { windup: 0.6, speed: 90, frame: 1, gapSize: 3, volleys: 3, gapStep: 1 }],
+        [3, 'wall', { windup: 0.7, speed: 85, frame: 1, gapSize: 4, volleys: 2, gapStep: 1 }],
       ] },
     ],
   },
   abyssaleye: {
     name: 'The Eye Below', subtitle: 'It Was Watching Before The Keep Was Built', sheet: 'abyssaleye', home: 8,
-    hp: 760, speed: 32, radius: 16, hitRadius: 19, contactDamage: 1, mass: 50, move: 'hover', restTime: [0.6, 1.0],
+    hp: 640, speed: 32, radius: 16, hitRadius: 19, contactDamage: 1, mass: 50, move: 'hover', restTime: [0.6, 1.0],
     phases: [
       { below: 1, attacks: [
         [3, 'laser', { windup: 0.9, duration: 1.8, sweep: 1.8, width: 7, beams: 1, color: 'abyss' }],
@@ -152,8 +152,8 @@ export const PATTERN_BOSSES_3 = {
         [2, 'ring', { windup: 0.6, count: 20, speed: 110, frame: 3, rings: 2, holes: 3, anim: 'cast' }],
       ] },
       { below: 0.5, speedMult: 1.2, attacks: [
-        [3, 'laser', { windup: 0.7, duration: 2.2, sweep: 2.4, width: 7, beams: 3, color: 'abyss' }],
-        [3, 'spiral', { windup: 0.5, arms: 5, rate: 11, duration: 2.6, speed: 110, turn: 1.2, frame: 3 }],
+        [3, 'laser', { windup: 0.7, duration: 2.0, sweep: 2.0, width: 6, beams: 2, color: 'abyss' }],
+        [3, 'spiral', { windup: 0.5, arms: 4, rate: 10, duration: 2.6, speed: 110, turn: 1.2, frame: 3 }],
         [2, 'blink', {}],
         [2, 'pull', { windup: 0.6, duration: 2.0, strength: 65, ring: 16, frame: 3 }],
       ] },

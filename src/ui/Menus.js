@@ -332,6 +332,7 @@ const settingsItems = (g, menus) => {
     { ...slider('shake', 'SCREEN SHAKE'), note: 'How hard the screen shakes when blows land.' },
     toggle('slowmo', 'SLOW-MO ON CRITS', 'A split second of slow motion when a critical hit lands.'),
     toggle('numbers', 'DAMAGE NUMBERS', 'Numbers float up from struck foes.'),
+    toggle('story', 'STORY SCENES', 'The tale of the Keep, and a scene at each new place below.'),
     {
       label: 'FULLSCREEN',
       value: () => (document.fullscreenElement ? 'ON' : 'OFF'),

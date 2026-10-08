@@ -33,7 +33,8 @@ export class EnemyShots {
       return { orb, sprite: s, shadow: sh, anim, x: 0, y: 0, h: 0, x0: 0, y0: 0, h0: 0, x1: 0, y1: 0, t: 0, T: 1, cfg: null, light: null };
     }, 24);
     this.orbs = new Pool(() => {
-      const sp = new Sprite(scene, 'orbs', { anchorY: 6, emissive: 0x606060 });
+      // unlit and glowing: an enemy shot must never hide in a dark room
+      const sp = new Sprite(scene, 'orbs', { lit: false, glow: 1.4, anchorY: 6 });
       sp.visible = false;
       return { sprite: sp, x: 0, y: 0, bx: 0, by: 0, h: 0, vx: 0, vy: 0, damage: 1, source: '', life: 0, t: 0, homing: 0, waveAmp: 0, waveFreq: 0, land: null, bounce: 0, reverseAt: 0 };
     }, 240); // the last bosses fill the room with orbs
@@ -258,6 +259,10 @@ export class EnemyShots {
     for (let i = 0; i < this.orbs.count; i++) {
       const o = this.orbs.active[i];
       o.sprite.place(o.x, o.y, o.h);
+      // a quick pop when it appears, then a gentle pulse
+      const pop = Math.min(1, (o.t || 0) * 14);
+      const pulse = 1 + Math.sin((o.t || 0) * 18) * 0.08;
+      o.sprite.mesh.scale.set(pop * pulse, pop * pulse, 1);
     }
     for (let i = 0; i < this.fireballs.count; i++) {
       const f = this.fireballs.active[i];

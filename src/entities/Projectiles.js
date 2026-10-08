@@ -517,6 +517,7 @@ export class Projectiles {
   sync() {
     const pool = this.pool;
     const counts = [0, 0, 0];
+    const dim = pool.count > 14 ? Math.max(0.55, 1 - (pool.count - 14) * 0.02) : 1;
     for (let i = 0; i < pool.count; i++) {
       const p = pool.active[i];
       const mesh = this.meshes[p.tier];
@@ -527,8 +528,9 @@ export class Projectiles {
         _m.setPosition(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
       } else _m.makeTranslation(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
       mesh.setMatrixAt(k, _m);
-      if (this.wand) _c.setRGB(p.r * 1.7, p.g * 1.7, p.b * 1.7); // brighter than white: it blooms
-      else _c.setRGB(p.r, p.g, p.b);
+      // your own shots glow less when the air is thick with them, so enemy shots stay easy to see
+      const k2 = (this.wand ? 1.3 : 1) * dim;
+      _c.setRGB(p.r * k2, p.g * k2, p.b * k2);
       mesh.setColorAt(k, _c);
       _m.makeTranslation(Math.round(p.x), Math.round(p.y) - 1, LAYER.shadow + 0.01);
       this.shadows.setMatrixAt(i, _m);

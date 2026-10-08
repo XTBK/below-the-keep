@@ -7,6 +7,7 @@ export const SETTINGS_DEFAULTS = {
   slowmo: true, // a split second of slow motion on critical hits
   numbers: true, // damage numbers over struck foes
   fullscreen: false,
+  story: true, // the little story scenes (the intro, and a vignette at each new place)
 };
 
 /** The player's settings, with defaults for anything missing. */

@@ -10,13 +10,28 @@ const GOLD = new THREE.Color(2.4, 1.8, 0.5);
 export class DamageNumbers {
   constructor() {
     this.list = [];
-    for (let i = 0; i < 32; i++) this.list.push({ t: 0, x: 0, y: 0, text: '', crit: false, dx: 0 });
+    for (let i = 0; i < 12; i++) this.list.push({ t: 0, x: 0, y: 0, text: '', crit: false, dx: 0, key: null, total: 0 }); // at most 12 on screen
     this.next = 0;
   }
 
-  add(x, y, amount, crit) {
+  add(x, y, amount, crit, key = null) {
+    // hits on the same foe in quick succession add up into one number instead of a stack of them
+    if (key) {
+      for (const m of this.list) {
+        if (m.key === key && m.t > (m.crit ? 0.9 : 0.6) - 0.35) {
+          m.total += amount;
+          m.crit = m.crit || crit;
+          m.text = m.total >= 10 ? String(Math.round(m.total)) : String(Math.round(m.total * 10) / 10);
+          m.x = x;
+          m.y = y;
+          return;
+        }
+      }
+    }
     const n = this.list[this.next];
     this.next = (this.next + 1) % this.list.length;
+    n.key = key;
+    n.total = amount;
     n.t = crit ? 0.9 : 0.6;
     n.x = x;
     n.y = y;

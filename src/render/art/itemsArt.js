@@ -7,6 +7,7 @@ import { SHARED as S, CHAPTERS, CREATURES as C } from '../../data/palettes.js';
 import { RELIC_IDS } from '../../data/items.js';
 import { RELIC_DRAW2 } from './itemsArt2.js';
 import { RELIC_DRAW3, ironHeartIcon } from './itemsArt3.js';
+import { RELIC_DRAW4 } from './itemsArt4.js';
 
 const STONE = CHAPTERS.cells.stone;
 const BONE = ['#5a5040', '#8a7e64', '#b8ab8a', '#ddd2b4'];
@@ -160,7 +161,7 @@ const RELIC_DRAW = {
 export function relicIcon(col) {
   const p = new Painter(16, 16);
   const id = RELIC_IDS[col];
-  (RELIC_DRAW[id] || RELIC_DRAW2[id] || RELIC_DRAW3[id])(p);
+  (RELIC_DRAW[id] || RELIC_DRAW2[id] || RELIC_DRAW3[id] || RELIC_DRAW4[id])(p);
   p.outline(S.outline);
   return p;
 }

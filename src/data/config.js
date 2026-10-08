@@ -115,6 +115,16 @@ export const COMBAT = {
 };
 
 // The dodge roll (Shift / gamepad B / the ROLL button): a quick tumble you can't be hurt in.
+// The attack budget: only so many ordinary enemies may be mid-attack at once (bosses don't count).
+// A crowded room takes turns instead of firing everything at once. Each enemy's turn lasts `turn`
+// seconds; afterwards it waits `rest` before it may take another, so the turns go round.
+export const ATTACK_BUDGET = {
+  early: 3, // floors 1-4
+  late: 4, // floors 5 and deeper
+  turn: 1.4,
+  rest: 0.6,
+};
+
 export const ROLL = {
   time: 0.3,
   speed: 270,

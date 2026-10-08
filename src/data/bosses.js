@@ -78,7 +78,7 @@ export const PATTERN_BOSSES = {
     name: 'The Gravedigger',
     subtitle: 'He Has Dug a Hole For You',
     sheet: 'gravedigger',
-    hp: 230, speed: 36, radius: 14, hitRadius: 17, contactDamage: 1, mass: 30, move: 'chase', restTime: [0.8, 1.3],
+    hp: 180, speed: 36, radius: 14, hitRadius: 17, contactDamage: 1, mass: 30, move: 'chase', restTime: [0.8, 1.3],
     phases: [
       { below: 1, attacks: [
         [3, 'lob', { windup: 0.6, count: 3, spread: 46, time: 0.8, patch: null, shards: 5, frame: 3 }],

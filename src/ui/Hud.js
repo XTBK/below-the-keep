@@ -192,6 +192,11 @@ export class Hud {
     const H = RENDER.height;
     ctx.clearRect(0, 0, W, H);
 
+    if (state.cutscene) {
+      state.cutscene.draw(ctx, this._dt || 1 / 60);
+      this.texture.needsUpdate = true;
+      return;
+    }
     if (state.state === 'title' || state.state === 'collection') {
       if (state.state === 'collection') drawCollection(this.ctx, state);
       else this._drawTitle(state);

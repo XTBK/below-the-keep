@@ -416,7 +416,9 @@ export class Room {
           if (destroyed.has(key)) this._staticSprite('rock_rubble', x, ground, 2, null, LAYER.floorDecal);
           else {
             const rock = { key, x, ground, sprites: [] };
-            rock.sprites.push(this._staticSprite(`${this.ts}_rock`, x, ground, 2, 3));
+            const rs = this._staticSprite(`${this.ts}_rock`, x, ground, 2, 3);
+            rs.setFrame(Math.abs(hashString(`${this.data.id}:${key}`)) % 3, 0); // which of the chapter's three obstacles
+            rock.sprites.push(rs);
             rock.sprites.push(this.sprites[this.sprites.length - 1]); // its shadow
             // now and then a rock has gems in it: blow it up for a reward
             rock.gem = new Rng(hashString(`${this.game.seed}:${this.floor.number}:${this.data.id}:${key}`)).chance(GEM_ROCK_CHANCE);

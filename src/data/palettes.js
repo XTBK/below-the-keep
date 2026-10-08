@@ -75,14 +75,14 @@ export const CHAPTERS = {
     name: 'The Hollow',
     stone: ['#0a1210', '#121e1a', '#1a2a26', '#243a34', '#305046', '#40665a', '#568274'],
     mortar: ['#060a08', '#0c1410'],
-    earth: ['#140f0c', '#1e1712', '#2a2018', '#38291e'],
+    earth: ['#26221a', '#342e24', '#433b2e', '#544a3a'], // lifted: the floor must read in the gloom
     bark: ['#160f0a', '#2a1c12', '#3e2a1a', '#583c26', '#765236'],
     moss: ['#0e2a1e', '#18402c', '#28603e', '#3a8050'],
     leaf: ['#2a1a3a', '#4a2a5a', '#3a6a4a'],
     glowTeal: ['#0e3a36', '#1a8a7a', '#4ae0c8', '#c0fff0'],
     glowPurple: ['#2a0e3a', '#6a1a8a', '#b04ae0', '#f0c0ff'],
-    ambient: { color: 0x4a8a90, level: 0.34 },
-    grade: { saturation: 1.0, contrast: 1.08, shadowTint: [0.8, 1.0, 1.15], highlightTint: [1.08, 0.94, 1.1], lift: 0.005 },
+    ambient: { color: 0x5a9a98, level: 0.42 },
+    grade: { saturation: 1.0, contrast: 1.04, shadowTint: [0.85, 1.0, 1.1], highlightTint: [1.08, 0.94, 1.1], lift: 0.02 },
   },
 
   // crimson, black and gold
@@ -90,14 +90,14 @@ export const CHAPTERS = {
     name: 'The Burning Halls',
     stone: ['#0c0808', '#181010', '#241614', '#32201c', '#442c26', '#5a3a32', '#744a40'],
     mortar: ['#060404', '#0c0808'],
-    marbleA: ['#140c0c', '#22141a', '#301e22', '#40282c', '#58363a'],
-    marbleB: ['#0e0e10', '#18181c', '#24242a', '#32323a', '#46464e'],
+    marbleA: ['#2a181a', '#3a2226', '#4c2e32', '#5e3a3e', '#764a4c'], // lifted: rooms must read in the gloom
+    marbleB: ['#1e1e24', '#2a2a32', '#383842', '#484852', '#5c5c66'],
     gold: ['#4a3612', '#806224', '#b8963c', '#e2c46c'],
     crimson: ['#3a0a0a', '#6a1212', '#9a1c1c', '#c83a2a'],
     lava: ['#7a2208', '#d4521a', '#ff9a3a', '#ffe0a0'],
     ash: ['#1a1816', '#2a2724', '#3c3834', '#55504a'],
-    ambient: { color: 0x8a4a3a, level: 0.24 },
-    grade: { saturation: 0.95, contrast: 1.12, shadowTint: [1.0, 0.82, 0.86], highlightTint: [1.12, 0.98, 0.82], lift: 0.004 },
+    ambient: { color: 0xa86050, level: 0.4 },
+    grade: { saturation: 0.95, contrast: 1.06, shadowTint: [1.0, 0.86, 0.88], highlightTint: [1.12, 0.98, 0.82], lift: 0.02 },
   },
 };
 

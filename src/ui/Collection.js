@@ -1,3 +1,4 @@
+import { quality, QUALITY_NAMES } from '../data/quality.js';
 import { drawText } from './PixelFont.js';
 import { RENDER } from '../data/config.js';
 import { RELICS, RELIC_IDS } from '../data/items.js';
@@ -27,7 +28,7 @@ const CURIO_LIST = [
 ];
 
 export const COLLECTION_TABS = [
-  { name: 'RELICS', cols: 15, count: () => RELIC_IDS.length },
+  { name: 'RELICS', cols: 20, count: () => RELIC_IDS.length },
   { name: 'CURIOS', cols: 10, count: () => CURIO_LIST.length },
   { name: 'JOURNAL', cols: 1, count: () => PAGES.length },
   { name: 'CHARACTERS AND DEEDS', cols: 4, count: () => CHARACTER_IDS.length },
@@ -137,7 +138,11 @@ export function drawCollection(ctx, state) {
     grid(ctx, items, tab.cols, c.cursor, x0, 60);
     drawText(ctx, `FOUND ${found} OF ${items.length}`, W / 2, 182, FAINT, { align: 'center' });
     const id = RELIC_IDS[c.cursor];
-    if (seen(id)) describe(ctx, RELICS[id].name.toUpperCase(), RELICS[id].flavour, 204);
+    if (seen(id)) {
+      describe(ctx, RELICS[id].name.toUpperCase(), RELICS[id].flavour, 204);
+      const q = quality(id);
+      drawText(ctx, QUALITY_NAMES[q], W / 2, 194, ['', '#a8a090', '#7ac07a', '#6aa8f0', '#e8b040'][q], { align: 'center' });
+    }
     else describe(ctx, '???', 'Not found yet.', 204);
   } else if (tab.name === 'CURIOS') {
     const items = CURIO_LIST.map((it) => ({ sheet: 'curios', frame: it.frame, known: seen(it.key) }));

@@ -1,0 +1,215 @@
+// The fourth chest of relics: twenty-five more, bringing the total to one hundred.
+// Built from the same parts as the others (stats, multipliers, shot powers, perks), so every one of
+// them is known to work and stacks fairly. Quality (data/quality.js) is noted beside each:
+// six situational (1), ten solid (2), six strong (3) and three that can carry a run (4).
+
+export const RELICS_4 = {
+  // ---------------------------------------------------------------- situational (quality 1)
+  tallow_candle: {
+    name: 'Tallow Candle',
+    flavour: 'Cheap light. It shows you a little more of what is coming.',
+    type: 'passive',
+    stats: { luck: 0.5, range: 20 },
+    pools: { armoury: 2, merchant: 2 },
+  },
+  cracked_buckler: {
+    name: 'Cracked Buckler',
+    flavour: 'It will turn one blow. Maybe two.',
+    type: 'passive',
+    pickups: { ironHalfHearts: 2 },
+    pools: { armoury: 2, merchant: 2 },
+  },
+  pilgrims_satchel: {
+    name: "Pilgrim's Satchel",
+    flavour: 'Packed for a long road, by someone who did not finish it.',
+    type: 'passive',
+    pickups: { keys: 2, bombs: 2, pennies: 5 },
+    pools: { armoury: 2, merchant: 1, secret: 1 },
+  },
+  rusty_spurs: {
+    name: 'Rusty Spurs',
+    flavour: 'Made for a horse. They work on feet, after a fashion.',
+    type: 'passive',
+    statsMult: { moveSpeed: 1.1, shotSpeed: 1.1 },
+    pools: { armoury: 2, merchant: 2 },
+  },
+  hares_foot: {
+    name: 'Hare-Bone Charm',
+    flavour: 'Knucklebones on a string. The hare was not lucky. You might be.',
+    type: 'passive',
+    stats: { luck: 1.5 },
+    pools: { armoury: 2, secret: 1, chapel: 1 },
+  },
+  broken_seal: {
+    name: 'Broken Wax Seal',
+    flavour: 'The letter it closed was never delivered. The anger in it was.',
+    type: 'passive',
+    stats: { damage: 0.2 },
+    mods: { size: 1 },
+    pools: { armoury: 2, merchant: 1 },
+  },
+
+  // ---------------------------------------------------------------- solid (quality 2)
+  ravens_quill: {
+    name: "Raven's Quill",
+    flavour: 'It wrote death warrants. It remembers how.',
+    type: 'passive',
+    stats: { damage: 0.6, range: 30 },
+    pools: { armoury: 3, boss: 1 },
+  },
+  hunters_bracer: {
+    name: "Hunter's Bracer",
+    flavour: 'Worn smooth on the inside by ten thousand draws.',
+    type: 'passive',
+    statsMult: { fireDelay: 0.88 },
+    pools: { armoury: 3, merchant: 1 },
+  },
+  bramble_wreath: {
+    name: 'Bramble Wreath',
+    flavour: 'It hurts to wear. It hurts them more.',
+    type: 'passive',
+    stats: { range: -20 },
+    mods: { pierce: 1 },
+    pools: { armoury: 2, shrine: 1 },
+  },
+  ember_flask: {
+    name: 'Ember Flask',
+    flavour: 'Lamp oil and something worse, corked in clay.',
+    type: 'passive',
+    statsMult: { shotSpeed: 1.1 },
+    mods: { burn: 1 },
+    pools: { armoury: 2, merchant: 1 },
+  },
+  grave_dust: {
+    name: 'Pouch of Grave-Dust',
+    flavour: 'Throw it, and they remember they are supposed to be afraid.',
+    type: 'passive',
+    stats: { luck: 0.5 },
+    mods: { fear: 1 },
+    pools: { armoury: 2, secret: 1 },
+  },
+  winter_rose: {
+    name: 'Winter Rose',
+    flavour: 'It bloomed in the snow on a grave. It is still cold.',
+    type: 'passive',
+    hearts: 2,
+    mods: { frost: 1 },
+    pools: { armoury: 2, chapel: 1 },
+  },
+  heron_feather: {
+    name: 'Heron Feather',
+    flavour: 'Patience, and then the strike.',
+    type: 'passive',
+    stats: { range: 60 },
+    statsMult: { shotSpeed: 1.15 },
+    pools: { armoury: 3, merchant: 1 },
+  },
+  mail_shirt: {
+    name: 'Shirt of Mail',
+    flavour: 'Heavy, and worth every ounce.',
+    type: 'passive',
+    hearts: 2,
+    statsMult: { moveSpeed: 0.95 },
+    pools: { armoury: 2, merchant: 2 },
+  },
+  field_dressing: {
+    name: 'Field Dressing',
+    flavour: 'Linen, honey and a prayer. Mostly the honey.',
+    type: 'passive',
+    heal: 4,
+    pickups: { ironHalfHearts: 2 },
+    pools: { armoury: 2, merchant: 2, chapel: 1 },
+  },
+  witchs_knot: {
+    name: "Witch's Knot",
+    flavour: 'Red thread, tied in a pattern your eyes slide off.',
+    type: 'passive',
+    mods: { homing: 0.5, wave: 1 },
+    pools: { armoury: 2, shrine: 1 },
+  },
+
+  // ---------------------------------------------------------------- strong (quality 3)
+  oathkeeper_ring: {
+    name: "Oathkeeper's Ring",
+    flavour: 'Sworn on the old gods. They are still listening.',
+    type: 'passive',
+    stats: { damage: 1.2 },
+    pools: { armoury: 2, boss: 2 },
+  },
+  twin_fang: {
+    name: 'Twin-Fang Dagger',
+    flavour: 'One blade, two bites.',
+    type: 'passive',
+    statsMult: { fireDelay: 1.1 },
+    perks: { multishot: 1 },
+    pools: { armoury: 1, boss: 2 },
+  },
+  saints_lantern: {
+    name: "Saint's Lantern",
+    flavour: 'Its light goes where it is needed, and through what is in the way.',
+    type: 'passive',
+    stats: { range: 30 },
+    mods: { spectral: 1, homing: 1 },
+    pools: { chapel: 2, armoury: 1, boss: 1 },
+  },
+  tempest_rune: {
+    name: 'Tempest Rune',
+    flavour: 'Cut in the lightning-struck oak at the top of the world.',
+    type: 'passive',
+    statsMult: { shotSpeed: 1.2 },
+    mods: { chain: 1 },
+    pools: { armoury: 1, boss: 2, secret: 1 },
+  },
+  ironwood_bow: {
+    name: 'Ironwood Stave',
+    flavour: 'Wood so dense it sinks. Whatever it throws goes through.',
+    type: 'passive',
+    stats: { damage: 0.8 },
+    statsMult: { shotSpeed: 1.25 },
+    mods: { pierce: 1 },
+    pools: { armoury: 2, boss: 1 },
+  },
+  bloodletter: {
+    name: "Bloodletter's Knife",
+    flavour: 'The barber-surgeon swore it was for healing.',
+    type: 'passive',
+    stats: { damage: 0.6 },
+    perks: { leech: 1 },
+    pools: { shrine: 2, armoury: 1, boss: 1 },
+  },
+
+  // ---------------------------------------------------------------- run-defining (quality 4)
+  dragons_heart: {
+    name: "Dragon's Heart",
+    flavour: 'It is still beating. It is still hot.',
+    type: 'passive',
+    stats: { damage: 1.5 },
+    hearts: 2,
+    mods: { burn: 1 },
+    pools: { boss: 2, secret: 1 },
+  },
+  first_crown: {
+    name: 'Crown of the First King',
+    flavour: 'Before the Hollow Crown, there was this one. It never whispered.',
+    type: 'passive',
+    stats: { damage: 0.8, range: 40, luck: 1 },
+    statsMult: { fireDelay: 0.85, moveSpeed: 1.1 },
+    pools: { boss: 1, secret: 2 },
+  },
+  starfall_shard: {
+    name: 'Starfall Shard',
+    flavour: 'It fell from the sky, burning, and it has not forgotten how.',
+    type: 'passive',
+    stats: { damage: 0.5 },
+    mods: { split: 1, explode: 1 },
+    pools: { boss: 2, secret: 1 },
+  },
+};
+
+export const QUALITY_4 = {
+  tallow_candle: 1, cracked_buckler: 1, pilgrims_satchel: 1, rusty_spurs: 1, hares_foot: 1, broken_seal: 1,
+  ravens_quill: 2, hunters_bracer: 2, bramble_wreath: 2, ember_flask: 2, grave_dust: 2, winter_rose: 2,
+  heron_feather: 2, mail_shirt: 2, field_dressing: 2, witchs_knot: 2,
+  oathkeeper_ring: 3, twin_fang: 3, saints_lantern: 3, tempest_rune: 3, ironwood_bow: 3, bloodletter: 3,
+  dragons_heart: 4, first_crown: 4, starfall_shard: 4,
+};

@@ -5,6 +5,11 @@ A top-down roguelike dungeon shooter in a dark medieval world. Built with Three.
 **▶ Play it in your browser: https://below-the-keep.vercel.app** (keyboard, gamepad, or touch on a phone held sideways)
 The full design lives in [GAME_DESIGN.md](GAME_DESIGN.md).
 
+> For three hundred years the Keep of Hollowmere stood over its valley. Then a new king dug too deep, and found a
+> crown that whispers. Now the Keep is sinking into the dark it woke - and the only way out is down.
+
+6 heroes · 100 relics · 50 enemies · 40 bosses · a story told in little pixel cutscenes · a Daily Descent leaderboard.
+
 ## Run it
 
 ```
@@ -52,9 +57,15 @@ Each has their own weapon and their own dodge:
 The three were balanced with a bot that plays each hero through the same fights on every chapter: they
 take about the same damage for their health (within ~10%); the Iron Knight kills fastest but takes the most.
 
+## The story
+
+Each hero's first descent opens with the tale of the Keep (five small animated pixel scenes), and each new place
+below - the Catacombs, the Hollow, the Burning Halls, the throne, the hidden Vault - gets its own scene on arrival.
+Any key moves on, Esc skips; they can be switched off in Settings (`src/ui/Cutscenes.js`).
+
 ## Every run counts
 
-- **Relic quality.** Every relic is Common, Fine, Rare or Legendary (`src/data/quality.js`). After two weak relics in a row
+- **100 relics.** Every one is Common, Fine, Rare or Legendary (`src/data/quality.js`). After two weak relics in a row
   the next pedestal is guaranteed Rare or better (bad-luck protection).
 - **Choices.** Some treasure rooms offer two relics: take one and the other crumbles.
 - **The Blacksmith's Anvil** (in every merchant's room): stand beside it to melt your newest relic and forge one a step better.
@@ -66,6 +77,12 @@ take about the same damage for their health (within ~10%); the Iron Knight kills
   better relics, and each hero's best heat won is remembered.
 - **The Daily Descent**: one seed and one hero for everyone, each day (UTC). Your first run of the day goes on the leaderboard
   (deepest floor, then fastest time); replays are practice.
+
+### Putting it on itch.io
+
+Everything is in `itch/`: the browser build (`below-the-keep-web.zip`), the cover image, and `ITCH_PAGE.md` with the
+page text, tags and the five-minute upload steps. Rebuild the zip with `npm run build:itch` (it uses relative paths,
+which itch needs) and zip the contents of `dist-itch/`. The itch copy uses the website's Daily Descent board.
 
 ### Turning on the Daily Descent leaderboard
 

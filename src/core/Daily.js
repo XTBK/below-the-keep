@@ -1,6 +1,10 @@
 import { Save } from './Save.js';
 import { todayUTC, dailySeed, dailyHero, dailyScore, cleanName } from '../data/dailySeed.js';
 
+// on the website (or a local dev server) the board is next door; anywhere else (itch.io) it's the website's
+const HOME = 'https://below-the-keep.vercel.app';
+const API = /vercel\.app$|^localhost$|^127\.0\.0\.1$/.test(location.hostname) ? '/api/daily' : HOME + '/api/daily';
+
 // The Daily Descent, game side: today's seed and hero, the leaderboard (api/daily.js), and posting
 // a finished run. Only the FIRST run of the day is posted; replays that day are practice.
 // If the board can't be reached (no server, offline, local dev) the best run is kept on this device.
@@ -40,7 +44,7 @@ export const daily = {
     if (this.loading) return;
     this.loading = true;
     try {
-      const r = await fetchWithTimeout('/api/daily', {}, 5000);
+      const r = await fetchWithTimeout(API, {}, 5000);
       this.board = r.ok ? await r.json() : { online: false, top: [] };
     } catch {
       this.board = { online: false, top: [] };
@@ -74,7 +78,7 @@ export async function submitDaily(game, won) {
   daily.lastPost = { pending: first, rank: null, practice: !first };
   if (!first || !daily.name) return;
   try {
-    const r = await fetchWithTimeout('/api/daily', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, seed: dailySeed(date), name: daily.name, depth, seconds, won }) }, 6000);
+    const r = await fetchWithTimeout(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, seed: dailySeed(date), name: daily.name, depth, seconds, won }) }, 6000);
     const j = r.ok ? await r.json() : null;
     if (j && j.online) {
       daily.board = j;

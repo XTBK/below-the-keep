@@ -29,6 +29,9 @@ import { DamageNumbers } from '../ui/DamageNumbers.js';
 import { quality, BAD_LUCK_LIMIT } from '../data/quality.js';
 import { OATHS, heatOf, HEAT_RELIC_BIAS } from '../data/oaths.js';
 import { Menus } from '../ui/Menus.js';
+import { Cutscene } from '../ui/Cutscenes.js';
+import { settingsOf } from '../data/settings.js';
+import { preloadTextures } from '../render/Assets.js';
 import { applySettings } from '../data/settings.js';
 import { daily, submitDaily } from './Daily.js';
 import { cleanName } from '../data/dailySeed.js';
@@ -131,6 +134,7 @@ export class Game {
     this.menus = new Menus(this);
     this.menus.reset('title');
     this.nameEntry = null; // { value, then } while typing a name for the Daily Descent board
+    this.cutscene = null; // a story scene playing over everything (ui/Cutscenes.js)
     this.daily = null; // { date } during a Daily Descent run
     applySettings(this, Save);
 
@@ -207,6 +211,12 @@ export class Game {
     this.state = 'play';
     this.deathTimer = 0;
     this.floorTitleT = 2.2;
+    // each hero's first descent opens with the story of the Keep
+    const seen = (Save.data.unlocks.introSeen = Save.data.unlocks.introSeen || []);
+    if (!seen.includes(this.characterId) && !this.daily) {
+      seen.push(this.characterId);
+      this.playCutscene('intro', () => (this.floorTitleT = 2.2));
+    }
     this.hud.markDirty();
     console.info(`Below the Keep - run seed ${seed}`);
   }
@@ -351,7 +361,7 @@ export class Game {
 
   /** The feel of a landed blow: a tiny freeze, a number, and for a crit a gold flash. */
   combatFeedback(enemy, dmg, crit) {
-    if (COMBAT.damageNumbers && this.damageNumbersOn !== false && dmg > 0) this.damageNumbers.add(enemy.x, enemy.y + (enemy.sprite.def.frameH - enemy.look.anchorY) * 0.6, dmg, crit);
+    if (COMBAT.damageNumbers && this.damageNumbersOn !== false && dmg > 0) this.damageNumbers.add(enemy.x, enemy.y + (enemy.sprite.def.frameH - enemy.look.anchorY) * 0.6, dmg, crit, enemy);
     if (crit) {
       if (this.slowmoOnCrits !== false) this.feel.hitStop(COMBAT.critHitStop);
       this.feel.shake(0.12);
@@ -397,6 +407,10 @@ export class Game {
   }
 
   _setChapter(key) {
+    const from = this.chapterKey;
+    if (this.state === 'play' && from && from !== key && ['catacombs', 'hollow', 'halls', 'throne', 'vault'].includes(key)) {
+      this.playCutscene(key, () => (this.floorTitleT = 2.4));
+    }
     this.chapterKey = key;
     const info = (this.chapterInfo = CHAPTER_INFO[key]);
     this.renderer.setGrade(info.grade);
@@ -775,6 +789,7 @@ export class Game {
    *  prepares their shaders now (behind the title) instead of stuttering in the first fight. */
   _warmUp() {
     try {
+      preloadTextures(this.renderer.gl); // every sprite sheet onto the GPU now, not mid-fight
       const c = this.room.slotCenter(7, 5);
       const e = this.enemies.spawn('rat', this.room, c.x, c.y, { noGrace: true });
       this.enemies.shots.fireOrb(c.x, c.y, 8, 1, 0, 1, 0, 1, 'warm-up');
@@ -803,7 +818,10 @@ export class Game {
     this.input.update();
     this._handleMenuInput();
 
-    if (!this.paused) {
+    if (this.cutscene) {
+      this.cutscene.update(dt);
+      this.hud.markDirty();
+    } else if (!this.paused) {
       const timeScale = this.feel.update(dt); // a heavy blow slows the world for a moment
       this._updateState(dt * timeScale);
       this._updateAmbient(dt);
@@ -896,7 +914,7 @@ export class Game {
   /** Which music fits this moment (see data/music.js). */
   _updateMusic() {
     let m = this.chapterKey;
-    if (this.state === 'title' || this.state === 'collection') m = 'title';
+    if (this.state === 'title' || this.state === 'collection' || (this.cutscene && this.cutscene.panels.length > 1)) m = 'title';
     else if (this.state === 'victory') m = 'victory';
     else if (this.state === 'dead') m = 'death';
     else {
@@ -921,6 +939,10 @@ export class Game {
   /** A touch tap anywhere: confirms menus. Returns true if it was used. */
   /** A tap (or a mouse click) at (fx, fy): 0..1 across the game picture (window fractions for touch). */
   _menuTap(fx = 0.5, fy = 0.5, picture = false) {
+    if (this.cutscene) {
+      this.cutscene.advance();
+      return true;
+    }
     if (!picture) {
       const pt = this.renderer.toPicture(fx * window.innerWidth, fy * window.innerHeight);
       fx = pt.fx;
@@ -971,6 +993,11 @@ export class Game {
 
   _handleMenuInput() {
     const input = this.input;
+    if (this.cutscene) {
+      if (input.pressed('pause')) this.cutscene.finish();
+      else if (['confirm', 'active', 'bomb', 'dodge', 'shootUp', 'shootDown', 'shootLeft', 'shootRight', 'consumable'].some((a) => input.pressed(a))) this.cutscene.advance();
+      return;
+    }
 
     if (this.state === 'title') {
       if (this.seedEntry !== null) {
@@ -1117,7 +1144,21 @@ export class Game {
 
   /** Is a menu on screen (so the mouse works)? */
   get _menuOpen() {
-    return this.state === 'title' || this.paused;
+    return this.state === 'title' || this.paused || !!this.cutscene;
+  }
+
+  /** Play a story scene (unless the player switched them off). */
+  playCutscene(id, then = null, force = false) {
+    // (automated browser tests skip the story unless they ask for it)
+    if (!force && (!settingsOf(Save).story || navigator.webdriver)) {
+      if (then) then();
+      return;
+    }
+    this.cutscene = new Cutscene(id, this.characterId, () => {
+      this.cutscene = null;
+      this.hud.markDirty();
+      if (then) then();
+    });
   }
 
   // --- what the menus call ---

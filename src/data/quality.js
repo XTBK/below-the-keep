@@ -1,3 +1,4 @@
+import { QUALITY_4 } from './relics4.js';
 // How good each relic is, 1-4. Used for:
 //   - bad-luck protection: after two weak relics in a row, the next pedestal offers a good one
 //   - harder bosses lean toward better relics (see BOSS_TIERS)
@@ -48,7 +49,7 @@ export const QUALITY = {
 };
 
 export function quality(id) {
-  return QUALITY[id] ?? 2;
+  return QUALITY[id] ?? QUALITY_4[id] ?? 2;
 }
 
 export const QUALITY_NAMES = ['', 'COMMON', 'FINE', 'RARE', 'LEGENDARY'];

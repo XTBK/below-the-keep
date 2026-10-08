@@ -12,8 +12,8 @@ const P = PARTICLES;
 const ATMOSPHERES = {
   dust: { keep: P.dust.count, preset: 'dust' },
   fog: { keep: 70, preset: 'fog' },
-  spores: { keep: 40, preset: 'dust', rate: 9, glowPreset: 'spore' },
-  embers: { keep: 30, preset: 'ash', rate: 14, glowPreset: 'risingEmber' },
+  spores: { keep: 40, preset: 'dust', rate: 3, glowPreset: 'spore' }, // sparse: glowing motes must not be mistaken for shots
+  embers: { keep: 30, preset: 'ash', rate: 6, glowPreset: 'risingEmber' },
 };
 
 export const PRESETS = {
@@ -214,6 +214,7 @@ export class Effects {
   }
 
   update(dt) {
+    this.impacts = 0; // shot impacts this frame (a shower of shots makes a few sparks, not a blizzard)
     for (let i = 0; i < this.emitters.length; i++) {
       const e = this.emitters[i];
       e.acc += e.rate * dt;
@@ -268,16 +269,20 @@ export class Effects {
 
   /** A spell bolt bursts: a ring of pale arcane sparks. */
   spellImpact(x, y, h) {
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + fxRng.float(0, 0.5);
-      const sp = fxRng.float(40, 90);
+    this.impacts = (this.impacts || 0) + 1;
+    const n = this.impacts > 4 ? 1 : 5;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + fxRng.float(0, 0.5);
+      const sp = fxRng.float(30, 70);
       this.glow.emit(PRESETS.holy, x, y, h, Math.cos(a) * sp, Math.sin(a) * sp, fxRng.float(-10, 30));
     }
-    this.glow.emit(PRESETS.spellFlash, x, y, h + 1, 0, 0, 0);
+    if (this.impacts <= 3) this.glow.emit(PRESETS.spellFlash, x, y, h + 1, 0, 0, 0);
   }
 
   /** A sling stone smacks into something: grey chips + a puff + a couple of sparks. */
   stoneImpact(x, y, h, dirX, dirY) {
+    this.impacts = (this.impacts || 0) + 1;
+    if (this.impacts > 6) return this.lit.emit(PRESETS.stoneDust, x, y, h, 0, 0, 10);
     for (let i = 0; i < P.stoneImpact.chips; i++) {
       this.lit.emit(PRESETS.stoneChip, x, y, h, -dirX * fxRng.float(20, 70) + fxRng.float(-40, 40), -dirY * fxRng.float(20, 70) + fxRng.float(-40, 40), fxRng.float(30, 90));
     }

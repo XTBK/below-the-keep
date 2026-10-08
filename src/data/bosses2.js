@@ -149,7 +149,7 @@ export const PATTERN_BOSSES_2 = {
   },
   lich: {
     name: 'The Lich', subtitle: 'Death Was A Door He Kept Open', sheet: 'lich', home: 4,
-    hp: 400, speed: 30, radius: 14, hitRadius: 17, contactDamage: 1, mass: 50, move: 'hover', restTime: [0.8, 1.2],
+    hp: 320, speed: 30, radius: 14, hitRadius: 17, contactDamage: 1, mass: 50, move: 'hover', restTime: [0.8, 1.2],
     phases: [
       { below: 1, attacks: [
         [3, 'lines', { windup: 0.7, directions: 4, spread: 1.5708, steps: 13, spacing: 18, delay: 0.04, radius: 11, visual: 6 }],
@@ -263,7 +263,7 @@ export const PATTERN_BOSSES_2 = {
   // ===================== THE BURNING HALLS =====================
   courtjester: {
     name: 'The Court Jester', subtitle: "The King's Favourite Fool", sheet: 'courtjester', home: 7,
-    hp: 380, speed: 95, radius: 14, hitRadius: 17, contactDamage: 1, mass: 25, move: 'circle', restTime: [0.6, 1.0],
+    hp: 320, speed: 95, radius: 14, hitRadius: 17, contactDamage: 1, mass: 25, move: 'circle', restTime: [0.6, 1.0],
     phases: [
       { below: 1, attacks: [
         [3, 'bounce', { windup: 0.5, count: 5, speed: 150, frame: 7, bounces: 3 }],

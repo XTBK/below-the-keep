@@ -1,3 +1,4 @@
+import { BeamFX } from '../render/BeamFX.js';
 import * as THREE from 'three';
 import { PlagueRat } from './PlagueRat.js';
 import { Gaoler } from './Gaoler.js';
@@ -19,7 +20,7 @@ import { Hazards } from './Hazards.js';
 import { Decals } from './Decals.js';
 import { PixelOverlay } from '../render/PixelOverlay.js';
 import { ENEMY_FX } from '../data/enemies.js';
-import { PLAYER } from '../data/config.js';
+import { PLAYER, ATTACK_BUDGET } from '../data/config.js';
 
 // Spawns, updates and draws every enemy, plus their shots, burning patches and splats.
 //
@@ -136,6 +137,8 @@ const CLASSES = {
 export class EnemyManager {
   constructor(game) {
     this.game = game;
+    this.turns = new Map(); // enemy -> when its attack turn started (see ATTACK_BUDGET)
+    this.turnRest = new Map(); // enemy -> when it may have another turn
     this.pools = {};
     this.active = [];
     const scene = game.renderer.scene;
@@ -143,6 +146,7 @@ export class EnemyManager {
     this.tele = new PixelOverlay(scene, game.lighting, 4096, { lit: false, additive: true });
     this.solidOverlay = new PixelOverlay(scene, game.lighting, 2048, { lit: true, additive: false });
     this.shots = new EnemyShots(game, this);
+    this.beams = new BeamFX(scene); // boss lasers and breath fire
     this.hazards = new Hazards(game, this);
     this.fire = this.hazards; // (older code calls it "fire")
     this.decals = new Decals(game);
@@ -249,6 +253,30 @@ export class EnemyManager {
     this.borrowedLights--;
   }
 
+  /** May this ordinary enemy attack now? Grants a turn if fewer than the budget are attacking. */
+  mayAttack(e) {
+    const t = this.game.time;
+    const turns = this.turns;
+    const B = ATTACK_BUDGET;
+    const started = turns.get(e);
+    if (started !== undefined) {
+      if (t - started < B.turn) return true;
+      turns.delete(e);
+      this.turnRest.set(e, t + B.rest);
+    }
+    if ((this.turnRest.get(e) ?? -1) > t) return false;
+    for (const [k, v] of turns) {
+      if (t - v >= B.turn || !k.alive || k.room !== this.game.room) {
+        turns.delete(k);
+        this.turnRest.set(k, v + B.turn + B.rest);
+      }
+    }
+    const budget = this.game.floorNumber >= 5 ? B.late : B.early;
+    if (turns.size >= budget) return false;
+    turns.set(e, t);
+    return true;
+  }
+
   decal(room, kind, x, y) {
     this.decals.add(room, kind, x, y);
   }
@@ -314,6 +342,7 @@ export class EnemyManager {
   }
 
   sync(time) {
+    this.beams.begin();
     this.tele.begin();
     this.solidOverlay.begin();
     for (const e of this.active) {
@@ -336,6 +365,7 @@ export class EnemyManager {
       this.tele.ring(w.x, w.y, w.r * (0.1 + 0.6 * k), WAVE, (1 - k) * 0.4);
     }
     this.tele.end();
+    this.beams.end();
     this.solidOverlay.end();
     this.shots.sync();
     this.hazards.sync();

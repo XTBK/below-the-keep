@@ -1,3 +1,4 @@
+import { ROCKS } from './rocksArt.js';
 // Chapter tilesets. One shared STRUCTURE (walls with corners, L-shape outer corners, cracked secret
 // walls, pits) plus a STYLE per chapter that supplies its own floor, wall face, wall decorations,
 // spikes, floor decor and rock prop.
@@ -305,9 +306,12 @@ export function makeTileset(S) {
     return p;
   }
 
-  function rock() {
+  function rock(variant = 0) {
+    // three variants per chapter (render/art/rocksArt.js)
     const p = new Painter(T, T);
-    S.rock(p, new Rng(6060 + S.seed));
+    const draw = ROCKS[S.key] && ROCKS[S.key][variant % 3];
+    if (draw) draw(p, P, new Rng(6060 + variant * 31 + S.seed));
+    else S.rock(p, new Rng(6060 + S.seed));
     p.outline(SHARED.outline);
     return p;
   }
@@ -713,9 +717,16 @@ const HOLLOW = {
     // a wall of packed earth bound by giant roots
     const P = this.pal;
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) p.px(x + i, y + j, P.earth[rng.int(0, 2)], 0.5);
+    // three great roots running the length of the wall. Their height and wave depend only on the
+    // position across the tile (one wave per 32 px), so neighbouring wall tiles join seamlessly.
     for (let k = 0; k < 3; k++) {
-      const y0 = y + 6 + k * 15 + rng.int(-3, 3);
-      root(p, rng, P.bark, x - 2, y0, x + w + 2, y0 + rng.int(-6, 6), rng.float(2.4, 3.4), 3.5);
+      const y0 = y + 7 + k * 15;
+      const r = [3, 2.6, 3.2][k];
+      for (let xx = x; xx < x + w; xx++) {
+        const yy = y0 + Math.sin(((xx % T) / T) * Math.PI * 2 + k * 2.1) * 1.6;
+        p.ellipse(xx, yy, r, r, P.bark, 3.5);
+      }
+      for (let xx = x + 3; xx < x + w; xx += 7) p.px(xx, y0 + Math.sin(((xx % T) / T) * Math.PI * 2 + k * 2.1) * 1.6 - r + 1, P.bark[P.bark.length - 1], 3.9); // light along the top
     }
     for (let i = 0; i < 4; i++) {
       const rx = x + rng.int(2, w - 3);

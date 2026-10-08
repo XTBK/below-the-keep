@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getSheet, makeTexture } from './Assets.js';
+import { getSheet, makeTexture, shareTexture } from './Assets.js';
 
 // A sprite is a flat rectangle facing the camera, textured with one frame of a sprite sheet.
 // Lit sprites use MeshLambertMaterial + a normal map so torches light them realistically.
@@ -88,8 +88,7 @@ export class Sprite {
     const { frameW, frameH, cols, rows } = this.def;
 
     // cloned textures share the same image on the GPU but have their own frame offset
-    this.map = sheet.map.clone();
-    this.map.needsUpdate = true;
+    this.map = shareTexture(sheet.map);
     this.map.repeat.set(1 / cols, 1 / rows);
 
     if (opts.shadow) {
@@ -98,14 +97,12 @@ export class Sprite {
       const g = opts.glow ?? 1;
       this.material = new THREE.MeshBasicMaterial({ map: this.map, color: new THREE.Color(g, g, g), alphaTest: 0.5 });
     } else {
-      this.normalMap = sheet.normalMap.clone();
-      this.normalMap.needsUpdate = true;
+      this.normalMap = shareTexture(sheet.normalMap);
       this.normalMap.repeat.set(1 / cols, 1 / rows);
       this.material = makeLitMaterial(this.map, this.normalMap, opts);
       if (sheet.emissiveMap) {
         // this sheet has its own glow layer (lava, witch-fire...): it replaces any plain self-glow
-        this.emitMap = sheet.emissiveMap.clone();
-        this.emitMap.needsUpdate = true;
+        this.emitMap = shareTexture(sheet.emissiveMap);
         this.emitMap.repeat.set(1 / cols, 1 / rows);
         this.material.emissive = new THREE.Color(1, 1, 1);
         this.material.emissiveMap = this.emitMap;
@@ -153,8 +150,7 @@ export class Sprite {
     const { cols, rows } = this.def;
     const swap = (old, tex) => {
       if (old) old.dispose();
-      const t = tex.clone();
-      t.needsUpdate = true;
+      const t = shareTexture(tex);
       t.repeat.set(1 / cols, 1 / rows);
       return t;
     };

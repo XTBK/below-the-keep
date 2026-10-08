@@ -19,6 +19,8 @@ export class Audio {
     this.musicVolume = 1; // the player's settings (0..1)
     this.soundVolume = 1;
     this.musicName = null;
+    this.lastPlayed = new Map(); // sound name -> time (the same sound can't restart within 35 ms)
+    this.recent = []; // start times of recent sounds (at most ~22 new sounds in any 0.1 s)
     // phones only allow audio to start when a finger LIFTS (touchend / pointerup), so listen for those too
     const unlock = () => this._ensure();
     for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click']) window.addEventListener(ev, unlock);
@@ -89,6 +91,13 @@ export class Audio {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const s = SOUNDS[name];
     if (!s) return;
+    // a flood of the same sound (twenty stones landing at once) is one sound, not twenty
+    const now = this.ctx.currentTime;
+    if (now - (this.lastPlayed.get(name) ?? -1) < 0.035) return;
+    while (this.recent.length && now - this.recent[0] > 0.1) this.recent.shift();
+    if (this.recent.length >= 22) return;
+    this.lastPlayed.set(name, now);
+    this.recent.push(now);
     const [wet, recipe] = s;
     const ctx = this.ctx;
     const out = ctx.createGain();

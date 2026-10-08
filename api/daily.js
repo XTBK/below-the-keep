@@ -62,6 +62,11 @@ function readBody(req) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  // the game is also played from itch.io: let other sites read and post (no cookies, nothing private)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   const date = todayUTC();
   const base = { date, seed: dailySeed(date), hero: dailyHero(date) };
   if (!URL || !TOKEN) return res.status(200).json({ ...base, online: false, top: [] });

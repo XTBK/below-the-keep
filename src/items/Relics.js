@@ -64,7 +64,13 @@ export function computeLoadout(items) {
     bonusHalfHearts += r.hearts || 0;
   }
   for (const k in mult) stats[k] *= mult[k];
+  if (perks.multishot) perks.multishot = Math.min(4, perks.multishot); // at most four extra shots
+  // sanity limits, so no pile of relics can break the game
   stats.fireDelay = Math.max(0.1, stats.fireDelay);
+  stats.damage = Math.max(0.5, stats.damage);
+  stats.range = Math.max(70, stats.range);
+  stats.shotSpeed = Math.max(130, Math.min(560, stats.shotSpeed));
+  stats.moveSpeed = Math.max(60, Math.min(230, stats.moveSpeed));
 
   // blend the stone tints (no relics = plain grey stone)
   const tint = [1, 1, 1];

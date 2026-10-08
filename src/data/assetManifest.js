@@ -116,7 +116,7 @@ for (const [key, ts] of Object.entries(TILESETS)) {
   ASSETS[`${key}_pit`] = { frameW: 32, frameH: 32, cols: PIT_VARIANTS, rows: 1, tile: true, generate: (c) => ts.pit(c) };
   ASSETS[`${key}_spikes`] = { frameW: 32, frameH: 32, cols: 1, rows: 1, generate: () => ts.spikes() };
   ASSETS[`${key}_decor`] = { frameW: 32, frameH: 32, cols: 1, rows: 1, generate: () => ts.decor() };
-  ASSETS[`${key}_rock`] = { frameW: 32, frameH: 32, cols: 1, rows: 1, generate: () => ts.rock() };
+  ASSETS[`${key}_rock`] = { frameW: 32, frameH: 32, cols: 3, rows: 1, generate: (c) => ts.rock(c) }; // three kinds of obstacle
   ASSETS[`${key}_door_top`] = { frameW: 48, frameH: 64, cols: DOOR_FRAMES, rows: 1, generate: (c) => doorTop(c, pal) };
   ASSETS[`${key}_door_left`] = { frameW: 32, frameH: 48, cols: DOOR_FRAMES, rows: 1, generate: (c) => doorLeft(c, pal) };
   ASSETS[`${key}_door_right`] = { frameW: 32, frameH: 48, cols: DOOR_FRAMES, rows: 1, generate: (c) => doorRight(c, pal) };
