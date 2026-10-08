@@ -315,6 +315,8 @@ export class EnemyManager {
     this.hazards.drawOverlay(this.tele, time);
     this.game.projectiles.drawOverlay(this.tele); // chain-lightning arcs
     this.game.familiars.drawOverlay(this.tele, time); // the War Banner's ring
+    this.game.damageNumbers.draw(this.tele);
+    this.game.player.drawOverlay(this.tele, time); // the Iron Knight's sword arc
     this.game.room.drawOverlay(this.tele, time); // price tags, puzzle runes
     for (const w of this.waves) {
       if (w.t >= 0.35) continue;

@@ -11,6 +11,7 @@ export const KEYS = {
   shootLeft: ['ArrowLeft'],
   shootRight: ['ArrowRight'],
   active: ['Space'],
+  dodge: ['ShiftLeft', 'ShiftRight'],
   consumable: ['KeyQ'],
   bomb: ['KeyE'],
   pause: ['Escape'],
@@ -40,6 +41,7 @@ export const PAD = {
   shootThreshold: 0.5,
   active: [5, 7], // RB, RT
   consumable: [4], // LB
+  dodge: [1], // B
   bomb: [6, 0], // LT, A
   pause: [9], // Start
   confirm: [0, 9], // A / Start on the title and death screens

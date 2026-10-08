@@ -23,6 +23,25 @@ export const SOUNDS = {
     s.bell(o, t + 0.03, 1980 * p, 0.25, 0.06);
     s.noise(o, t, { type: 'bandpass', f: [900 * p, 3600 * p], q: 2.5, gain: 0.16, attack: 0.02, dur: 0.14 });
   }],
+  crit: [0.4, (s, o, t, p) => {
+    s.metal(o, t, 1500 * p, 0.35, 0.22);
+    s.drum(o, t, 200 * p, 90, 0.12, 0.35, 0.5);
+  }],
+  roll: [0.15, (s, o, t, p) => s.noise(o, t, { type: 'lowpass', f: [900 * p, 300], gain: 0.22, attack: 0.03, dur: 0.22 })],
+  xbow: [0.3, (s, o, t, p) => {
+    s.pluck(o, t, 92 * p, 0.4, 0.7, 0.95, 0.982); // the string snaps
+    s.drum(o, t, 160 * p, 80, 0.1, 0.35, 0.5); // the stock thumps your shoulder
+    s.noise(o, t, { type: 'bandpass', f: [3000, 1200], q: 1.6, gain: 0.25, dur: 0.1 });
+  }],
+  sword: [0.3, (s, o, t, p) => {
+    s.noise(o, t, { type: 'bandpass', f: [500 * p, 2600 * p], q: 1.3, gain: 0.4, attack: 0.04, dur: 0.2 }); // the whoosh
+    s.metal(o, t + 0.02, 2400 * p, 0.12, 0.05);
+  }],
+  slash: [0.3, (s, o, t, p) => {
+    s.drum(o, t, 180 * p, 70, 0.14, 0.5, 0.6); // the blow lands
+    s.metal(o, t, 760 * p, 0.3, 0.2);
+  }],
+  parry: [0.4, (s, o, t, p) => s.metal(o, t, 1800 * p, 0.45, 0.25)],
   spellHit: [0.4, (s, o, t, p) => {
     s.noise(o, t, { type: 'bandpass', f: [3000 * p, 1200], q: 2, gain: 0.18, dur: 0.08 });
     s.bell(o, t, 880 * p, 0.25, 0.08);

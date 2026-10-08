@@ -11,6 +11,7 @@ import { fxRng } from './Rng.js';
 //   horn      a war horn: buzzing reed, filter opening, a little vibrato
 //   choir     voices singing "ah": detuned saws through vowel formant filters
 //   growl     a beast's throat: noise + low buzz through moving formants, with a rasp
+//   pipe      a wooden recorder / shawm: a breathy, gently wavering tone
 //   drone     a held, slowly breathing chord (for the music)
 
 export function midi(n) {
@@ -174,6 +175,40 @@ export class Synth {
     }
     vib.start(t);
     vib.stop(t + dur + 0.05);
+  }
+
+  /** A wooden pipe (recorder): soft attack, breath noise, a slow vibrato that grows as the note is held. */
+  pipe(out, t, freq, dur, gain) {
+    const ctx = this.ctx;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.05);
+    g.gain.setValueAtTime(gain * 0.85, t + Math.max(0.06, dur - 0.08));
+    g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = freq * 4;
+    lp.connect(g).connect(out);
+    const vib = ctx.createOscillator();
+    vib.frequency.value = 5.4;
+    const vibAmt = ctx.createGain();
+    vibAmt.gain.setValueAtTime(0, t);
+    vibAmt.gain.linearRampToValueAtTime(freq * 0.008, t + Math.min(0.5, dur));
+    vib.connect(vibAmt);
+    for (const [type, mul, amp] of [['triangle', 1, 1], ['sine', 2, 0.25]]) {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = freq * mul;
+      vibAmt.connect(o.frequency);
+      const og = ctx.createGain();
+      og.gain.value = amp;
+      o.connect(og).connect(lp);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    }
+    vib.start(t);
+    vib.stop(t + dur + 0.05);
+    this.noise(out, t, { type: 'bandpass', f: [freq * 2, freq * 2], q: 3, gain: gain * 0.25, attack: 0.03, dur: Math.min(dur, 0.25) }); // breath
   }
 
   /** Voices singing "ah" on each note of `freqs`. Slow to swell, slow to fade. */

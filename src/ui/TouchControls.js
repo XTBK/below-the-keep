@@ -32,8 +32,9 @@ export class TouchControls {
     this.bombBtn = el('button', 'touch-btn touch-bomb', root, 'BOMB');
     this.itemBtn = el('button', 'touch-btn touch-item', root, 'ITEM');
     this.useBtn = el('button', 'touch-btn touch-use', root, 'USE');
+    this.rollBtn = el('button', 'touch-btn touch-roll', root, 'ROLL');
     this.onTap = null; // set by the Game: taps confirm menus (title, death screen)
-    for (const [btn, action] of [[this.bombBtn, 'bomb'], [this.itemBtn, 'active'], [this.useBtn, 'consumable']]) {
+    for (const [btn, action] of [[this.bombBtn, 'bomb'], [this.itemBtn, 'active'], [this.useBtn, 'consumable'], [this.rollBtn, 'dodge']]) {
       btn.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
         input.virtualTap(action);

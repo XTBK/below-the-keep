@@ -376,7 +376,7 @@ export const ENEMY_FX = {
   rallySpeed: 1.35, // enemies near a Banner Bearer move this much faster...
   rallyArmour: 0.6, // ...and take only this much of the damage
   spawnGrace: 0.55, // seconds after appearing before an enemy may act (fairness)
-  knockback: 140, // base push from a stone, divided by mass
+  knockback: 190, // base push from a stone, divided by mass
   knockbackFriction: 9,
   separation: 40, // how strongly enemies push apart from each other
   deathFadeDelay: 1.6, // corpses linger this long...

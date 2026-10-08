@@ -5,7 +5,9 @@
 //   relics       relics they start with                         trinket    a trinket they start with
 //   pickups      { pennies, bombs, keys } to start with
 //   looks        accessories drawn on the sprite (render/art/wrenArt.js); 'wizard' is a whole outfit
-//   weapon       'wand' (spell bolts) or 'sling' (stones, the default)
+//   weapon       'wand' (spell bolts), 'crossbow' (heavy piercing bolts), 'sword' (a strong melee
+//                swing plus a weak short sword-wave), or 'sling' (stones, the default)
+//   starter      true: can be chosen from the very first run
 //   recolor      swaps colours of Wren's sprite: { tunic, hair, skin } -> new colour ramps
 //   unlock       how to unlock them (shown on the title screen while locked)
 
@@ -19,6 +21,44 @@ export const CHARACTERS = {
     relics: [],
     looks: ['wizard'],
     weapon: 'wand', // casts spell bolts instead of slinging stones
+    starter: true,
+  },
+  ranger: {
+    name: 'Rowan',
+    title: 'The Ranger Knight',
+    flavour: 'Warden of the royal forest. Slow to reload, slower to miss.',
+    halfHearts: 6,
+    // heavy bolts: hit hard, fly fast and far, pass through a foe - but the crossbow is slow to wind
+    stats: { damage: 2.4, range: 70 },
+    statsMult: { fireDelay: 1.75, shotSpeed: 1.45 },
+    mods: { pierce: 1 },
+    pickups: { pennies: 0, bombs: 1, keys: 2 },
+    relics: [],
+    looks: ['rangerhood', 'crossbow'],
+    recolor: {
+      tunic: ['#1a1a10', '#2c2c18', '#424226', '#5a5a36', '#727248'],
+      hair: ['#2a1608', '#4a2a10', '#6a4018', '#8a5a26'],
+    },
+    weapon: 'crossbow',
+    starter: true,
+  },
+  ironknight: {
+    name: 'Sir Aldwin',
+    title: 'The Iron Knight',
+    flavour: 'Too heavy to throw anything well. Too stubborn to fall.',
+    halfHearts: 8,
+    // the sword does the work: a mighty swing that also turns aside shots; his thrown sword-wave is weak and short
+    stats: { range: -110 },
+    statsMult: { moveSpeed: 0.92 },
+    pickups: { pennies: 0, bombs: 2, keys: 1 },
+    relics: [],
+    looks: ['greathelm', 'sword'],
+    recolor: {
+      tunic: ['#121418', '#22262e', '#383e4a', '#535a68', '#707888'],
+      hair: ['#2a2a2e', '#3e3e44', '#56565e', '#707078'],
+    },
+    weapon: 'sword',
+    starter: true,
   },
   knight: {
     name: 'Maud',

@@ -219,3 +219,28 @@ export function spellFrame(k) {
   }
   return p;
 }
+
+/**
+ * A crossbow quarrel, pointing right (rotated to its flight when drawn), in the three stone sizes
+ * (16 x 16; 'quarrels' sheet). Drawn pale so a relic's colour tints the shaft and fletching.
+ */
+export function quarrelFrame(k) {
+  const p = new Painter(16, 16);
+  const len = [9, 11, 13][k];
+  const x0 = 8 - Math.floor(len / 2);
+  const thick = k === 2 ? 2 : 1;
+  for (let t = 0; t < thick; t++) p.hline(x0, x0 + len - 3, 8 + t, '#c8b48a', 3); // the shaft
+  // a steel head
+  p.px(x0 + len - 2, 7, '#e8eef4', 3.5);
+  p.px(x0 + len - 2, 8, '#ffffff', 3.6);
+  p.px(x0 + len - 2, 9 + (thick - 1), '#e8eef4', 3.5);
+  p.px(x0 + len - 1, 8, '#ffffff', 3.6);
+  if (thick > 1) p.px(x0 + len - 1, 9, '#e8eef4', 3.6);
+  // fletching
+  p.px(x0, 6, '#e0d8c8', 3);
+  p.px(x0 + 1, 7, '#e0d8c8', 3);
+  p.px(x0, 10 + (thick - 1), '#e0d8c8', 3);
+  p.px(x0 + 1, 9 + (thick - 1), '#e0d8c8', 3);
+  p.outline('#0b0a0d');
+  return p;
+}

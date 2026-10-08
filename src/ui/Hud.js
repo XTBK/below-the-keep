@@ -401,15 +401,37 @@ export class Hud {
     const ctx = this.ctx;
     const W = RENDER.width;
     const H = RENDER.height;
-    ctx.fillStyle = 'rgba(4,3,6,0.74)';
+    ctx.fillStyle = 'rgba(4,3,6,0.76)';
     ctx.fillRect(0, 0, W, H);
+    // a slow red pulse behind the logo, like something breathing far below
+    const pulse = 0.5 + 0.5 * Math.sin(this.time * 1.3);
+    const g = ctx.createRadialGradient(W / 2, 76, 10, W / 2, 76, 220);
+    g.addColorStop(0, `rgba(120,24,12,${0.18 + 0.12 * pulse})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // embers drifting up out of the dark
+    for (let i = 0; i < 46; i++) {
+      const seed = i * 97.31;
+      const speed = 8 + (i % 7) * 3;
+      const y = H + 10 - ((this.time * speed + seed * 3) % (H + 20));
+      const x = ((seed * 13.7) % W) + Math.sin(this.time * 0.8 + i) * 6;
+      const life = 1 - y / H;
+      ctx.globalAlpha = Math.max(0, Math.min(1, (1 - life) * 1.4)) * (0.4 + 0.6 * Math.abs(Math.sin(this.time * 3 + i)));
+      ctx.fillStyle = i % 3 ? '#f68c2c' : '#ffc35a';
+      ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+    ctx.globalAlpha = 1;
     // the title, with a flickering ember glow behind it
     const flick = 0.85 + 0.15 * Math.sin(this.time * 7) * Math.sin(this.time * 3.1);
     ctx.globalAlpha = 0.35 * flick;
-    drawText(ctx, 'BELOW THE KEEP', W / 2 + 1, 63, '#d4521a', { scale: 5, align: 'center', shadow: null });
+    drawText(ctx, 'BELOW THE KEEP', W / 2 + 1, 59, '#d4521a', { scale: 5, align: 'center', shadow: null });
     ctx.globalAlpha = 1;
-    drawText(ctx, 'BELOW THE KEEP', W / 2, 62, GOLD, { scale: 5, align: 'center', shadow: '#3a1206' });
-    drawText(ctx, "A DESCENT INTO THE MAD KING'S DUNGEONS", W / 2, 106, DIM, { align: 'center' });
+    drawText(ctx, 'BELOW THE KEEP', W / 2, 58, GOLD, { scale: 5, align: 'center', shadow: '#3a1206' });
+    // the one line that matters, bleeding red
+    ctx.globalAlpha = 0.75 + 0.25 * pulse;
+    drawText(ctx, 'THE ONLY WAY OUT IS DOWN', W / 2, 100, '#c02634', { scale: 2, align: 'center', shadow: '#1a0406' });
+    ctx.globalAlpha = 1;
 
     const touch = state.input.touchMode;
     if (state.seedEntry !== null) {
@@ -424,7 +446,7 @@ export class Hud {
       const id = state.characterId;
       const ch = CHARACTERS[id];
       const locked = !Save.data.unlocks.characters.includes(id);
-      drawCharacter(ctx, id, W / 2 - 32, 118, 2, locked);
+      drawCharacter(ctx, id, W / 2 - 32, 120, 2, locked);
       const bob = Math.round(Math.sin(this.time * 4) * 2);
       drawText(ctx, '<', W / 2 - 70 - bob, 144, GOLD, { scale: 2, align: 'center' });
       drawText(ctx, '>', W / 2 + 70 + bob, 144, GOLD, { scale: 2, align: 'center' });
@@ -440,7 +462,13 @@ export class Hud {
     drawText(ctx, `RUNS ${st.runsStarted}    VICTORIES ${st.victories}    BOSSES SLAIN ${st.bossesBeaten}    RELICS FOUND ${RELIC_IDS.filter((r) => Save.data.unlocks.itemsSeen.includes(r)).length}/${RELIC_IDS.length}`, W / 2, H - 36, FAINT, {
       align: 'center',
     });
-    drawText(ctx, 'THROWN INTO THE DUNGEONS BENEATH THE KEEP. THE ONLY WAY OUT IS DOWN.', W / 2, H - 22, FAINT, { align: 'center' });
+    // browsers keep quiet until the first key press or tap
+    const audio = state.audio;
+    if (!audio.ctx || audio.ctx.state !== 'running') {
+      ctx.globalAlpha = 0.6 + 0.4 * pulse;
+      drawText(ctx, touch ? 'TAP ANYWHERE FOR SOUND' : 'PRESS ANY KEY FOR SOUND', W / 2, H - 22, DIM, { align: 'center' });
+      ctx.globalAlpha = 1;
+    }
   }
 
   _drawDeath(state) {
@@ -523,6 +551,7 @@ export class Hud {
       ['', ''],
       ['LEFT THUMB', 'DRAG TO MOVE'],
       ['RIGHT THUMB', 'DRAG TO SHOOT'],
+      ['ROLL', 'DODGE (BOTTOM CENTRE)'],
       ['ITEM / BOMB', 'BUTTONS AT THE TOP RIGHT'],
     ];
     const lines = state.input.touchMode
@@ -534,6 +563,7 @@ export class Hud {
           ['', ''],
           ['WASD', 'MOVE'],
           ['ARROWS', 'SHOOT'],
+          ['SHIFT', 'DODGE ROLL'],
           ['SPACE / E', 'ACTIVE RELIC / POWDER KEG'],
           ['F3 / F4', 'FPS / LIGHTING-ONLY VIEW'],
           ['F5 / F6 / F7', 'DEBUG: MAP / OPEN SECRETS / NEXT FLOOR'],

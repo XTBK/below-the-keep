@@ -17,7 +17,8 @@
 | 6 | Chapters 2, 3, 4 (enemies, art, layouts, bosses) | Done |
 | 7 | All remaining items, special rooms and secrets | Done |
 | 8 | Final boss, unlocks, characters, collection page, polish & performance pass | Done |
-| E1 | Expansion: 20 enemies, 20 bosses, 25 relics, random scaled bosses, depth difficulty, Isaac-style systems | **Done — awaiting OK** |
+| E1 | Expansion: 20 enemies, 20 bosses, 25 relics, random scaled bosses, depth difficulty, Isaac-style systems | Done |
+| E2 | Its own soul: songs per place, new title, Ranger + Iron Knight, parchment map, weighty combat, dodge roll | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -275,7 +276,7 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
 
 ## 10. UI & Audio
 
-- Pixel-art HUD: hearts, pennies, bombs, keys, active charge, minimap. Pixel font.
+- Pixel-art HUD: hearts, pennies, bombs, keys, active charge, a parchment map. Pixel font.
 - Title screen, pause menu (shows seed), death screen (what killed you + items), collection page.
 - Web Audio API generated SFX and music in a medieval style (lute, harp, bells, drums, horns, choir; dungeon reverb). Music files can replace the generated music.
 
@@ -423,7 +424,7 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
   orbs, ~3,000 particles) simulates in about 0.8 ms per frame; 90 draw calls.
 
 
-### Expansion 1 — done (awaiting OK)
+### Expansion 1 — done
 - **Random bosses, Isaac-style:** every floor draws its boss from all 28 (seeded, no repeats in a run). Each boss
   has a HOME floor; met elsewhere its health, tempo and shot speed scale from home to here, so an early boss
   late is dangerous and a late boss early is weaker and slower - a fair fight anywhere.
@@ -456,3 +457,32 @@ Hidden floor boss: **The Forgotten Keeper** (the Forgotten Vault). Every boss: �
   set (Plague, Saint, Beast, Alchemy, Menagerie) to become the Plaguebearer, the Saint, the Beast, the
   Alchemist or the Beastmaster (`data/sets.js`, `items/Sets.js`); the **Trial Chamber** (three waves for a
   relic) and the **Gambler's Den** (dice table, a beggar who repays kindness).
+
+### Expansion 2 — its own soul (awaiting OK)
+
+Goal: keep the Isaac skeleton (rooms, relics, floors) but give the game its own feel.
+
+- **Music** (`core/Ambience.js`): a small composer. Each moment is a song described as data: mode, tempo, chord
+  progression, pad (choir or drone), bass rhythm, arpeggio, a melody grown from a 2-bar motif (A A' B A''; strong
+  beats on chord tones, steps between), frame drums and bell tolls, alternating 4 quiet and 8 full bars. Title: a
+  D-minor funeral march (choir, heartbeat drum, bell, horn). Cells: lute, D aeolian. Catacombs: choir and bells,
+  E phrygian. Hollow: pipe and harp, A dorian dance. Burning Halls: horns and war drums, D harmonic minor. Vault,
+  throne, boss, final boss, victory (the only major key), death. New instrument: the pipe (`Synth.pipe`).
+- **Title screen:** only "THE ONLY WAY OUT IS DOWN" in pulsing red, embers rising, a slow red glow behind the logo,
+  a "press any key for sound" hint until audio is allowed.
+- **Two new starting heroes** (`starter: true` in `data/characters.js`, unlocked from the first run):
+  - **Rowan, the Ranger Knight** - crossbow (`weapon: 'crossbow'`): damage +2.4, range +70, fire delay x1.75,
+    shot speed x1.45, built-in pierce. Bolts are oriented to their flight (`quarrels` sheet). Hard recoil.
+  - **Sir Aldwin, the Iron Knight** - sword (`weapon: 'sword'`, `WEAPONS.sword` in config): each "shot" is a
+    swing - a 40 px arc of ±72°, x3.2 damage, heavy knockback, a lunge, carries burn/poison/frost/gild/fear, breaks
+    props, and **parries** enemy orbs and bolts in the arc. Also throws a weak sword-wave (35% damage, 80 range).
+    8 half hearts, move speed x0.92.
+  - Wren's sling is hidden for heroes who carry another weapon; new looks: rangerhood, crossbow, greathelm, sword.
+- **Parchment map** (`ui/Minimap.js`): a torn, scorched scrap of parchment; explored rooms in a sepia wash with
+  an ink outline, glimpsed rooms dotted, corridors inked between known doors, ink marks for special rooms, a red
+  wax seal for where you are.
+- **Weight in combat** (`COMBAT` in config): crits (8% + 2% per luck, x2, gold burst, bigger freeze, a ring
+  sound), hit-stop on every landed blow (rate-limited), floating pixel damage numbers (`ui/DamageNumbers.js`),
+  enemies squash when struck, base knockback 140 -> 190, recoil per weapon.
+- **Dodge roll** (`ROLL` in config; Shift / gamepad B / touch ROLL): 0.3 s tumble at 270 px/s, untouchable,
+  can't shoot mid-roll, 0.7 s cooldown. The biggest change in how fights play.

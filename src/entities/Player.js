@@ -10,6 +10,10 @@ import { ACTIVE } from '../data/items.js';
 import { PERKS, onPlayerHurt } from '../items/Perks.js';
 import { CHARACTERS } from '../data/characters.js';
 import { DIFFICULTY } from '../data/difficulty.js';
+import { WEAPONS, ROLL, COMBAT } from '../data/config.js';
+import * as THREE from 'three';
+
+const SLASH = new THREE.Color(2.2, 2.1, 1.8);
 import { SETS, SET_SIZE } from '../data/sets.js';
 
 // Wren (or whichever character was chosen: see data/characters.js). Moves with WASD / left
@@ -65,6 +69,11 @@ export class Player {
     this.shieldReady = false; // Saint's Shroud: the first hit in each room is blocked
     this.martyrStacks = 0; // Martyr's Chain: hits taken this floor
     this.charge = 0; // Siege Crossbow: 0..1 while a shot is held
+    this.rollT = 0; // > 0 while dodge-rolling
+    this.rollCool = 0;
+    this.rollDir = { x: 0, y: -1 };
+    this.slashT = 0; // the sword arc, fading
+    this.slashAngle = 0;
     this.chargeDir = { x: 1, y: 0 };
     this.transforms = new Set(); // sets of three relics that changed him (data/sets.js)
     this.familiarList = []; // companions following him (items/Familiars.js)
@@ -233,7 +242,7 @@ export class Player {
    * `source` names what hurt him (shown on the death screen).
    */
   hurt(halfHearts, fromX, fromY, source = 'the Dark') {
-    if (this.invuln > 0 || this.dead || this.buffs.warding > 0) return false;
+    if (this.invuln > 0 || this.dead || this.buffs.warding > 0 || this.rollT > 0) return false;
     // deep down, every hit costs a whole heart
     if (halfHearts === 1 && this.game.floorNumber >= DIFFICULTY.fullHeartFrom) halfHearts = 2;
     if (this.shieldReady && this.perks.shield) {
@@ -285,8 +294,18 @@ export class Player {
     const ty = input.moveY * speed * flip;
     const moving = input.moveX !== 0 || input.moveY !== 0;
     const rate = (moving ? PLAYER.accel : PLAYER.friction) * dt;
-    this.vx = approach(this.vx, tx, rate);
-    this.vy = approach(this.vy, ty, rate);
+    if (this.rollCool > 0) this.rollCool -= dt;
+    if (this.slashT > 0) this.slashT -= dt;
+    if (this.rollT > 0) {
+      // mid-roll: a fixed burst of speed, a puff of dust
+      this.rollT -= dt;
+      this.vx = this.rollDir.x * ROLL.speed;
+      this.vy = this.rollDir.y * ROLL.speed;
+      if (Math.random() < 0.5) this.game.effects.landDust(this.x, this.y, 1);
+    } else {
+      this.vx = approach(this.vx, tx, rate);
+      this.vy = approach(this.vy, ty, rate);
+    }
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
@@ -311,7 +330,9 @@ export class Player {
     // --- shooting ---
     this.fireCooldown -= dt;
     this.throwTimer -= dt;
-    if (this.perks.chargeShot) {
+    if (this.rollT > 0) {
+      // no shooting mid-roll
+    } else if (this.perks.chargeShot) {
       // the Siege Crossbow: hold to draw, let go to loose one great bolt
       const full = Math.max(0.5, st.fireDelay * 2.5);
       if (shooting) {
@@ -334,8 +355,121 @@ export class Player {
     this.sprite.update(dt);
   }
 
+  /** Dodge roll: a quick tumble in the direction he's moving, untouchable while it lasts. */
+  tryRoll(input) {
+    if (this.dead || this.rollT > 0 || this.rollCool > 0) return;
+    let dx = input.moveX;
+    let dy = input.moveY;
+    if (!dx && !dy) {
+      const f = { right: [1, 0], left: [-1, 0], up: [0, 1], down: [0, -1] }[this.facing];
+      dx = f[0];
+      dy = f[1];
+    }
+    const l = Math.hypot(dx, dy) || 1;
+    this.rollDir.x = dx / l;
+    this.rollDir.y = dy / l;
+    this.rollT = ROLL.time;
+    this.rollCool = ROLL.time + ROLL.cooldown;
+    this.game.audio.play('roll');
+    this.game.effects.landDust(this.x, this.y, 6);
+  }
+
+  /** The Iron Knight's swing: a mighty arc that also bats enemy shots out of the air. */
+  swing(dx, dy) {
+    const g = this.game;
+    const w = WEAPONS.sword;
+    const angle = Math.atan2(dy, dx);
+    this.slashAngle = angle;
+    this.slashT = 0.16;
+    // a step into the blow
+    this.vx += Math.cos(angle) * w.lunge;
+    this.vy += Math.sin(angle) * w.lunge;
+    let hits = 0;
+    const shot = this.shot;
+    g.enemies.forEachAlive(g.room, (e) => {
+      if (!e.hittable) return;
+      const ex = e.x - this.x;
+      const ey = e.y - this.y;
+      const d = Math.hypot(ex, ey);
+      if (d > w.reach + e.def.hitRadius) return;
+      let diff = Math.atan2(ey, ex) - angle;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      if (Math.abs(diff) > w.arc && d > e.def.hitRadius + 4) return;
+      const crit = g.rollCrit();
+      const dmg = this.stats.damage * w.damage * this.damageScale * (crit ? COMBAT.critMultiplier : 1);
+      const before = e.hp;
+      e.hit(dmg, ex / (d || 1), ey / (d || 1));
+      e.kbx += (ex / (d || 1)) * (w.knockback / e.def.mass);
+      e.kby += (ey / (d || 1)) * (w.knockback / e.def.mass);
+      // the blade carries the relics' powers too
+      if (shot.burn) e.applyStatus('burn', 3, dmg * 0.25 * shot.burn);
+      if (shot.poison) e.applyStatus('poison', 4, dmg * 0.18 * shot.poison);
+      if (shot.frost) e.chill(2.5 * shot.frost);
+      if (shot.gild && Math.random() < 0.18 * shot.gild) e.gild(1.6);
+      if (shot.fear && Math.random() < 0.25 * shot.fear) e.scare(2.2);
+      g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), crit);
+      g.effects.enemyHit(e.x, e.y, 12, ex / (d || 1), ey / (d || 1), e.look.blood);
+      hits++;
+    });
+    // parry: enemy shots caught in the arc are knocked away
+    const shots = g.enemies.shots;
+    for (let i = shots.orbs.count - 1; i >= 0; i--) {
+      const o = shots.orbs.active[i];
+      const ox = o.x - this.x;
+      const oy = o.y - this.y;
+      if (Math.hypot(ox, oy) > w.reach + 6) continue;
+      let diff = Math.atan2(oy, ox) - angle;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      if (Math.abs(diff) > w.arc) continue;
+      g.effects.sparkle(o.x, o.y);
+      shots._releaseOrb(o);
+      g.audio.play('parry', 0.6);
+    }
+    for (let i = shots.bolts.count - 1; i >= 0; i--) {
+      const b = shots.bolts.active[i];
+      if (Math.hypot(b.x - this.x, b.y - this.y) < w.reach + 6) {
+        g.effects.sparkle(b.x, b.y);
+        shots._releaseBolt(b);
+        g.audio.play('parry', 0.6);
+      }
+    }
+    // barrels and the like
+    for (const prop of g.room.props) {
+      if (!prop.broken && prop.hit && Math.hypot(prop.x - this.x, prop.ground + 6 - this.y) < w.reach + 10) prop.hit(this.stats.damage * w.damage);
+    }
+    g.audio.play('sword');
+    if (hits) {
+      g.audio.play('slash');
+      g.feel.shake(0.18);
+    }
+    // ...and a weak, short wave of steel flies on
+    const hand = HAND[this.facing];
+    g.projectiles.spawn(this.x + hand[0], this.y + hand[1], hand[2], dx * this.stats.shotSpeed, dy * this.stats.shotSpeed, { ...shot, range: w.waveRange }, 0, w.waveDamage * this.damageScale);
+  }
+
+  /** The sword's arc, drawn bright for a blink. */
+  drawOverlay(o) {
+    if (this.slashT <= 0) return;
+    const w = WEAPONS.sword;
+    const k = this.slashT / 0.16;
+    for (const r of [w.reach * 0.6, w.reach * 0.85, w.reach]) o.arc(this.x, this.y + 10, r, this.slashAngle - w.arc, this.slashAngle + w.arc, SLASH, k * (r === w.reach ? 1 : 0.5), 3, 0.8);
+  }
+
   /** Throw a stone (or, for a wizard, cast a spell bolt). */
   fire(dx, dy) {
+    const weapon = this.character.weapon || 'sling';
+    if (weapon === 'sword') {
+      this.swing(dx, dy);
+      const st0 = this.stats;
+      this.fireCooldown = st0.fireDelay * WEAPONS.sword.cooldown * (this.buffs.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (this.buffs.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
+      this.throwTimer = PLAYER.throwAnimTime * 1.3;
+      return;
+    }
+    // recoil: a little kick back with every shot (a hard one from the crossbow)
+    const wcfg = WEAPONS[weapon] || WEAPONS.sling;
+    this.vx -= dx * wcfg.recoil;
+    this.vy -= dy * wcfg.recoil;
+    if (wcfg.shake) this.game.feel.shake(wcfg.shake);
     const st = this.stats;
     const shot = this.shot;
     this.shotCounter++;
@@ -361,7 +495,7 @@ export class Player {
     const b = this.buffs;
     this.fireCooldown = st.fireDelay * (b.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (b.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
     this.throwTimer = PLAYER.throwAnimTime;
-    this.game.audio.play(this.character.weapon === 'wand' ? 'wand' : 'sling');
+    this.game.audio.play({ wand: 'wand', crossbow: 'xbow' }[this.character.weapon] || 'sling');
     Save.data.stats.stonesThrown++;
   }
 
@@ -397,6 +531,10 @@ export class Player {
 
   sync() {
     this.sprite.place(this.x, this.y);
+    if (this.rollT > 0) {
+      const k = Math.sin((1 - this.rollT / ROLL.time) * Math.PI);
+      this.sprite.mesh.scale.set(1 + 0.25 * k, 1 - 0.35 * k, 1);
+    } else if (this.sprite.mesh.scale.x !== 1) this.sprite.mesh.scale.set(1, 1, 1);
     // transformations tint him
     if (this.transforms.size) {
       const c = this.sprite.material.color;

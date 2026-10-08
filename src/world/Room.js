@@ -346,7 +346,7 @@ export class Room {
     // --- the start room has the controls scratched into the floor ---
     if (this.data.type === 'start') {
       const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-      const lines = touch ? ['LEFT THUMB  MOVE', 'RIGHT THUMB  SHOOT'] : ['WASD  MOVE', 'ARROWS  SHOOT', 'E  BOMB    SPACE  ITEM'];
+      const lines = touch ? ['LEFT THUMB  MOVE', 'RIGHT THUMB  SHOOT', 'ROLL BUTTON  DODGE'] : ['WASD  MOVE', 'ARROWS  SHOOT', 'SHIFT  ROLL', 'E  BOMB    SPACE  ITEM'];
       cctx.globalAlpha = 0.28;
       lines.forEach((t, i) => drawText(cctx, t, W / 2, 150 + i * 14, '#d8d0c0', { align: 'center', shadow: null }));
       cctx.globalAlpha = 1;

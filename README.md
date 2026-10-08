@@ -17,7 +17,8 @@ npm run dev     # then open the http://localhost:5173 link it prints
 | Action | Keyboard | Gamepad |
 |---|---|---|
 | Move | WASD | Left stick |
-| Shoot | Arrow keys | Right stick |
+| Shoot (or swing, for the Iron Knight) | Arrow keys | Right stick |
+| Dodge roll (can't be hurt mid-roll) | Shift | B |
 | Active relic / scroll or potion / powder keg | Space / Q / E | RB / LB / LT (or A) |
 | Title screen: choose character / begin / seeded run / collection | A, D (or ← →) / Enter / F / C | D-pad / A / — / X |
 | Collection page: browse / next page / back | Arrows / Tab (or Q) / Esc | D-pad / RB / Start |
@@ -30,16 +31,27 @@ npm run dev     # then open the http://localhost:5173 link it prints
 
 Replay a run: add `?seed=XXXX-XXXX` to the URL.
 
-On a phone: left thumb moves, right thumb shoots; BOMB / ITEM / USE buttons at the top. On the title screen tap the
+On a phone: left thumb moves, right thumb shoots; BOMB / ITEM / USE buttons at the top, ROLL at the bottom centre. On the title screen tap the
 sides to change character, the bottom for the collection, anywhere else to begin.
+
+## Heroes
+
+Three are open from the first run; three more unlock through deeds.
+
+- **Wren, the Wandering Wizard** - casts quick spell bolts from a wand.
+- **Rowan, the Ranger Knight** - a crossbow: slow to reload, but heavy bolts that fly far and pass through foes.
+- **Sir Aldwin, the Iron Knight** - a mighty sword swing that knocks enemies back and bats their shots out of
+  the air; his thrown sword-wave is weak and short, so he has to get close. Extra heart, a little slower.
 
 ## Sound and music
 
 Everything you hear is synthesised live, no sound files: plucked lute and harp strings, cast bells, clanging
 metal, frame drums, war horns, a choir and beastly growls, all in a stone-dungeon reverb (`src/core/Synth.js`
 builds the instruments, `src/core/Sounds.js` has a recipe per sound effect). The music is generated too
-(`src/core/Ambience.js`): a drone with lute and harp in the old church modes, a mood per chapter, drums and horns
-for bosses. To use your own music instead, put a file in `public/assets/music/` and name it in `src/data/music.js`
+(`src/core/Ambience.js`): each place has its own song, written as rules - a mode, a chord progression, a bass
+line, harp or lute picking, a melody built from a motif that repeats and varies, drums and bells - and played
+note by note, so it never repeats exactly. A funeral march on the title, a grim lute for the Cells, choir and
+bells for the Catacombs, a strange pipe dance in the Hollow, war horns in the Burning Halls, drums for bosses. To use your own music instead, put a file in `public/assets/music/` and name it in `src/data/music.js`
 (e.g. `cells: 'assets/music/cells.ogg'`); set `generated: false` there to turn the generated music off.
 
 ## Where things live

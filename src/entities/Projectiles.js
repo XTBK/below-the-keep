@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PROJECTILE, FEEL } from '../data/config.js';
+import { PROJECTILE, FEEL, COMBAT } from '../data/config.js';
 import { MODS } from '../data/items.js';
 import { Pool } from '../core/Pool.js';
 import { getSheet } from '../render/Assets.js';
@@ -45,6 +45,8 @@ export class Projectiles {
     const scene = game.renderer.scene;
     const sheet = getSheet('stones');
     const spells = getSheet('spells');
+    const quarrels = getSheet('quarrels');
+    this.boltMats = [];
     this.meshes = [];
     this.stoneMats = [];
     this.spellMats = [];
@@ -66,6 +68,16 @@ export class Projectiles {
       smap.repeat.set(1 / 3, 1);
       smap.offset.set(tier / 3, 0);
       this.spellMats.push(new THREE.MeshBasicMaterial({ map: smap, alphaTest: 0.4 }));
+      // crossbow bolts: lit like the stones, rotated to fly point-first
+      const qmap = quarrels.map.clone();
+      qmap.needsUpdate = true;
+      qmap.repeat.set(1 / 3, 1);
+      qmap.offset.set(tier / 3, 0);
+      const qn = quarrels.normalMap.clone();
+      qn.needsUpdate = true;
+      qn.repeat.set(1 / 3, 1);
+      qn.offset.set(tier / 3, 0);
+      this.boltMats.push(makeLitMaterial(qmap, qn, { emissive: 0x4a4a4a }));
       const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(16, 16), mat, PROJECTILE.poolSize);
       mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(PROJECTILE.poolSize * 3), 3);
       mesh.frustumCulled = false;
@@ -91,8 +103,9 @@ export class Projectiles {
 
   /** 'sling' (stones) or 'wand' (spell bolts) - set from the character when a run starts. */
   setStyle(style) {
-    this.style = style === 'wand' ? 'wand' : 'sling';
-    const mats = this.style === 'wand' ? this.spellMats : this.stoneMats;
+    // the Iron Knight's thrown sword-wave glows like a spell
+    this.style = style === 'wand' || style === 'sword' ? 'wand' : style === 'crossbow' ? 'crossbow' : 'sling';
+    const mats = this.style === 'wand' ? this.spellMats : this.style === 'crossbow' ? this.boltMats : this.stoneMats;
     this.meshes.forEach((m, i) => (m.material = mats[i]));
   }
 
@@ -366,7 +379,12 @@ export class Projectiles {
   }
 
   _hitEnemy(p, enemy, dx, dy) {
-    enemy.hit(p.damage, dx, dy);
+    // a critical hit now and then: double damage, a gold flash, a harder freeze
+    const crit = this.game.rollCrit();
+    const dmg = p.damage * (crit ? COMBAT.critMultiplier : 1);
+    const hpBefore = enemy.hp;
+    enemy.hit(dmg, dx, dy);
+    this.game.combatFeedback(enemy, Math.min(dmg, Math.max(0, hpBefore)), crit);
     this.game.feel.shake(FEEL.impactShake);
     if (p.burn > 0) enemy.applyStatus('burn', MODS.burn.time, p.damage * MODS.burn.dps * p.burn);
     if (p.poison > 0) enemy.applyStatus('poison', MODS.poison.time, p.damage * MODS.poison.dps * p.poison);
@@ -502,7 +520,11 @@ export class Projectiles {
       const p = pool.active[i];
       const mesh = this.meshes[p.tier];
       const k = counts[p.tier]++;
-      _m.makeTranslation(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
+      if (this.style === 'crossbow') {
+        // point the bolt along its flight
+        _m.makeRotationZ(Math.atan2(p.vy, p.vx));
+        _m.setPosition(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
+      } else _m.makeTranslation(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
       mesh.setMatrixAt(k, _m);
       if (this.wand) _c.setRGB(p.r * 1.7, p.g * 1.7, p.b * 1.7); // brighter than white: it blooms
       else _c.setRGB(p.r, p.g, p.b);

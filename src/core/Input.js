@@ -6,7 +6,7 @@ import { KEYS, PAD } from '../data/controls.js';
 //   input.pressed('pause')   true only on the frame the button went down
 //   input.held('active')
 
-const ACTIONS = ['active', 'consumable', 'bomb', 'pause', 'newRun', 'confirm', 'seed', 'quitTitle', 'collection', 'tab', 'debug', 'debugLights', 'debugMap', 'debugSecrets', 'debugFloor',
+const ACTIONS = ['active', 'consumable', 'bomb', 'dodge', 'pause', 'newRun', 'confirm', 'seed', 'quitTitle', 'collection', 'tab', 'debug', 'debugLights', 'debugMap', 'debugSecrets', 'debugFloor',
   // directions can be 'pressed' too (menus: the character picker, the collection page)
   'up', 'down', 'left', 'right', 'shootUp', 'shootDown', 'shootLeft', 'shootRight'];
 const SHOOT_DIRS = {

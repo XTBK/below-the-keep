@@ -165,7 +165,7 @@ export function drawCollection(ctx, state) {
   } else {
     const unlocked = Save.data.unlocks.characters;
     CHARACTER_IDS.forEach((id, i) => {
-      const x = W / 2 + (i - 1.5) * 110 - 32;
+      const x = W / 2 + (i - (CHARACTER_IDS.length - 1) / 2) * 96 - 32;
       const locked = !unlocked.includes(id);
       if (i === c.cursor) {
         ctx.strokeStyle = GOLD;

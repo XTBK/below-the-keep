@@ -91,6 +91,11 @@ canvas {
   top: calc(env(safe-area-inset-top, 0px) + 10px);
   right: calc(env(safe-area-inset-right, 0px) + 206px);
 }
+.touch-roll {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  left: calc(env(safe-area-inset-left, 0px) + 50%);
+  transform: translateX(-50%);
+}
 .touch-newrun {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
   left: 50%;

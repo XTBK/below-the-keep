@@ -1,4 +1,5 @@
 import { ENEMIES, CHAMPION, ENEMY_FX } from '../data/enemies.js';
+import { COMBAT } from '../data/config.js';
 import { Sprite, Animator, LAYER } from '../render/Sprite.js';
 import { pushCircleOutOfBox, clampCircleToRect } from '../world/Collision.js';
 import { fxRng } from '../core/Rng.js';
@@ -252,6 +253,7 @@ export class Enemy {
     this.hp -= damage;
     if (!quiet) {
       this.sprite.flash(0.07);
+      this.squashT = COMBAT.squash;
       const k = ENEMY_FX.knockback / this.def.mass;
       this.kbx += dirX * k;
       this.kby += dirY * k;
@@ -379,6 +381,12 @@ export class Enemy {
     if (this.gildTime > 0) c.setRGB(1.9, 1.5, 0.5);
     if (this.fearTime > 0) c.setRGB(c.r * 0.8, c.g * 0.8, c.b * 1.1);
     this.sprite.place(this.x, this.y, this.h);
+    // a struck enemy squashes and springs back
+    if (this.squashT > 0) {
+      this.squashT -= 1 / 60;
+      const k = Math.max(0, this.squashT / COMBAT.squash);
+      this.sprite.mesh.scale.set(1 + 0.22 * k, 1 - 0.18 * k, 1);
+    } else if (this.sprite.mesh.scale.x !== 1) this.sprite.mesh.scale.set(1, 1, 1);
     this.shadow.place(this.x, this.y - this.shadowOffset, 0, LAYER.shadow);
   }
 

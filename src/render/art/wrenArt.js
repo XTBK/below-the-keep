@@ -22,6 +22,8 @@ const POSES = [
 ];
 
 const BOOT = S.leather.slice(0, 3);
+// a character carrying another weapon (a crossbow, a sword) draws no sling (set by wrenFrame)
+let noSling = false;
 
 function frontLegs(p, pose, b) {
   // two legs, viewed from the front or back
@@ -134,24 +136,28 @@ function drawFront(pose, back) {
     p.cyl(slingX, 7 + b, 2, 7, S.tunic, 3);
     p.rect(slingX, 5 + b, 2, 2, S.skin[3], 3.5);
     const dir = back ? 1 : -1;
-    p.px(slingX + (back ? 1 : 0), 4 + b, S.leather[1], 4);
-    p.px(slingX + dir * 1 + (back ? 1 : 0), 3 + b, S.leather[1], 4);
-    p.px(slingX + dir * 2 + (back ? 1 : 0), 2 + b, S.leather[2], 4);
-    p.rect(slingX + dir * 3 + (back ? 0 : 0), 1 + b, 2, 2, S.pebble[3], 4.5);
+    if (!noSling) {
+      p.px(slingX + (back ? 1 : 0), 4 + b, S.leather[1], 4);
+      p.px(slingX + dir * 1 + (back ? 1 : 0), 3 + b, S.leather[1], 4);
+      p.px(slingX + dir * 2 + (back ? 1 : 0), 2 + b, S.leather[2], 4);
+      p.rect(slingX + dir * 3 + (back ? 0 : 0), 1 + b, 2, 2, S.pebble[3], 4.5);
+    }
   } else if (t === 'release') {
     if (back) {
       p.cyl(slingX, 6 + b, 2, 7, S.tunic, 3);
       p.rect(slingX, 4 + b, 2, 2, S.skin[3], 3.5);
-      p.vline(slingX + 1, 0 + b, 3 + b, S.leather[1], 3.5);
+      if (!noSling) p.vline(slingX + 1, 0 + b, 3 + b, S.leather[1], 3.5);
     } else {
       p.cyl(slingX + 1, 14 + b, 2, 6, S.tunic, 3.5);
       p.rect(slingX + 1, 20 + b, 2, 2, S.skin[3], 3.5);
-      p.vline(slingX + 2, 22 + b, 27 + b, S.leather[1], 3.5);
-      p.rect(slingX + 1, 28, 2, 2, S.leather[2], 3);
+      if (!noSling) {
+        p.vline(slingX + 2, 22 + b, 27 + b, S.leather[1], 3.5);
+        p.rect(slingX + 1, 28, 2, 2, S.leather[2], 3);
+      }
     }
   } else {
     frontArm(p, slingX, b, back ? pose.armR : pose.armL);
-    slingHanging(p, slingX + (back ? 1 : 0), 21 + b + (back ? pose.armR : pose.armL));
+    if (!noSling) slingHanging(p, slingX + (back ? 1 : 0), 21 + b + (back ? pose.armR : pose.armL));
   }
   if (back) headBack(p, b);
   else headFront(p, b);
@@ -228,20 +234,24 @@ function drawSide(pose) {
     p.line(16, 14 + b, 12, 11 + b, S.tunic[3], 3.5);
     p.line(16, 15 + b, 12, 12 + b, S.tunic[2], 3.5);
     p.rect(10, 10 + b, 2, 2, S.skin[3], 4);
-    p.line(10, 9 + b, 7, 6 + b, S.leather[1], 4);
-    p.rect(5, 4 + b, 2, 2, S.pebble[3], 4.5);
+    if (!noSling) {
+      p.line(10, 9 + b, 7, 6 + b, S.leather[1], 4);
+      p.rect(5, 4 + b, 2, 2, S.pebble[3], 4.5);
+    }
   } else if (t === 'release') {
     p.line(16, 15 + b, 22, 15 + b, S.tunic[3], 4);
     p.line(16, 16 + b, 22, 16 + b, S.tunic[2], 4);
     p.rect(23, 15 + b, 2, 2, S.skin[3], 4);
-    p.line(25, 16 + b, 29, 17 + b, S.leather[1], 4);
+    if (!noSling) p.line(25, 16 + b, 29, 17 + b, S.leather[1], 4);
   } else {
     const swing = pose.armL * 2;
     p.line(16, 14 + b, 16 + swing, 19 + b, S.tunic[3], 4);
     p.line(17, 14 + b, 17 + swing, 18 + b, S.tunic[2], 4);
     p.rect(16 + swing, 20 + b, 2, 2, S.skin[3], 4);
-    p.vline(17 + swing, 22 + b, 25 + b, S.leather[1], 3);
-    p.rect(17 + swing, 26 + b, 2, 2, S.leather[2], 3);
+    if (!noSling) {
+      p.vline(17 + swing, 22 + b, 25 + b, S.leather[1], 3);
+      p.rect(17 + swing, 26 + b, 2, 2, S.leather[2], 3);
+    }
   }
   return p;
 }
@@ -361,6 +371,98 @@ const ACCESSORIES = {
       p.px(x + (x < 16 ? -1 : 1), 21 + b, I[2], 5.5);
     }
   },
+  // --- the Ranger: a hooded forest cloak, and a crossbow in hand ---
+  rangerhood(p, dir, b) {
+    const G = ['#14200e', '#223414', '#34481e', '#4a6028'];
+    if (dir === 'up') {
+      p.ellipse(16, 7 + b, 6, 5.5, G, 7.5);
+      p.ellipse(16, 17 + b, 6.5, 6, G.slice(0, 3), 4.6); // the cloak down the back
+      return;
+    }
+    if (dir === 'right') {
+      p.ellipse(15, 6 + b, 5.6, 4.6, G, 7.5);
+      p.line(10, 9 + b, 10, 20 + b, G[1], 4.6);
+      p.px(20, 5 + b, G[3], 7.8);
+      return;
+    }
+    p.ellipse(16, 5.5 + b, 6, 4.2, G, 7.5); // the hood over the brow
+    p.vline(10, 6 + b, 12 + b, G[1], 7);
+    p.vline(22, 6 + b, 12 + b, G[0], 7);
+    p.px(16, 2 + b, G[3], 7.8);
+  },
+  crossbow(p, dir, b, pose) {
+    const W = S.wood;
+    const I = S.iron;
+    const t = pose.throwPose;
+    if (dir === 'right') {
+      // held level at the hip, raised to the shoulder to shoot
+      const y = t ? 13 + b : 18 + b;
+      const x = t === 'release' ? 19 : 16;
+      p.line(x - 4, y, x + 7, y, W[3], 6.5);
+      p.line(x + 6, y - 4, x + 6, y + 4, W[4], 6.6); // the bow arms
+      p.line(x + 6, y - 4, x + (t === 'wind' ? 1 : 3), y, '#d8d0b0', 6.7);
+      p.line(x + 6, y + 4, x + (t === 'wind' ? 1 : 3), y, '#d8d0b0', 6.7);
+      if (t !== 'release') p.line(x, y, x + 9, y, I[4], 6.8); // a bolt, loaded
+      return;
+    }
+    // facing us or away: the crossbow held across the body
+    const y = t ? 10 + b : 18 + b;
+    const x0 = dir === 'up' ? 18 : 9;
+    p.line(x0, y, x0 + 6, y, W[3], dir === 'up' ? 3.5 : 6.5);
+    p.line(x0 - 1, y - 2, x0 + 7, y - 2, W[4], dir === 'up' ? 3.4 : 6.6);
+    p.px(x0 + 3, y - 3, I[4], dir === 'up' ? 3.5 : 6.8);
+  },
+  // --- the Iron Knight: a great helm with a crest, and a broad sword ---
+  greathelm(p, dir, b) {
+    const I = S.iron;
+    if (dir === 'right') {
+      p.ellipse(16, 7.5 + b, 5, 5, I.slice(1, 6), 8);
+      p.vline(19, 7 + b, 9 + b, '#060608', 8.4); // the eye-slit, seen from the side
+      p.px(20, 8 + b, '#060608', 8.4);
+    } else {
+      p.ellipse(16, 7.5 + b, 5.2, 5, I.slice(1, 6), 8);
+      if (dir === 'down') {
+        p.hline(13, 19, 8 + b, '#060608', 8.4); // the eye-slit
+        p.vline(16, 9 + b, 12 + b, I[1], 8.4);
+        for (const x of [14, 18]) p.px(x, 11 + b, I[1], 8.4); // breathing holes
+      }
+    }
+    for (let i = 0; i < 6; i++) p.px(15 + (i % 2), 2 + b - Math.floor(i / 2) + 1, i % 2 ? '#a02020' : '#c02634', 8.8); // a red crest
+  },
+  sword(p, dir, b, pose) {
+    const I = S.iron;
+    const t = pose.throwPose;
+    if (dir === 'right') {
+      if (t === 'wind') {
+        p.line(11, 10 + b, 6, 1 + b, I[5], 7); // raised high behind the head
+        p.line(12, 10 + b, 7, 1 + b, I[3], 7);
+        p.hline(9, 13, 11 + b, S.brass[2], 7.4);
+      } else if (t === 'release') {
+        p.line(23, 16 + b, 31, 18 + b, I[5], 7); // swept forward
+        p.line(23, 17 + b, 31, 19 + b, I[3], 7);
+        p.vline(23, 14 + b, 19 + b, S.brass[2], 7.4);
+      } else {
+        p.line(18, 20 + b, 22, 29 + b, I[5], 6.4); // held low
+        p.line(19, 20 + b, 23, 29 + b, I[3], 6.4);
+        p.hline(17, 20, 20 + b, S.brass[2], 6.8);
+      }
+      return;
+    }
+    const x = dir === 'up' ? 21 : 9;
+    if (t === 'wind') {
+      p.vline(x, b, 8 + b, I[5], dir === 'up' ? 3.6 : 7);
+      p.vline(x + 1, b, 8 + b, I[3], dir === 'up' ? 3.6 : 7);
+      p.hline(x - 1, x + 2, 9 + b, S.brass[2], dir === 'up' ? 3.8 : 7.4);
+    } else if (t === 'release') {
+      p.vline(x + 1, 21 + b, 30, I[5], dir === 'up' ? 3.6 : 7);
+      p.vline(x + 2, 21 + b, 30, I[3], dir === 'up' ? 3.6 : 7);
+      p.hline(x, x + 3, 20 + b, S.brass[2], dir === 'up' ? 3.8 : 7.4);
+    } else {
+      p.vline(x, 21 + b, 29 + b, I[5], dir === 'up' ? 3.4 : 6.4);
+      p.vline(x + 1, 21 + b, 29 + b, I[3], dir === 'up' ? 3.4 : 6.4);
+      p.hline(x - 1, x + 2, 20 + b, S.brass[2], dir === 'up' ? 3.6 : 6.8);
+    }
+  },
   soot(p, dir, b) {
     for (const [x, y] of [[13, 15], [18, 17], [15, 20], [12, 19]]) p.tint(x, y + b, '#0a0a0c', 0.6);
     if (dir === 'down') p.tint(18, 10 + b, '#0a0a0c', 0.5);
@@ -404,10 +506,11 @@ export function wrenFrame(col, row, looks = [], recolor = null) {
   const pose = POSES[col];
   const dir = WREN_DIRS[row];
   const drawDir = dir === 'left' ? 'right' : dir;
+  noSling = looks.includes('crossbow') || looks.includes('sword');
   // the 'wizard' outfit is a whole different body (robe, hat, beard, wand); other looks are drawn on top
   const p = looks.includes('wizard') ? wizardFrame(pose, drawDir) : drawDir === 'right' ? drawSide(pose) : drawFront(pose, drawDir === 'up');
   if (recolor) recolorPainter(p, recolor);
-  for (const look of looks) if (ACCESSORIES[look]) ACCESSORIES[look](p, drawDir, pose.bob);
+  for (const look of looks) if (ACCESSORIES[look]) ACCESSORIES[look](p, drawDir, pose.bob, pose);
   p.outline(S.outline);
   return dir === 'left' ? p.mirrored() : p;
 }

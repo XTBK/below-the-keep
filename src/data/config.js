@@ -77,15 +77,49 @@ export const DOOR = {
 };
 
 export const MINIMAP = {
-  cellW: 7,
+  cellW: 6, // a room cell on the parchment map, in pixels
   cellH: 5,
-  gap: 1,
-  margin: 6,
+  gap: 2, // room for the inked corridors between rooms
+  margin: 3,
 };
 
 export const HAZARDS = {
   spikeDamage: 1, // half hearts
   spikeInset: 7, // spike hitbox is this much smaller than the tile on each side
+};
+
+// How each weapon handles. (Damage itself comes from Wren's stats and relics.)
+export const WEAPONS = {
+  sling: { recoil: 18, shake: 0 },
+  wand: { recoil: 14, shake: 0 },
+  crossbow: { recoil: 70, shake: 0.08 }, // a hard kick back
+  sword: {
+    reach: 40, // how far the swing reaches
+    arc: 1.25, // half the width of the swing (radians)
+    damage: 3.2, // x Wren's damage
+    knockback: 300,
+    cooldown: 1.5, // x his fire delay
+    lunge: 70, // a step forward into the swing
+    waveDamage: 0.35, // the thrown sword-wave: weak...
+    waveRange: 80, //            ...and short
+  },
+};
+
+// The weight of a fight: crits, numbers, little freezes on hits, squash on the struck.
+export const COMBAT = {
+  critChance: 0.08, // +2% per point of luck
+  critMultiplier: 2,
+  hitStop: 0.022, // seconds the world freezes when a shot lands (at most once every 0.06 s)
+  critHitStop: 0.06,
+  squash: 0.14, // how long a struck enemy squashes
+  damageNumbers: true,
+};
+
+// The dodge roll (Shift / gamepad B / the ROLL button): a quick tumble you can't be hurt in.
+export const ROLL = {
+  time: 0.3,
+  speed: 270,
+  cooldown: 0.7,
 };
 
 export const PLAYER = {

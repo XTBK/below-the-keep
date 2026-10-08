@@ -23,7 +23,7 @@ import * as SA from '../render/art/secretsArt.js';
 import * as E3 from '../render/art/enemiesArt3.js';
 import * as B3 from '../render/art/bossesArt3.js';
 import * as I3 from '../render/art/itemsArt3.js';
-import { spellFrame } from '../render/art/wizardArt.js';
+import { spellFrame, quarrelFrame } from '../render/art/wizardArt.js';
 import { wrenFrame, WREN_FRAMES } from '../render/art/wrenArt.js';
 import { barrel, barrelBroken, brazier, candles, flameFrame, slingStone, shadowFrame, pedestal, merchantTable } from '../render/art/propsArt.js';
 
@@ -246,3 +246,4 @@ Object.assign(ASSETS, {
 
 // --- Wren's wand: spell bolts in the three stone sizes ---
 ASSETS.spells = { frameW: 16, frameH: 16, cols: 3, rows: 1, generate: (c) => spellFrame(c) };
+ASSETS.quarrels = { frameW: 16, frameH: 16, cols: 3, rows: 1, generate: (c) => quarrelFrame(c) }; // the Ranger's crossbow bolts

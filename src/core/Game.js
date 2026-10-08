@@ -25,6 +25,8 @@ import { BOSS_FX, BOSS_ROSTER, bossHome } from '../data/bosses.js';
 import { enemyScale, bossScale, EARLY_BOSS_LIMIT } from '../data/difficulty.js';
 import { OMENS, OMEN_IDS, OMEN_CHANCE, OMEN_FX } from '../data/omens.js';
 import { Familiars } from '../items/Familiars.js';
+import { DamageNumbers } from '../ui/DamageNumbers.js';
+import { COMBAT } from '../data/config.js';
 import { tickSets, setsOnFloorStart } from '../items/Sets.js';
 import { FEATURES, SPECIAL_LAYOUTS } from '../data/rooms/specialLayouts.js';
 import { PAGE_DROP_CHANCE, ALTAR, ACTIVE } from '../data/items.js';
@@ -90,6 +92,8 @@ export class Game {
     this.pickups = new Pickups(this);
     this.bombs = new Bombs(this);
     this.familiars = new Familiars(this);
+    this.damageNumbers = new DamageNumbers();
+    this.hitStopCool = 0;
     this.warBanner = null; // { x, y, t, room } while a War Banner stands
     this.hud = new Hud(this.renderer.hudCanvas, this.renderer.hudTexture);
 
@@ -112,6 +116,8 @@ export class Game {
     this.victoryT = 0;
     this.seedEntry = null; // string while typing a seed on the title screen
 
+    // the starting heroes are always available
+    for (const [id, c] of Object.entries(CHARACTERS)) if (c.starter && !Save.data.unlocks.characters.includes(id)) Save.data.unlocks.characters.push(id);
     // which character the next run uses (the last one picked, if it's still unlocked)
     const saved = Save.data.settings.character;
     this.characterId = saved && Save.data.unlocks.characters.includes(saved) ? saved : 'wren';
@@ -296,6 +302,25 @@ export class Game {
       this.rebuildCurrentRoom();
     } else {
       this.victoryT = 3.2;
+    }
+  }
+
+  /** Is this blow a critical hit? (luck helps) */
+  rollCrit() {
+    return Math.random() < COMBAT.critChance + 0.02 * Math.max(0, this.player.stats.luck);
+  }
+
+  /** The feel of a landed blow: a tiny freeze, a number, and for a crit a gold flash. */
+  combatFeedback(enemy, dmg, crit) {
+    if (COMBAT.damageNumbers && dmg > 0) this.damageNumbers.add(enemy.x, enemy.y + (enemy.sprite.def.frameH - enemy.look.anchorY) * 0.6, dmg, crit);
+    if (crit) {
+      this.feel.hitStop(COMBAT.critHitStop);
+      this.feel.shake(0.12);
+      this.effects.burst(this.effects.presets.gold, enemy.x, enemy.y, 12, 12, 90, 60);
+      this.audio.play('crit');
+    } else if (this.hitStopCool <= 0) {
+      this.feel.hitStop(COMBAT.hitStop);
+      this.hitStopCool = 0.06;
     }
   }
 
@@ -735,6 +760,8 @@ export class Game {
     }
     this.enemies.update(edt);
     this.familiars.update(dt);
+    this.damageNumbers.update(dt);
+    if (this.hitStopCool > 0) this.hitStopCool -= dt;
     tickSets(this, dt);
     if (this.warBanner) {
       this.warBanner.t -= dt;
@@ -889,6 +916,7 @@ export class Game {
       if (input.pressed('bomb')) this.bombs.place();
       if (input.pressed('active')) this.player.tryUseActive();
       if (input.pressed('consumable')) useConsumable(this);
+      if (input.pressed('dodge')) this.player.tryRoll(this.input);
     }
 
     if (input.pressed('debug')) {

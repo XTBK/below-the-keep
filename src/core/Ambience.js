@@ -1,8 +1,16 @@
 import { midi } from './Synth.js';
 
-// Generated medieval music: a breathing drone under sparse lute / harp in the old church modes,
-// frame drums and horns for the bosses. Nothing is a recording - every note is chosen as it plays,
-// so it never repeats exactly. Used for any moment that has no music file (see data/music.js).
+// Generated medieval music. Every moment of the game (the title, each chapter, bosses, victory...)
+// has a SONG: a mode, a tempo, a chord progression, and a set of parts -
+//   pad      choir or drone holding each chord
+//   bass     low plucked strings (or horns) on a rhythm pattern
+//   arp      harp / lute picking through the chord
+//   melody   a tune made of a short motif that repeats and varies (phrase A A' B A'')
+//   drums    frame drum ('B' boom, 'b' soft boom, 't' tak, 's' shaker), one character per 16th
+//   bell     a toll every few bars
+// Songs alternate quiet and full sections, so they breathe. Nothing is recorded: notes are chosen
+// as they play, from the song's rules and a little chance, so it never repeats exactly.
+// Used for every moment that has no music file (see data/music.js).
 
 const MODES = {
   dorian: [0, 2, 3, 5, 7, 9, 10],
@@ -12,25 +20,97 @@ const MODES = {
   ionian: [0, 2, 4, 5, 7, 9, 11],
 };
 
-// a frame drum pattern for the boss fights, in 16 steps: B = boom (low), t = tak (rim), . = rest
-const BOSS_DRUMS = 'B..tB.t.B..tB.tt';
-const FINAL_DRUMS = 'B.tBB.t.B.tBBttt';
-// lute riffs (scale degrees, 0 = root; null = rest), one note per step
-const BOSS_RIFF = [0, null, 0, 1, 0, null, 4, 5, 4, null, 1, 0, null, 0, 1, null];
-const FINAL_RIFF = [0, 0, 1, 0, 4, 0, 5, 4, 0, 0, 1, 0, 6, 5, 4, 1];
+// melody rhythms for one bar (8 eighth notes): 1 = a note starts, 2 = a long note starts
+const RHYTHMS = {
+  slow: ['2.......', '2...2...', '2.....1.', '1...2...'],
+  walk: ['1.1.2...', '2...1.1.', '1.1.1.1.', '2.1.1...', '1...1.1.'],
+  dance: ['1.11.1..', '1..11.1.', '11.1.1..', '1.1.11..'],
+  fierce: ['1111.1.1', '1.111.1.', '11.111..', '1.1.1111'],
+};
 
 export const MOMENTS = {
-  title: { root: 50, mode: 'dorian', bpm: 64, sub: 1, drone: [38, 45], harp: 0.55, low: 0, high: 14 },
-  cells: { root: 50, mode: 'aeolian', bpm: 52, sub: 1, drone: [38, 45], lute: 0.3, low: -7, high: 7 },
-  catacombs: { root: 52, mode: 'phrygian', bpm: 46, sub: 1, drone: [40, 47], lute: 0.2, bellEvery: 12, low: -7, high: 7 },
-  hollow: { root: 57, mode: 'dorian', bpm: 56, sub: 1, drone: [45, 52], harp: 0.35, low: -3, high: 12 },
-  halls: { root: 50, mode: 'harmonic', bpm: 60, sub: 2, drone: [38, 45], lute: 0.18, heartbeat: true, low: -7, high: 7 },
-  vault: { root: 52, mode: 'phrygian', bpm: 40, sub: 1, drone: [40, 47], bellEvery: 6, harp: 0.15, low: 0, high: 10 },
-  throne: { root: 50, mode: 'harmonic', bpm: 54, sub: 1, drone: [38, 45], tollEvery: 8, choirEvery: 16, lute: 0.15, low: -7, high: 5 },
-  boss: { root: 50, mode: 'phrygian', bpm: 138, sub: 2, drone: [38, 45], drums: BOSS_DRUMS, riff: BOSS_RIFF },
-  finalBoss: { root: 50, mode: 'harmonic', bpm: 150, sub: 2, drone: [38, 45, 50], drums: FINAL_DRUMS, riff: FINAL_RIFF, hornEvery: 32, choirEvery: 32 },
-  victory: { root: 50, mode: 'ionian', bpm: 76, sub: 2, drone: [38, 45], chords: [[0, 4, 7], [5, 9, 12], [7, 11, 14], [0, 4, 7]] },
-  death: { root: 38, mode: 'aeolian', bpm: 60, sub: 1, drone: null, tollEvery: 6 },
+  // the title: a slow funeral march - low choir, a heartbeat drum, a bell, a horn calling in the dark
+  title: {
+    bpm: 58, root: 38, mode: 'aeolian', progression: [0, 5, 3, 4], barsPerChord: 2,
+    pad: 'choir', padGain: 0.05, bass: 'R.......R.......', bassInst: 'pluck', bassGain: 0.2,
+    arp: '..0...2...1...2.', arpInst: 'harp', arpGain: 0.07, arpOct: 2,
+    melody: { inst: 'horn', rhythm: 'slow', octave: 1, gain: 0.07, fullOnly: true },
+    drums: 'B.......b.......', drumGain: 0.18, bellEvery: 4, bellGain: 0.12,
+  },
+  // the Cells: grim and plodding - lute, a dripping tak, a low drone
+  cells: {
+    bpm: 72, root: 38, mode: 'aeolian', progression: [0, 0, 5, 4], barsPerChord: 1,
+    pad: 'drone', bass: 'R.....R.R.......', bassInst: 'pluck', bassGain: 0.17,
+    arp: '0.2.1.2.0.2.1.2.', arpInst: 'lute', arpGain: 0.07, arpOct: 1,
+    melody: { inst: 'lute', rhythm: 'walk', octave: 2, gain: 0.11 },
+    drums: 'b.....t.......t.', drumGain: 0.12,
+  },
+  // the Catacombs: phrygian dread - choir, bells for a melody, a slow bone-drum
+  catacombs: {
+    bpm: 60, root: 40, mode: 'phrygian', progression: [0, 1, 0, 6], barsPerChord: 2,
+    pad: 'choir', padGain: 0.05, bass: 'R.......F.......', bassInst: 'pluck', bassGain: 0.16,
+    arp: '0...1...2...1...', arpInst: 'harp', arpGain: 0.06, arpOct: 2,
+    melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.07 },
+    drums: 'B...........t...', drumGain: 0.14, bellEvery: 8, bellGain: 0.08,
+  },
+  // the Hollow: an old forest dance gone strange - a wooden pipe over a rippling harp
+  hollow: {
+    bpm: 92, root: 45, mode: 'dorian', progression: [0, 3, 0, 6], barsPerChord: 1,
+    pad: 'drone', bass: 'R.....F.R.....F.', bassInst: 'pluck', bassGain: 0.15,
+    arp: '0120120120120121', arpInst: 'harp', arpGain: 0.055, arpOct: 2,
+    melody: { inst: 'pipe', rhythm: 'dance', octave: 2, gain: 0.08 },
+    drums: 'b..t..s.b..t..s.', drumGain: 0.11,
+  },
+  // the Burning Halls: a war march - horns, choir, drums
+  halls: {
+    bpm: 96, root: 38, mode: 'harmonic', progression: [0, 5, 4, 4], barsPerChord: 1,
+    pad: 'choir', padGain: 0.045, bass: 'R.R.....R.R...F.', bassInst: 'horn', bassGain: 0.06,
+    arp: '0.1.2.1.0.1.2.1.', arpInst: 'lute', arpGain: 0.05, arpOct: 1,
+    melody: { inst: 'horn', rhythm: 'walk', octave: 1, gain: 0.07 },
+    drums: 'B..tB.t.B..tB.tt', drumGain: 0.15,
+  },
+  vault: {
+    bpm: 50, root: 40, mode: 'phrygian', progression: [0, 1, 6, 0], barsPerChord: 2,
+    pad: 'choir', padGain: 0.05, bass: 'R...............', bassInst: 'pluck', bassGain: 0.15,
+    arp: '0.......2.......', arpInst: 'harp', arpGain: 0.06, arpOct: 2,
+    melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.08 },
+    drums: '................', bellEvery: 2, bellGain: 0.09,
+  },
+  // the throne: a dark coronation - choir, horns, the bell of the keep
+  throne: {
+    bpm: 66, root: 38, mode: 'harmonic', progression: [0, 5, 3, 4], barsPerChord: 2,
+    pad: 'choir', padGain: 0.06, bass: 'R.......R...F...', bassInst: 'horn', bassGain: 0.06,
+    arp: '0...1...2...1...', arpInst: 'harp', arpGain: 0.06, arpOct: 2,
+    melody: { inst: 'horn', rhythm: 'slow', octave: 1, gain: 0.07 },
+    drums: 'B.......B...b...', drumGain: 0.16, bellEvery: 4, bellGain: 0.12,
+  },
+  boss: {
+    bpm: 140, root: 38, mode: 'phrygian', progression: [0, 1, 0, 6], barsPerChord: 1,
+    pad: 'drone', bass: 'R.RR.R.RR.RR.R.F', bassInst: 'pluck', bassGain: 0.17,
+    arp: '0.1.2.1.0.1.2.1.', arpInst: 'lute', arpGain: 0.05, arpOct: 1,
+    melody: { inst: 'horn', rhythm: 'fierce', octave: 1, gain: 0.06, fullOnly: true },
+    drums: 'B..tB.t.B..tB.tt', drumGain: 0.2,
+  },
+  finalBoss: {
+    bpm: 150, root: 38, mode: 'harmonic', progression: [0, 5, 1, 4], barsPerChord: 1,
+    pad: 'choir', padGain: 0.06, bass: 'RRR.RR.RRR.RR.FF', bassInst: 'pluck', bassGain: 0.17,
+    arp: '0121012101210121', arpInst: 'lute', arpGain: 0.045, arpOct: 1,
+    melody: { inst: 'horn', rhythm: 'fierce', octave: 1, gain: 0.07 },
+    drums: 'B.tBB.t.B.tBBttt', drumGain: 0.2, bellEvery: 4, bellGain: 0.1,
+  },
+  // victory: at last, a major key - harp, pipe, choir
+  victory: {
+    bpm: 84, root: 50, mode: 'ionian', progression: [0, 4, 5, 3], barsPerChord: 1,
+    pad: 'choir', padGain: 0.05, bass: 'R.....F.R.......', bassInst: 'pluck', bassGain: 0.15,
+    arp: '0120120120120121', arpInst: 'harp', arpGain: 0.06, arpOct: 1,
+    melody: { inst: 'pipe', rhythm: 'walk', octave: 1, gain: 0.09 },
+    drums: 'b.......b...t...', drumGain: 0.1, bellEvery: 4, bellGain: 0.1,
+  },
+  death: {
+    bpm: 50, root: 38, mode: 'aeolian', progression: [0, 5, 3, 0], barsPerChord: 2,
+    pad: 'choir', padGain: 0.04, bass: '................', arp: '................',
+    drums: '................', bellEvery: 2, bellGain: 0.16,
+  },
 };
 
 export class Ambience {
@@ -52,9 +132,10 @@ export class Ambience {
     this.m = MOMENTS[name] || null;
     this._stopDrone();
     if (!this.m) return;
-    if (this.m.drone) this._startDrone(this.m.drone);
     this.step = 0;
-    this.next = this.ctx.currentTime + 0.3;
+    this.next = this.ctx.currentTime + 0.4;
+    this.phrase = null;
+    this.lastDeg = 4;
   }
 
   /** Called every frame: schedules the notes of the next fraction of a second. */
@@ -63,100 +144,167 @@ export class Ambience {
     if (!m) return;
     const now = this.ctx.currentTime;
     if (this.next < now) this.next = now + 0.05; // (the tab was in the background)
-    const stepDur = 60 / m.bpm / m.sub;
-    while (this.next < now + 0.25) {
-      this._play(m, this.step, this.next, stepDur);
+    const sixteenth = 60 / m.bpm / 4;
+    while (this.next < now + 0.3) {
+      this._step(m, this.step, this.next, sixteenth);
       this.step++;
-      this.next += stepDur;
+      this.next += sixteenth;
     }
   }
 
-  _note(m, degree) {
+  // --- music theory helpers ------------------------------------------------------------------
+
+  /** Frequency of a scale degree (0 = root; 7 = an octave up) in the song's mode. */
+  _deg(m, degree, octave = 0) {
     const sc = MODES[m.mode];
     const oct = Math.floor(degree / sc.length);
     const d = ((degree % sc.length) + sc.length) % sc.length;
-    return midi(m.root + sc[d] + 12 * oct);
+    return midi(m.root + 12 * (oct + octave) + sc[d]);
   }
 
-  _play(m, i, t, stepDur) {
+  /** The chord (as scale degrees: root, third, fifth) for a bar. */
+  _chord(m, bar) {
+    const root = m.progression[Math.floor(bar / (m.barsPerChord || 1)) % m.progression.length];
+    return [root, root + 2, root + 4];
+  }
+
+  /** A melodic phrase for 2 bars: notes leaning on chord tones, moving by step between them. */
+  _makePhrase(m, bar) {
+    const mel = m.melody;
+    const notes = [];
+    for (let b = 0; b < 2; b++) {
+      const chord = this._chord(m, bar + b);
+      const rhythm = RHYTHMS[mel.rhythm][Math.floor(Math.random() * RHYTHMS[mel.rhythm].length)];
+      for (let i = 0; i < 8; i++) {
+        const c = rhythm[i];
+        if (c === '.') continue;
+        let len = 1;
+        while (i + len < 8 && rhythm[i + len] === '.') len++;
+        let deg;
+        if (i % 4 === 0) {
+          // strong beat: the chord tone closest to where the tune already is
+          const opts = chord.flatMap((d) => [d, d + 7, d - 7]);
+          deg = opts.reduce((a, d) => (Math.abs(d - this.lastDeg) < Math.abs(a - this.lastDeg) ? d : a), opts[0]);
+        } else {
+          deg = this.lastDeg + (Math.random() < 0.5 ? 1 : -1) * (Math.random() < 0.8 ? 1 : 2);
+        }
+        deg = Math.max(-2, Math.min(9, deg));
+        this.lastDeg = deg;
+        notes.push({ at: b * 16 + i * 2, deg, len: len * 2, long: c === '2' });
+      }
+    }
+    return notes;
+  }
+
+  // --- one 16th note -------------------------------------------------------------------------
+
+  _step(m, i, t, sx) {
     const s = this.s;
     const o = this.out;
-    const beat = m.sub > 1 ? i % m.sub === 0 : true;
-    // wandering melody: small steps up and down the mode, resting often
-    const wander = (chance, bright, gain, dur) => {
-      if (!beat || Math.random() > chance) return;
-      this.deg = Math.max(m.low, Math.min(m.high, (this.deg ?? 0) + [-2, -1, -1, 1, 1, 2, 3, -3][Math.floor(Math.random() * 8)]));
-      s.pluck(o, t, this._note(m, this.deg), dur, gain, bright, 0.998);
-      // sometimes a second note, a third above, like a lute strummed
-      if (Math.random() < 0.25) s.pluck(o, t + 0.03, this._note(m, this.deg + 2), dur, gain * 0.6, bright, 0.998);
-    };
-    if (m.lute) wander(m.lute, 0.4, 0.16, 2.2);
-    if (m.harp) {
-      // harp: little rising figures of 3-4 notes
-      if (beat && Math.random() < m.harp * 0.4) {
-        const base = Math.floor(Math.random() * 5);
-        const n = 3 + Math.floor(Math.random() * 2);
-        for (let k = 0; k < n; k++) s.pluck(o, t + k * stepDur * 0.33, this._note(m, base + k * 2), 2.5, 0.12, 0.3, 0.998);
+    const pos = i % 16;
+    const bar = Math.floor(i / 16);
+    const chord = this._chord(m, bar);
+    // sections: 4 bars quiet, 8 bars full (the first 4 bars always quiet)
+    const section = Math.floor(bar / 4) % 3;
+    const full = bar >= 4 && section !== 0;
+
+    // the pad: a choir chord per chord change, or a drone that follows the root
+    if (pos === 0 && bar % (m.barsPerChord || 1) === 0) {
+      const dur = sx * 16 * (m.barsPerChord || 1);
+      if (m.pad === 'choir') s.choir(o, t, [this._deg(m, chord[0], -1), this._deg(m, chord[1], -1), this._deg(m, chord[2], -1)], dur + 0.4, m.padGain || 0.05, Math.min(1.2, dur * 0.3));
+      else if (m.pad === 'drone') this._droneTo(this._deg(m, chord[0], -1));
+    }
+    // the bass
+    const bc = m.bass && m.bass[pos];
+    if (bc && bc !== '.') {
+      const deg = bc === 'F' ? chord[0] + 4 : bc === 'O' ? chord[0] + 7 : chord[0];
+      const f = this._deg(m, deg, -1);
+      if (m.bassInst === 'horn') s.horn(o, t, f, sx * 3, m.bassGain);
+      else s.pluck(o, t, f, sx * 6, m.bassGain, 0.55, 0.993);
+    }
+    // the arpeggio
+    const ac = m.arp && m.arp[pos];
+    if (ac && ac !== '.' && (full || pos % 4 === 0)) {
+      const f = this._deg(m, chord[+ac % 3], m.arpOct || 1);
+      s.pluck(o, t, f, sx * 8, m.arpGain, m.arpInst === 'lute' ? 0.5 : 0.3, 0.997);
+    }
+    // the melody: a motif that repeats and varies
+    if (m.melody && (full || !m.melody.fullOnly) && (full || bar % 2 === 0)) {
+      if (pos === 0 && bar % 2 === 0) {
+        const phraseNo = Math.floor(bar / 2) % 4;
+        if (!this.phrase || phraseNo === 0 || phraseNo === 2) this.phrase = this._makePhrase(m, bar); // A ... B
+        else if (Math.random() < 0.5) {
+          // A' / A'': the same tune, one note changed
+          const k = Math.floor(Math.random() * this.phrase.length);
+          if (this.phrase[k]) this.phrase[k] = { ...this.phrase[k], deg: this.phrase[k].deg + (Math.random() < 0.5 ? 1 : -1) };
+        }
+        this.phraseBar = bar;
+      }
+      const local = (bar - (this.phraseBar || 0)) * 16 + pos;
+      for (const n of this.phrase || []) {
+        if (n.at !== local) continue;
+        const f = this._deg(m, n.deg, m.melody.octave);
+        const dur = sx * n.len * (n.long ? 1.1 : 0.95);
+        const g = m.melody.gain;
+        switch (m.melody.inst) {
+          case 'horn':
+            s.horn(o, t, f, Math.max(0.2, dur), g);
+            break;
+          case 'pipe':
+            s.pipe(o, t, f, Math.max(0.12, dur), g);
+            break;
+          case 'bell':
+            s.bell(o, t, f, 2.5, g);
+            break;
+          default:
+            s.pluck(o, t, f, Math.max(0.6, dur * 2), g, 0.45, 0.997);
+        }
       }
     }
-    if (m.bellEvery && i % m.bellEvery === 0 && i > 0) s.bell(o, t, this._note(m, 7 + (Math.random() < 0.5 ? 0 : 4)), 4, 0.12);
-    if (m.tollEvery && i % m.tollEvery === 0) s.bell(o, t, midi(m.root - 12 + (m.root < 45 ? 12 : 0)), 5, 0.22);
-    if (m.choirEvery && i % m.choirEvery === 0) s.choir(o, t, [this._note(m, 0) / 2, this._note(m, 2) / 2, this._note(m, 4) / 2], stepDur * m.choirEvery * 0.9, 0.05, 1.5);
-    if (m.heartbeat && i % 4 === 0) {
-      s.drum(o, t, 70, 45, 0.4, 0.22, 0.15);
-      s.drum(o, t + stepDur * 0.5, 62, 42, 0.35, 0.16, 0.1);
+    // drums
+    const dc = m.drums && m.drums[pos];
+    if (dc && dc !== '.' && (full || dc === 'B' || dc === 'b')) {
+      const g = m.drumGain || 0.15;
+      if (dc === 'B') s.drum(o, t, 80, 44, 0.45, g, 0.25);
+      else if (dc === 'b') s.drum(o, t, 70, 44, 0.35, g * 0.6, 0.15);
+      else if (dc === 't') s.noise(o, t, { type: 'bandpass', f: [1900, 1500], q: 3, gain: g * 0.5, dur: 0.05 });
+      else if (dc === 's') s.noise(o, t, { type: 'highpass', f: [6000, 5000], gain: g * 0.25, attack: 0.01, dur: 0.06 });
     }
-    if (m.drums) {
-      const c = m.drums[i % m.drums.length];
-      if (c === 'B') s.drum(o, t, 78, 46, 0.35, 0.3, 0.25);
-      else if (c === 't') s.noise(o, t, { type: 'bandpass', f: [1900, 1500], q: 3, gain: 0.14, dur: 0.05 });
-    }
-    if (m.riff) {
-      const d = m.riff[i % m.riff.length];
-      if (d !== null) s.pluck(o, t, this._note(m, d - 7), stepDur * 3, 0.17, 0.7, 0.99);
-    }
-    if (m.hornEvery && i % m.hornEvery === 0) {
-      s.horn(o, t, this._note(m, -7), stepDur * 6, 0.08);
-      s.horn(o, t, this._note(m, -3), stepDur * 6, 0.05);
-    }
-    if (m.chords && i % 8 === 0) {
-      const ch = m.chords[Math.floor(i / 8) % m.chords.length];
-      const f = ch.map((st) => midi(m.root + st));
-      s.choir(o, t, f, stepDur * 8, 0.04, 0.5);
-      f.concat(f.map((x) => x * 2)).forEach((x, k) => s.pluck(o, t + k * stepDur * 0.5, x, 2, 0.1, 0.35, 0.998));
-    }
+    // the bell
+    if (m.bellEvery && pos === 0 && bar % m.bellEvery === 0) s.bell(o, t, this._deg(m, chord[0], -1), 5, m.bellGain || 0.1);
   }
 
-  _startDrone(notes) {
+  /** The drone glides to a new root. */
+  _droneTo(freq) {
     const ctx = this.ctx;
     const t = ctx.currentTime;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.05, t + 3);
-    const f = ctx.createBiquadFilter();
-    f.type = 'lowpass';
-    f.frequency.value = 380;
-    f.Q.value = 1.5;
-    // the drone breathes: its filter opens and closes very slowly
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.07;
-    const lfoAmt = ctx.createGain();
-    lfoAmt.gain.value = 160;
-    lfo.connect(lfoAmt).connect(f.frequency);
-    f.connect(g).connect(this.out);
-    const oscs = [lfo];
-    for (const n of notes) {
-      for (const det of [-6, 6]) {
+    if (!this.drone) {
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.04, t + 3);
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = 360;
+      f.Q.value = 1.5;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.07;
+      const lfoAmt = ctx.createGain();
+      lfoAmt.gain.value = 150;
+      lfo.connect(lfoAmt).connect(f.frequency);
+      f.connect(g).connect(this.out);
+      const oscs = [];
+      for (const [mul, det] of [[1, -6], [1, 6], [1.5, 0], [0.5, 0]]) {
         const o = ctx.createOscillator();
         o.type = 'sawtooth';
-        o.frequency.value = midi(n);
         o.detune.value = det;
         o.connect(f);
-        oscs.push(o);
+        oscs.push({ o, mul });
       }
+      lfo.start(t);
+      for (const { o } of oscs) o.start(t);
+      this.drone = { g, oscs, lfo };
     }
-    for (const o of oscs) o.start(t);
-    this.drone = { g, oscs };
+    for (const { o, mul } of this.drone.oscs) o.frequency.setTargetAtTime(freq * mul, t, 0.4);
   }
 
   _stopDrone() {
@@ -166,7 +314,8 @@ export class Ambience {
     d.g.gain.cancelScheduledValues(t);
     d.g.gain.setValueAtTime(d.g.gain.value, t);
     d.g.gain.linearRampToValueAtTime(0.0001, t + 2);
-    for (const o of d.oscs) o.stop(t + 2.1);
+    for (const { o } of d.oscs) o.stop(t + 2.1);
+    d.lfo.stop(t + 2.1);
     this.drone = null;
   }
 }
