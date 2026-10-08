@@ -104,10 +104,26 @@ floor she starts walking toward you, room by room. You hear her before you see h
 whispers, the light thinning, the edges of the screen going dark. Then she comes through the door and drifts
 straight at you, through rocks and walls. If you keep your distance too long, she's suddenly behind you.
 
-- Her touch costs **two hearts**; then she lets you go for a while.
+- Her touch costs **a heart and a half**; then she lets you go for a while (about 24 seconds).
+- She takes a moment to become solid when she arrives, and while you're fighting the room she drifts slower and won't appear behind you.
 - A **dodge** passes through her unharmed. A **bomb** beside her drives her off.
 - Leave the room and she follows, a few seconds behind. She won't enter a boss's room while the boss lives.
 - Embers x1.5.
+
+## Encounters
+
+Some floors have **a quiet room** with no fight in it - just someone (or something) and a choice. Seven of them,
+never the same twice in a run:
+
+- **A Dying Knight**: give him a heart of your health for pennies and a key, or take his sword (a weapon) and his curse.
+- **The Crown's Echo**: take its rare relic (and the next floor is cursed), smash it with a bomb, or walk away.
+- **A Locked Cell**: spend a key on the stranger inside. Usually grateful. Not always.
+- **Beatrix's Candle**: blow it out (a key and embers - and in Stalked mode she loses your trail), or let it heal you.
+- **A Mapmaker's Satchel**: Wynn's maps (the floor revealed) or her coins.
+- **An Altar of Old Blood**: a heart for good in exchange for damage, or a draught for luck.
+- **A Gaoler's Body**: take his keyring and face what guards it, or try to slip one key off quietly.
+
+Esc walks away without choosing; you can come back.
 
 ## The road forks
 

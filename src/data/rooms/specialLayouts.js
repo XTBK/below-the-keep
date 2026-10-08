@@ -33,6 +33,7 @@ export const SPECIAL_LAYOUTS = {
   feature_puzzle: L('Chamber of Candles', '.............', '..T.......T..', '.............', '......H......', '.............', '..T.......T..', '.............'),
   feature_library: L('Forgotten Library', 'c...........c', '.L..L...L..L.', '.............', '....c...c....', '.............', '.L..L...L..L.', 'c...........c'),
   feature_well: L('Wishing Well', 'c...........c', '.............', '.............', '......W......', '.............', '.............', 'c...........c'),
+  feature_encounter: L('A Quiet Room', 'c...........c', '.............', '.............', '......Q......', '.............', '.............', 'c...........c'),
   feature_rug: L('Dusty Parlour', 'c...........c', '..b.......b..', '.............', '.....eUe.....', '.............', '..b.......b..', 'c...........c'),
 };
 
@@ -41,6 +42,7 @@ export const FEATURES = {
   feature_puzzle: { chance: 0.4 },
   feature_library: { chance: 0.35 },
   feature_well: { chance: 0.35 },
+  feature_encounter: { chance: 0.6 }, // someone (or something) and a choice (data/encounters.js)
   feature_rug: { chance: 0.4, minFloor: 2, maxFloor: 7 }, // the trapdoor to the Forgotten Vault
 };
 

@@ -1,3 +1,4 @@
+import { Encounter } from './Encounter.js';
 import { furnishGatehouse, Prisoner } from './Gatehouse.js';
 import { ROUTES } from '../data/routes.js';
 import * as THREE from 'three';
@@ -578,6 +579,8 @@ export class Room {
           bookSpots.push({ c, r });
         } else if (ch === 'W') {
           this.features.push(new WishingWell(this, x, ground));
+        } else if (ch === 'Q') {
+          this.features.push(new Encounter(this, x, ground));
         } else if (ch === 'U') {
           this.features.push(new Rug(this, x, y));
         } else if (ch === 'X') {

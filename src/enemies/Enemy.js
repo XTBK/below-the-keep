@@ -120,6 +120,18 @@ export class Enemy {
     return true;
   }
 
+  /**
+   * The last ones left in a room and all hiding (in the water, on the ceiling, as a statue...):
+   * hurry them along - whatever they're waiting for, it's over. Their turn to attack is granted.
+   */
+  coax() {
+    this.stateTime = 999;
+    this.grace = 0;
+    this.game.enemies.turnRest.delete(this);
+    if (this.state === 'under' && this.type === 'eel') this.setState('rising'); // the eel rises wherever it is
+    this.game.effects.landDust(this.x, this.y, 8);
+  }
+
   get alive() {
     return this.active && !this.dying;
   }

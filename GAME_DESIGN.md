@@ -678,3 +678,20 @@ Three systems so a run feels like this game's own, not a borrowed loop.
   across consecutive lines. Lines may have a `voice` (THE CROWN in purple, BEATRIX in pale red). New: a 7-panel intro
   (the tomb, the crown's whisper, the procession of the five, Beatrix), a Crown line for each chapter, the endings
   `endKing` / `endCrown` (played by `Game.win`) and `beatrix` (the first Stalked run).
+
+### Expansion 9 — encounters, a fairer Beatrix, no hiding forever (awaiting OK)
+
+- **Encounters** (`data/encounters.js`, `world/Encounter.js`, the `encounter` menu screen): a feature room
+  (`feature_encounter`, chance 0.6, tile `Q`) with one of seven encounters (`Game.drawEncounter`, never twice a run).
+  Walking up opens the choice; options can be unavailable with a reason (`can`). Choosing is final
+  (`data.encounterDone`); Esc walks away. Effects: health, heart containers, pennies, keys, bombs, luck/damage (through
+  `potionBonus`), reward pedestals, embers, a map reveal, an ambush (the chapter's medium pool, doors lock) and
+  `Game.omenOwed` (the next floor's omen).
+- **Beatrix tuned** after the playtest (5 touches in 2 floors): touch 4 -> 3 half hearts, rest 14 -> 24 s, bomb 22 -> 30 s,
+  slower to become solid (~0.8 s of warning), and while the room's creatures are still fighting she drifts at 70% and
+  never blinks behind you.
+- **Stragglers** (`EnemyManager.update`, `Enemy.coax`): when every non-boss enemy left in the room has been hidden for
+  4 s, they're hurried out (their wait is over and they get an attack turn; the eel rises where it is), with a wail
+  and a puff of dust to show where.
+- Playtest bot: `scratchpad/shot/playrun.mjs` + `botlib.js` play whole runs and log every room (the bot must advance
+  `game.time` itself, or the attack budget never frees up).

@@ -1,3 +1,4 @@
+import { getSheet } from '../render/Assets.js';
 import { RENDER } from '../data/config.js';
 import { drawText, textWidth } from './PixelFont.js';
 import { Save } from '../core/Save.js';
@@ -376,6 +377,63 @@ const SCREENS = {
         { label: 'COLLECTION', action: () => g.openCollection() },
         { label: 'SETTINGS', action: () => menus.open('settings') },
       ];
+    },
+  },
+
+  // an encounter: someone in a quiet room, and a choice
+  encounter: {
+    back(g, menus) {
+      const t = menus.top;
+      if (t.result) return g.setPaused(false);
+      // walking away is always allowed (it doesn't count as choosing)
+      t.enc.room.data.encounterDone = false;
+      g.setPaused(false);
+    },
+    items(g, menus, t) {
+      if (t.result) return [{ label: 'GO ON', action: () => g.setPaused(false) }];
+      return t.enc.def.options.map((o, i) => {
+        const why = o.can ? o.can(g) : null;
+        return {
+          label: o.label,
+          disabled: !!why,
+          selectable: true,
+          note: why || o.note,
+          action: () => {
+            t.result = t.enc.choose(i);
+            t.cursor = 0;
+          },
+        };
+      });
+    },
+    draw(ctx, menus, time, t) {
+      const g = menus.game;
+      const def = t.enc.def;
+      dimBackground(ctx, 0.75);
+      drawPanel(ctx, 90, 46, 460, 262, def.name.toUpperCase());
+      // who (or what) it is, drawn twice the size
+      const [key, col, row] = def.look;
+      const s = getSheet(key);
+      const { frameW: fw, frameH: fh } = s.def;
+      const sc = fw > 40 ? 1 : 2;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(s.colorCanvas, col * fw, row * fh, fw, fh, 160 - (fw * sc) / 2, 150 - fh * sc, fw * sc, fh * sc);
+      const text = t.result || def.text;
+      wrap(text.toUpperCase(), 44).forEach((line, k) => drawText(ctx, line, 236, 74 + k * 12, t.result ? C.gold : C.ink));
+      const items = menus.items();
+      menus.rows = [];
+      items.forEach((it, i) => {
+        const y = 176 + i * 20;
+        const sel = i === t.cursor;
+        if (sel) {
+          ctx.fillStyle = 'rgba(232,196,108,0.12)';
+          ctx.fillRect(110, y - 4, 420, 17);
+        }
+        drawText(ctx, (sel ? '> ' : '  ') + it.label, 120, y, it.disabled ? C.faint : sel ? C.gold : C.ink);
+        menus.rows.push({ x0: 110, x1: 530, y0: y - 4, y1: y + 13, i });
+      });
+      const note = items[t.cursor] && items[t.cursor].note;
+      if (note) wrap(note.toUpperCase(), 66).forEach((line, k) => drawText(ctx, line, W / 2, 262 + k * 11, items[t.cursor].disabled ? C.red : C.dim, { align: 'center' }));
+      drawText(ctx, g.input.touchMode ? 'TAP A CHOICE' : 'W/S CHOOSE    ENTER DECIDE    ESC WALK AWAY', W / 2, H - 30, C.faint, { align: 'center' });
     },
   },
 

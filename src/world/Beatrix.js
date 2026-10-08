@@ -20,9 +20,11 @@ export const BEATRIX = {
   maxSpeed: 64,
   blinkEvery: 7, // if you've kept your distance this long, she is suddenly behind you
   blinkFar: 150,
-  damage: 4, // half hearts: two hearts
-  rest: 14, // after her touch, how long she lets you be
-  banish: 22, // after a bomb
+  damage: 3, // half hearts: a heart and a half
+  rest: 24, // after her touch, how long she lets you be
+  banish: 30, // after a bomb
+  fadeIn: 1.0, // how fast she becomes solid (she can't touch you until she is): ~0.8 s of warning
+  busySlow: 0.7, // while you're fighting the room's creatures, she drifts slower and doesn't blink
   radius: 12,
 };
 
@@ -181,19 +183,22 @@ export class Beatrix {
         }
         break;
       case 'hunting': {
-        this.alpha = Math.min(1, this.alpha + dt * 1.6);
+        this.alpha = Math.min(1, this.alpha + dt * BEATRIX.fadeIn);
+        // is the room still fighting you? then she's a slower, steadier threat
+        let busy = false;
+        g.enemies.forEachAlive(g.room, (e) => (busy = busy || e.hittable));
         const dx = pl.x - this.x;
         const dy = pl.y - this.y;
         const d = Math.hypot(dx, dy) || 1;
         // she drifts straight at you, through everything; a little faster when you look away
-        const v = this.speed * (d > 160 ? 1.25 : 1);
+        const v = this.speed * (d > 160 ? 1.25 : 1) * (busy ? BEATRIX.busySlow : 1);
         this.x += (dx / d) * v * dt;
         this.y += (dy / d) * v * dt;
         // keep your distance too long, and she's suddenly behind you
         this.blinkT -= dt;
         if (this.blinkT <= 0) {
           this.blinkT = BEATRIX.blinkEvery;
-          if (d > BEATRIX.blinkFar) this._blinkBehind();
+          if (d > BEATRIX.blinkFar && !busy) this._blinkBehind();
         }
         // whispers
         if (Math.random() < dt * 0.45) g.audio.play('whisper', 0.5 + 0.5 * this.dread);

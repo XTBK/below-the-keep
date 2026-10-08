@@ -298,6 +298,20 @@ export class EnemyManager {
   update(dt) {
     const room = this.game.room;
     const p = this.game.player;
+    // stragglers: if everything left in the room is hiding, it doesn't get to hide for long
+    let alive = 0;
+    let shown = 0;
+    this.forEachAlive(room, (e) => {
+      if (e.isBoss) return;
+      alive++;
+      if (e.hittable) shown++;
+    });
+    this.hidingT = alive > 0 && shown === 0 ? (this.hidingT || 0) + dt : 0;
+    if (this.hidingT > 4) {
+      this.hidingT = 0;
+      this.forEachAlive(room, (e) => !e.isBoss && e.coax());
+      this.game.audio.play('wail', 0.4);
+    }
     room.nav.update(p.x, p.y);
 
     const n = this.active.length; // enemies spawned during this loop (flies) start next frame

@@ -26,6 +26,7 @@ import { arenaFor } from '../data/rooms/shapedLayouts.js';
 import { ROUTES, rollRoutes } from '../data/routes.js';
 import { gatehouseFloor } from '../world/Gatehouse.js';
 import { Beatrix } from '../world/Beatrix.js';
+import { ENCOUNTER_IDS } from '../data/encounters.js';
 import { PRISONERS, PRISONER_IDS, rescued } from '../data/prisoners.js';
 import { EMBERS, rank } from '../data/embers.js';
 import { enemyScale, bossScale, EARLY_BOSS_LIMIT, TIER_INFO, bossTier } from '../data/difficulty.js';
@@ -182,6 +183,8 @@ export class Game {
     this.prisonerHere = null; // { roomId, id }: a prisoner in chains on this floor
     this.loreGiven = false;
     this.beatrixAnnounced = false;
+    this.encountersSeen = new Set();
+    this.omenOwed = false; // the Crown's Echo: its gift curses the next floor
     this.embersBanked = 0;
     this.prisonerFreed = null;
     this.inVault = false; // on the hidden floor under the rug
@@ -354,6 +357,10 @@ export class Game {
 
   _rollOmen(rng) {
     if (this.realm) return null;
+    if (this.omenOwed && this.floorNumber >= 2 && this.chapterKey !== 'throne') {
+      this.omenOwed = false;
+      return OMEN_IDS[Math.floor(rng.next() * OMEN_IDS.length)];
+    }
     if (this.route && ROUTES[this.route].omen) return OMEN_IDS[Math.floor(rng.next() * OMEN_IDS.length)];
     if (this.floorNumber < 2 || this.chapterKey === 'throne' || this.chapterKey === 'vault') return null;
     if (!rng.chance(this.oath('moon') ? 1 : OMEN_CHANCE)) return null;
@@ -570,6 +577,15 @@ export class Game {
     this._snapCamera();
     this.onEnteredRoom();
     this.familiars.warp();
+  }
+
+  /** An encounter for a quiet room: never the same one twice in a run. */
+  drawEncounter(rng) {
+    let pool = ENCOUNTER_IDS.filter((id) => !this.encountersSeen.has(id));
+    if (!pool.length) pool = ENCOUNTER_IDS;
+    const id = pool[Math.floor(rng.next() * pool.length)];
+    this.encountersSeen.add(id);
+    return id;
   }
 
   /** The Stalked mode: Beatrix comes to every floor of the Keep. */
