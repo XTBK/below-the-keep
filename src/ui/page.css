@@ -1,0 +1,132 @@
+/* Page-level styles: full-screen black stage, no scrolling/zooming, touch control visuals. */
+:root {
+  color-scheme: dark;
+  --stage: #000000;
+  --ink: #e8e0d0;
+  --ember: #e8c46c;
+  --iron: rgba(93, 96, 108, 0.55);
+  --iron-dark: rgba(18, 18, 22, 0.55);
+  --font: 'Courier New', ui-monospace, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--stage);
+  overflow: hidden;
+  touch-action: none; /* no scrolling, no pinch zoom: every touch goes to the game */
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+canvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* --- touch sticks: appear under your thumb --- */
+.touch-ui .stick {
+  display: none;
+  position: fixed;
+  width: 112px;
+  height: 112px;
+  margin: -56px 0 0 -56px;
+  border-radius: 50%;
+  border: 2px solid var(--iron);
+  background: var(--iron-dark);
+  pointer-events: none;
+}
+.touch-ui .stick-shoot {
+  border-color: rgba(232, 196, 108, 0.45);
+}
+.touch-ui .knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: var(--iron);
+}
+.touch-ui .stick-shoot .knob {
+  background: rgba(232, 196, 108, 0.5);
+}
+
+/* --- touch buttons: only shown on touch screens --- */
+.touch-btn {
+  display: none;
+  position: fixed;
+  font: bold 14px/1 var(--font);
+  color: var(--ink);
+  background: var(--iron-dark);
+  border: 2px solid var(--iron);
+  border-radius: 6px;
+  padding: 10px 14px;
+  touch-action: none;
+}
+.touch-btn:focus-visible {
+  outline: 2px solid var(--ember);
+}
+.touch-pause {
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+}
+.touch-item {
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 66px);
+}
+.touch-bomb {
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 136px);
+}
+.touch-use {
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 206px);
+}
+.touch-newrun {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--ember);
+}
+@media (pointer: coarse) {
+  .touch-btn {
+    display: block;
+  }
+}
+.touch-mode .touch-btn {
+  display: block;
+}
+.touch-btn[hidden] {
+  display: none !important;
+}
+
+/* --- portrait phones: ask to rotate --- */
+.rotate-hint {
+  display: none;
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  .rotate-hint {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 16px;
+    text-align: center;
+    background: var(--stage);
+    color: var(--ember);
+    font: bold 18px/1.4 var(--font);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
