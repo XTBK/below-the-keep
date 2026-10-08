@@ -42,7 +42,7 @@ export const FEATURES = {
   feature_puzzle: { chance: 0.4 },
   feature_library: { chance: 0.35 },
   feature_well: { chance: 0.35 },
-  feature_encounter: { chance: 0.6 }, // someone (or something) and a choice (data/encounters.js)
+  feature_encounter: { chance: 0.22 }, // someone (or something) and a choice (data/encounters.js)
   feature_rug: { chance: 0.4, minFloor: 2, maxFloor: 7 }, // the trapdoor to the Forgotten Vault
 };
 

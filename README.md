@@ -112,7 +112,7 @@ straight at you, through rocks and walls. If you keep your distance too long, sh
 
 ## Encounters
 
-Some floors have **a quiet room** with no fight in it - just someone (or something) and a choice. Seven of them,
+Now and then a floor has **a quiet room** with no fight in it - just someone (or something) and a choice. Seven of them,
 never the same twice in a run:
 
 - **A Dying Knight**: give him a heart of your health for pennies and a key, or take his sword (a weapon) and his curse.

@@ -682,7 +682,7 @@ Three systems so a run feels like this game's own, not a borrowed loop.
 ### Expansion 9 — encounters, a fairer Beatrix, no hiding forever (awaiting OK)
 
 - **Encounters** (`data/encounters.js`, `world/Encounter.js`, the `encounter` menu screen): a feature room
-  (`feature_encounter`, chance 0.6, tile `Q`) with one of seven encounters (`Game.drawEncounter`, never twice a run).
+  (`feature_encounter`, chance 0.22, tile `Q`) with one of seven encounters (`Game.drawEncounter`, never twice a run).
   Walking up opens the choice; options can be unavailable with a reason (`can`). Choosing is final
   (`data.encounterDone`); Esc walks away. Effects: health, heart containers, pennies, keys, bombs, luck/damage (through
   `potionBonus`), reward pedestals, embers, a map reveal, an ambush (the chapter's medium pool, doors lock) and
