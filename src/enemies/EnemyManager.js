@@ -10,6 +10,7 @@ import { Ghoul } from './Ghoul.js';
 import { Fly } from './Fly.js';
 import { Crossbowman } from './Crossbowman.js';
 import { BarrelMimic } from './BarrelMimic.js';
+import { Echo } from './Echo.js';
 import { MotherOfRats } from './bosses/MotherOfRats.js';
 import { Warden } from './bosses/Warden.js';
 import * as CATACOMBS from './catacombs.js';
@@ -41,6 +42,7 @@ const CLASSES = {
   fly: Fly,
   crossbowman: Crossbowman,
   mimic: BarrelMimic,
+  echo: Echo, // what your last hero left behind (see Echo.js)
   ratmother: MotherOfRats,
   warden: Warden,
   // chapter 2

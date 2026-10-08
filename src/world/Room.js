@@ -118,6 +118,12 @@ export class Room {
     this._buildDoors();
     this._buildBackground();
     this._buildContents();
+    if (this.data.echo && !this.data.cleared) {
+      // the Echo's room: it waits alone in the middle (whatever else the layout held has fled)
+      const cell = this.data.cells[0];
+      const c = this.slotCenter((cell.x - this.data.minX) * 15 + 7, (cell.y - this.data.minY) * 10 + 5);
+      this.spawns = [{ type: 'echo', x: c.x, y: c.y, count: 1, champion: false }];
+    }
     this._buildWallSolids();
     this.nav = new NavGrid(this);
   }

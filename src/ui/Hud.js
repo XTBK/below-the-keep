@@ -562,6 +562,12 @@ export class Hud {
     const slide = Math.round(Math.max(0, 1 - (BOSS_FX.introTime - t) * 3) * 40);
     drawText(ctx, boss.name, W / 2 - slide, H / 2 - 22, GOLD, { scale: 3, align: 'center' });
     drawText(ctx, boss.subtitle, W / 2 + slide, H / 2 + 12, INK, { align: 'center' });
+    if (boss.cardLine) {
+      // an Echo has no rank, only a reminder of whose it is
+      drawText(ctx, boss.cardLine, W / 2, H / 2 + 25, '#8fd0ff', { align: 'center' });
+      ctx.globalAlpha = 1;
+      return;
+    }
     // its rank: one skull per step, in the rank's colour
     const tier = state.bossTierOf(boss.type);
     const info = TIER_INFO[tier];

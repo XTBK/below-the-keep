@@ -19,6 +19,7 @@ import { Bombs } from '../entities/Bombs.js';
 import { EnemyManager } from '../enemies/EnemyManager.js';
 import { Hud } from '../ui/Hud.js';
 import { TouchControls } from '../ui/TouchControls.js';
+import { recordEcho, echoForFloor } from '../enemies/Echo.js';
 import { CHAPTERS } from '../data/palettes.js';
 import { SIM, DEBUG, TRANSITION, PLAYER, FEEL } from '../data/config.js';
 import { RELICS, RELIC_IDS, ROOM_DROPS, BOSS_DROPS, PRICES, SHOP_GOODS } from '../data/items.js';
@@ -308,6 +309,7 @@ export class Game {
     const arena = arenaFor(this.floorBoss, this.chapterKey);
     const bossRoom = this.floor.rooms.find((r) => r.type === 'boss');
     if (arena && bossRoom) for (const c of bossRoom.cells) bossRoom.layouts.set(`${c.x},${c.y}`, arena.name);
+    this._placeEcho(this.rng.fork(`echo${tag}`));
     this.tookDamageThisFloor = false;
     const f = this.floor;
     const mainCells = f.rooms.filter((r) => r.type !== 'secret' && r.type !== 'supersecret').reduce((n, r) => n + r.cells.length, 0);
@@ -507,6 +509,17 @@ export class Game {
     list.push(id);
     Save.write();
     this.unlockNotice = id;
+  }
+
+  /** The Echo of your last hero waits in one ordinary room of the floor where they fell. */
+  _placeEcho(rng) {
+    if (!echoForFloor(this)) return;
+    const f = this.floor;
+    const rooms = f.rooms.filter((r) => r.type === 'normal' && r.id !== f.startId);
+    if (!rooms.length) return;
+    const single = rooms.filter((r) => r.cells.length === 1);
+    const pool = single.length ? single : rooms;
+    pool[Math.floor(rng.next() * pool.length)].echo = true;
   }
 
   /** Build a room's graphics and, if it hasn't been cleared yet, its enemies. */
@@ -868,7 +881,7 @@ export class Game {
     this._revealNeighbours(this.room);
     this.effects.bounds = this.room.bounds;
     if (!data.cleared) {
-      if ((data.type === 'boss' || data.type === 'crown') && this.room.enemiesAlive > 0) {
+      if ((data.type === 'boss' || data.type === 'crown' || data.echo) && this.room.enemiesAlive > 0) {
         // boss title card: doors slam at once, nothing moves until it ends
         this.room.locked = true;
         this.audio.play('doorSlam');
@@ -1237,6 +1250,7 @@ export class Game {
         this.state = 'dead';
         this.deathTimer = 0;
         Save.data.stats.deaths++;
+        recordEcho(this);
         this.runEnded(false);
         Save.write();
         this.audio.play('death');

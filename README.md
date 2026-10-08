@@ -97,6 +97,18 @@ the tougher it is, a floor with no damage taken earns a bonus, champions drop on
 
 (The Daily Descent never earns or uses embers, so its board stays fair.)
 
+## Echoes of your last run
+
+When a hero dies below, something of them stays where they fell. On a later descent, on **that same floor**, one
+ordinary room holds their **Echo**: a pale, glowing copy of that hero wearing what they wore and carrying the relics
+they died with. It opens with a title card (*The Echo of Rowan, slain here by the Gravedigger*) and fights the way
+that hero fights: a wizard's Echo circles and casts volleys, a ranger's takes aim and fires bolts, a knight's or
+squire's closes in and lunges, a witch's throws homing curses, the Nameless sends out rings of shadow. And it rolls
+out of the way of your shots, the way a player would.
+
+Lay it to rest and it gives back the finest of its relics that you don't already hold, plus a few embers. A new death
+replaces the old Echo; the Daily Descent neither leaves nor meets one. (`src/enemies/Echo.js`)
+
 ## Stalked: Beatrix the Wandering
 
 A separate mode, from the title menu (**STALKED**). Beatrix can't be killed. A little while after you reach a

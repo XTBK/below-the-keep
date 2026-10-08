@@ -787,3 +787,17 @@ setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.
 - Recorded from the live game: the real loop is paused and stepped by hand (60 ticks a second), each scene seeded so it
   plays out the same every time, the run bot playing. Encoded in the page with one palette per shot and only the
   pixels that visibly changed per frame, which is what keeps 23 seconds under 5 MB.
+
+### Echoes of your last run
+
+- `recordEcho(game)` (called on death, not on the Daily, realms, the Vault or the Gatehouse) stores
+  `Save.data.echo = { hero, looks, relics, floor, killer, run }`. A later death overwrites it.
+- `Game._placeEcho` marks one ordinary single-cell room (not the start) on that floor as `room.echo`; `Room` replaces
+  its spawns with the `echo` creature in the middle, and `onEnteredRoom` gives it the boss title card (`cardLine`
+  "YOUR LAST DESCENT" in place of a rank).
+- `enemies/Echo.js`: the hero's own sheet (`buildWrenSheet` with their looks) drained to a pale spectral blue, self-lit
+  and carrying a cold light. HP 120 on the creature depth curve, +3.5% per relic carried. Fights by weapon class
+  (`STYLE`): wand volleys, crossbow aimed bolts, hex homing curses, soul shadow rings, sword/spear telegraphed lunges.
+  Rolls aside from player shots within 52px (0.24 s, unhittable, 1.7 s cooldown), never mid-attack.
+- On death: a reward pedestal with the highest-quality relic it carried that the player doesn't hold (or a quality 2+
+  armoury relic), embers x4 of a champion's, a banner, and the record is cleared. `stats.echoesLaid` counts them.
