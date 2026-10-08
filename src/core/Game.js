@@ -167,6 +167,21 @@ export class Game {
     window.addEventListener('blur', () => {
       if (this.state === 'play') this.setPaused(true);
     });
+    // switching to another tab or app: pause, and go quiet until you're back
+    document.addEventListener('visibilitychange', () => {
+      const ctx = this.audio && this.audio.ctx;
+      if (document.hidden) {
+        if (this.state === 'play' && !this.paused) this.setPaused(true);
+        if (ctx && ctx.state === 'running') ctx.suspend();
+        Save.write();
+      } else if (ctx && ctx.state === 'suspended') ctx.resume();
+    });
+    // the graphics device was reset (it happens on laptops and phones): say so, and offer a reload
+    this.renderer.gl.domElement.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      Save.write();
+      if (window.showTrouble) window.showTrouble('The graphics device was reset. Your unlocks and embers are saved - reload to carry on.');
+    });
     window.addEventListener('beforeunload', () => Save.write());
     this._frame = this._frame.bind(this);
   }

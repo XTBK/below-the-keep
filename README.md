@@ -177,7 +177,7 @@ realm has its own colours, music and story scene.
 ## The story
 
 Under the Keep of Hollowmere lies the Hollow, sealed behind the Deep Door by the First King with a crown forged
-from fallen-star iron. King Aldric dug for silver and found the First King's tomb instead. The **Hollow Crown** on
+from fallen-star iron. King Varick dug for silver and found the First King's tomb instead. The **Hollow Crown** on
 the skull whispered to him to take it home, down to the door it was made to lock. He sent his people down to dig
 (the five prisoners among them) and his bride **Beatrix** followed with a single candle. None came back. Now the
 Keep is sinking, and your hero goes down.

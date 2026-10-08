@@ -300,7 +300,7 @@ export class Hud {
     this._drawPlayHud(state);
 
     if (state.state === 'bossIntro') this._drawBossCard(state);
-    if (state.floorTitleT > 0) this._drawFloorTitle(state);
+    if (state.floorTitleT > 0 && state.state !== 'dead' && state.state !== 'victory') this._drawFloorTitle(state);
     if (state.state === 'dead' && state.deathTimer > 1.1) this._drawDeath(state);
     if (state.state === 'victory') this._drawVictory(state);
     this._drawFade(state);
@@ -450,7 +450,7 @@ export class Hud {
       drawText(ctx, `RELICS ${ids.length}`, RX + 6, ry, FAINT, { shadow: null });
       ry += 10;
       const perRow = 4;
-      const maxRows = Math.floor((H - ry - 6) / 17);
+      const maxRows = Math.floor((H - ry - (state.input.touchMode ? 44 : 6)) / 17); // (on a touch screen, clear of the ROLL button)
       const shown = ids.slice(-perRow * maxRows); // newest stay in view
       shown.forEach((id, i) => {
         const ic = this._relicIcon(id);

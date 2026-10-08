@@ -712,3 +712,16 @@ cliff (whole-heart hits plus two runaway bosses); the sword hero took 2-3x the b
   The Great Toad's slam warns longer (0.55 s). Wisps spiral fewer orbs; Root Saplings warn longer.
 - **Burning pitch and poison clouds** have a bright pulsing rim (orange / green), so they're easy to see and avoid.
 - **A breath on the stairs**: reaching a new floor restores a heart (floors 2-4) or half a heart (deeper).
+
+### Release polish (QA pass)
+
+- Loading screen with a progress bar (the art is generated at start-up); a "something went wrong" screen with a
+  reload button if start-up fails, errors keep coming, or the graphics device is reset (`main.js`).
+- Switching tab or app pauses the game and silences the audio; the save is written.
+- Touch layout fitted to the ledger HUD: USE / BOMB / ITEM / pause in a row at the top centre, ROLL in the
+  bottom-right corner (clear of the map, banners and boss bar); the relic list leaves room for ROLL.
+- Page text (touch buttons, loading, rotate hint) in Silkscreen, a pixel face (SIL Open Font License).
+- three.js ships as its own cached chunk. Link-preview text updated.
+- Names: the king is Varick, the chronicler Tobiah (no more Aldric / Aldwin / Aldous mix-ups).
+- Checked: 24-floor soak (no memory or GPU-object growth, zero console warnings), corrupted saves, phone /
+  tablet / ultrawide / 5:4 layouts.

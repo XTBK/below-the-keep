@@ -6,7 +6,7 @@
   --ember: #e8c46c;
   --iron: rgba(93, 96, 108, 0.55);
   --iron-dark: rgba(18, 18, 22, 0.55);
-  --font: 'Courier New', ui-monospace, monospace;
+  --font: 'Silkscreen', 'Courier New', ui-monospace, monospace; /* a pixel face, like the game's own lettering */
 }
 
 html,
@@ -75,26 +75,34 @@ canvas {
 .touch-btn:focus-visible {
   outline: 2px solid var(--ember);
 }
+/* the action buttons sit in a compact row at the top centre, over the room's top wall - clear of the
+   side panels (map, vigor) and of the banners; ROLL is in the bottom-right corner, under the right thumb
+   and clear of the boss's health bar */
+.touch-use,
+.touch-bomb,
+.touch-item,
 .touch-pause {
-  top: calc(env(safe-area-inset-top, 0px) + 10px);
-  right: calc(env(safe-area-inset-right, 0px) + 12px);
-}
-.touch-item {
-  top: calc(env(safe-area-inset-top, 0px) + 10px);
-  right: calc(env(safe-area-inset-right, 0px) + 66px);
-}
-.touch-bomb {
-  top: calc(env(safe-area-inset-top, 0px) + 10px);
-  right: calc(env(safe-area-inset-right, 0px) + 136px);
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  width: 64px;
+  padding: 9px 0;
+  text-align: center;
 }
 .touch-use {
-  top: calc(env(safe-area-inset-top, 0px) + 10px);
-  right: calc(env(safe-area-inset-right, 0px) + 206px);
+  left: calc(50% - 140px);
+}
+.touch-bomb {
+  left: calc(50% - 68px);
+}
+.touch-item {
+  left: calc(50% + 4px);
+}
+.touch-pause {
+  left: calc(50% + 76px);
 }
 .touch-roll {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
-  left: calc(env(safe-area-inset-left, 0px) + 50%);
-  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  padding: 16px 14px;
 }
 .touch-newrun {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
@@ -130,8 +138,91 @@ canvas {
     text-align: center;
     background: var(--stage);
     color: var(--ember);
-    font: bold 18px/1.4 var(--font);
-    letter-spacing: 0.08em;
+    font: 16px/1.6 var(--font);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    flex-direction: column;
+    gap: 22px;
   }
+  /* a little phone, turning on its side */
+  .rotate-hint::before {
+    content: '';
+    width: 30px;
+    height: 52px;
+    border: 4px solid var(--ember);
+    border-radius: 5px;
+    box-shadow: inset 0 -6px 0 -2px var(--ember);
+    animation: turn-phone 2.4s ease-in-out infinite;
+  }
+  @keyframes turn-phone {
+    0%,
+    30% {
+      transform: rotate(0deg);
+    }
+    55%,
+    100% {
+      transform: rotate(-90deg);
+    }
+  }
+}
+
+/* --- the loading and trouble screens (plain HTML: they work before the game exists) --- */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding-inline: 16px;
+  background: var(--stage);
+  color: var(--ink);
+  font-family: var(--font);
+  text-align: center;
+}
+.screen[hidden] {
+  display: none;
+}
+.screen-title {
+  color: var(--ember);
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.screen-text {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a8478;
+  max-width: 34em;
+  line-height: 1.6;
+}
+.loading-bar {
+  width: min(280px, 70vw);
+  height: 8px;
+  border: 2px solid #5d606c;
+  padding: 2px;
+}
+#loading-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--ember);
+}
+.screen-button {
+  font: 14px var(--font);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: #16151b;
+  border: 2px solid #5d606c;
+  padding: 10px 22px;
+  cursor: pointer;
+}
+.screen-button:hover,
+.screen-button:focus-visible {
+  border-color: var(--ember);
+  color: var(--ember);
+  outline: none;
 }

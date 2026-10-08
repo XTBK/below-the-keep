@@ -14,9 +14,9 @@ import { CURIO_FRAME } from '../data/curios.js';
 // THE STORY
 // Under the Keep of Hollowmere lies the Hollow: the dark the valley was built on. The First King
 // sealed it behind the Deep Door with a crown forged from fallen-star iron, and was buried with it.
-// Three hundred years later King Aldric dug for silver and found the First King's tomb instead. The
+// Three hundred years later King Varick dug for silver and found the First King's tomb instead. The
 // crown on the skull - the Hollow Crown - whispers. It wants to go home, down to the door it was made
-// to lock, and open it. Aldric sent his people down to dig (the smith, the quartermaster, a sister of
+// to lock, and open it. Varick sent his people down to dig (the smith, the quartermaster, a sister of
 // the chapel, the mapmaker, the old archivist - hundreds more). His bride Beatrix went after him with
 // a single candle. None came back. Now the Keep is sinking, and the only way out is down.
 
@@ -225,7 +225,7 @@ const SCENES = {
     g.drawImage(keepCanvas, 80, 60, PW, PH, 0, 0, PW, PH);
   },
 
-  // the First King's tomb: King Aldric lifts the crown from the skull
+  // the First King's tomb: King Varick lifts the crown from the skull
   tomb(g, t, dt, f, whisper = false) {
     const s = new Stage(g, t, 10 + t * 3);
     s.wall('catacombs');
@@ -237,7 +237,7 @@ const SCENES = {
     const bob = Math.sin(t * 2) * 2;
     s.icon('relics', crownIcon(), 240, 104 + bob - Math.min(12, t * 3));
     s.light(240, 100, whisper ? 150 : 90, '176,110,255', whisper ? 0.9 : 0.55);
-    // Aldric, reaching for it
+    // Varick, reaching for it
     s.sprite('madking1', whisper ? 6 : 11, 0, 182, 176);
     s.motes('rgba(200,180,255,0.5)', 18, -4);
     s.shade(whisper ? 0.72 : 0.6);
@@ -360,7 +360,7 @@ const SCENES = {
     SCENES.halls(g, t, dt, f, true);
   },
 
-  // the throne: Aldric at the bottom of everything
+  // the throne: Varick at the bottom of everything
   throne(g, t, dt, f, whisper = false) {
     const s = new Stage(g, t, 0);
     s.wall('halls');
@@ -507,7 +507,7 @@ const crown = (scene, text) => ({ scene, text, color: CROWN, voice: 'THE CROWN' 
 export const CUTSCENES = {
   intro: (hero) => [
     { scene: 'keep', text: 'For three hundred years the Keep of Hollowmere stood over its valley. Beneath it, behind an iron door, slept the Hollow.' },
-    { scene: 'tomb', text: "King Aldric dug for silver. He found the First King's tomb instead - and on the skull inside, a crown of black iron." },
+    { scene: 'tomb', text: "King Varick dug for silver. He found the First King's tomb instead - and on the skull inside, a crown of black iron." },
     crown('whisper', 'TAKE ME HOME. DOWN. TO THE DOOR I WAS MADE TO LOCK.'),
     { scene: 'procession', text: 'So the king sent his people down to dig: a smith, a quartermaster, a sister of the chapel, a mapmaker, an old archivist. Hundreds more.' },
     { scene: 'beatrix', text: 'His bride Beatrix went after him with a single candle. None of them came back up.' },
@@ -527,7 +527,7 @@ export const CUTSCENES = {
     crown('hallsWhisper', 'YOU ARE CLOSE NOW. CLOSER THAN HE EVER WAS. PUT ME ON.'),
   ],
   throne: () => [
-    { scene: 'throne', text: 'At the bottom of the Keep sits King Aldric, wearing what is left of himself - and the crown wearing him.' },
+    { scene: 'throne', text: 'At the bottom of the Keep sits King Varick, wearing what is left of himself - and the crown wearing him.' },
     crown('throneWhisper', 'KNEEL, OR TAKE HIS PLACE. EITHER WAY, I GO HOME.'),
   ],
   vault: () => [{ scene: 'vault', text: 'A vault no king remembers, sealed with bone, flame and thorn. The First King hid the way to break his crown here.' }],
@@ -537,11 +537,11 @@ export const CUTSCENES = {
   // Stalked: who she is
   beatrix: () => [
     { scene: 'beatrix', text: 'Beatrix went down to find her king. She has been looking ever since, in the dark, with her candle long gone out.' },
-    { scene: 'beatrix', text: 'ALDRIC...? IS THAT YOU...?', color: BEATRIX_VOICE, voice: 'BEATRIX' },
+    { scene: 'beatrix', text: 'VARICK...? IS THAT YOU...?', color: BEATRIX_VOICE, voice: 'BEATRIX' },
   ],
   // the endings
   endKing: () => [
-    { scene: 'kingFalls', text: 'Aldric falls. For a moment the whisper stops, and the Keep is very quiet.' },
+    { scene: 'kingFalls', text: 'Varick falls. For a moment the whisper stops, and the Keep is very quiet.' },
     crown('kingFalls', 'ANOTHER WILL COME. ANOTHER ALWAYS COMES.'),
     { scene: 'kingFalls', text: 'The crown endures. They say three seals, hidden in the deep, could break it for good.' },
   ],

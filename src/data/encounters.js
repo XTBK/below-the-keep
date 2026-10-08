@@ -38,7 +38,7 @@ export const ENCOUNTERS = {
   knight: {
     name: 'A Dying Knight',
     look: ['blackknight', 0, 0],
-    text: "One of Aldric's knights, leaning on his sword, blood pooling at his feet. 'The king sent us down to dig. I'm the last of my company.'",
+    text: "One of Varick's knights, leaning on his sword, blood pooling at his feet. 'The king sent us down to dig. I'm the last of my company.'",
     options: [
       {
         label: 'GIVE HIM A DRAUGHT',

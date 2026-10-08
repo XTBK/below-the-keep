@@ -101,14 +101,14 @@ export const SEALS = [
 
 // Torn journal pages: the true story, a page at a time. Read them on the collection page.
 export const PAGES = [
-  { title: 'Page I', text: 'The new king hears voices. He says the crown speaks to him at night, and that it is hungry.' },
+  { title: 'Page I', text: 'King Varick hears voices. He says the crown speaks to him at night, and that it is hungry.' },
   { title: 'Page II', text: 'He had the old grey wizard thrown below for laughing. The wizard did not laugh. The crown said he did.' },
   { title: 'Page III', text: 'They are digging deeper under the cells. The diggers come back pale and do not speak.' },
-  { title: 'Page IV', text: 'The crown was not made for this king. It was found in the catacombs, on a skull that still wore it.' },
+  { title: 'Page IV', text: 'The crown was not made for this king. It was found in the First King\'s tomb, on a skull that still wore it.' },
   { title: 'Page V', text: 'The Hollow was a garden once, the queen\'s. The king burned her for a witch. The garden went on growing, in the dark.' },
-  { title: 'Page VI', text: 'The court sorcerers say the crown is a door, and something on the other side is pushing.' },
+  { title: 'Page VI', text: 'The court sorcerers say the crown is a key. Far below there is a door, and something on the other side is pushing.' },
   { title: 'Page VII', text: 'Three seals were made to bind it: bone, flame and thorn. They were hidden where no king would look.' },
   { title: 'Page VIII', text: 'The Black Champion swore to protect the king. I think now he only protects the crown.' },
   { title: 'Page IX', text: 'If you are reading this, the halls are already burning. Do not put on the crown. Break it.' },
-  { title: 'Page X', text: 'My name was Aldous. I was the king\'s chronicler. I am writing this in the dark. I hear him coming. Run, child. Run up.' },
+  { title: 'Page X', text: 'My name was Tobiah. I was the king\'s chronicler. I am writing this in the dark. I hear him coming. Whatever you do, do not let the crown go home.' },
 ];

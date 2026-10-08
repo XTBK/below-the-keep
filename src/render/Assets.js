@@ -69,7 +69,7 @@ export function preloadTextures(renderer) {
   }
 }
 
-export async function loadAssets() {
+export async function loadAssets(onProgress = null) {
   let overrides = {};
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}assets/overrides.json`);
@@ -78,7 +78,14 @@ export async function loadAssets() {
     // no overrides file: everything is generated
   }
 
-  for (const [key, def] of Object.entries(ASSETS)) {
+  const entries = Object.entries(ASSETS);
+  let done = 0;
+  for (const [key, def] of entries) {
+    // every few sheets, report progress and let the page repaint (so the loading bar moves)
+    if (onProgress && done++ % 12 === 0) {
+      onProgress(done / entries.length);
+      await new Promise((r) => setTimeout(r, 0));
+    }
     let colorCanvas;
     let normalCanvas;
     let emissiveCanvas = null;
