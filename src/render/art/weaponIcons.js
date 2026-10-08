@@ -3,6 +3,7 @@
 import { Painter } from '../Painter.js';
 import { SHARED as S } from '../../data/palettes.js';
 import { WEAPON_IDS } from '../../data/weapons.js';
+import { CLASS_ICONS } from './classWeapons.js';
 
 const I = S.iron;
 const W = S.wood;
@@ -23,6 +24,7 @@ function blade(p, x0, y0, x1, y1, ramp) {
 }
 
 const DRAW = {
+  ...CLASS_ICONS, // spears, staves and lanterns (classWeapons.js)
   oak_wand: (p) => wand(p, '#c8e8ff', '#8ac8ff'),
   ember_wand: (p) => wand(p, '#ffb040', '#ff6a20'),
   tide_wand: (p) => wand(p, '#60b0ff', '#2a60e0'),

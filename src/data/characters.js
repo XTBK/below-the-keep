@@ -6,10 +6,13 @@
 //   pickups      { pennies, bombs, keys } to start with
 //   looks        accessories drawn on the sprite (render/art/wrenArt.js); 'wizard' is a whole outfit
 //   weapon       'wand' (spell bolts), 'crossbow' (heavy piercing bolts), 'sword' (a strong melee
-//                swing plus a weak short sword-wave), or 'sling' (stones, the default)
+//                swing plus a weak short sword-wave), 'spear' (a long narrow thrust), 'hex' (slow
+//                poison thorn-seeds), 'soul' (bolts through stone), or 'sling' (stones, the default)
+//   passive      'riposte' | 'bloom' | 'hunger' (see Player)
 //   starter      true: can be chosen from the very first run
 //   dodge        what the dodge button does: 'roll' (the default), 'blink', 'reload' (roll + reload),
-//                'charge' (shield charge). See SKILLS in data/config.js
+//                'charge' (shield charge), 'lunge', 'bramble' (a roll leaving thorns), 'phase'.
+//                See SKILLS in data/config.js
 //   steadyAim    standing still makes the next shot a sure critical hit
 //   recolor      swaps colours of Wren's sprite: { tunic, hair, skin } -> new colour ramps
 //   unlock       how to unlock them (shown on the title screen while locked)
@@ -71,51 +74,63 @@ export const CHARACTERS = {
   knight: {
     name: 'Maud',
     title: 'The Squire Without a Knight',
-    flavour: 'Her lord fell in the Halls. She came down to finish the job.',
+    flavour: 'Her lord fell in the Halls. She came down with his spear to finish the job.',
     halfHearts: 8,
-    stats: { damage: 0.6 },
-    statsMult: { moveSpeed: 0.92, fireDelay: 1.1 },
+    // the spear does the work: a long thrust through a line of foes; her thrown spear-wave is weak
+    stats: { range: -90 },
+    statsMult: { moveSpeed: 0.97 },
     pickups: { pennies: 0, bombs: 1, keys: 1 },
-    relics: ['iron_gauntlet'],
-    looks: ['helm'],
+    relics: [],
+    looks: ['helm', 'spear'],
     recolor: {
       tunic: ['#14181f', '#232a36', '#384356', '#55627a', '#7584a0'],
       hair: ['#3a2210', '#6a4220', '#9a6a34', '#c89a54'],
     },
+    weapon: 'spear',
+    dodge: 'lunge',
+    passive: 'riposte', // the first thrust after a lunge is a sure critical
     unlock: 'Draw the blade from the stone.',
   },
   witch: {
     name: 'Agnes',
     title: "The Witch's Apprentice",
-    flavour: 'The queen\'s garden still remembers her.',
-    halfHearts: 4,
-    stats: { range: 40, luck: 1 },
-    statsMult: { fireDelay: 0.85, damage: 0.9 },
-    pickups: { pennies: 5, bombs: 0, keys: 1 },
-    relics: ['alchemists_eye'],
-    consumable: { type: 'potion', id: 'healing' },
-    looks: ['witchhat'],
+    flavour: "The queen's garden still remembers her. Whatever she curses, blooms.",
+    halfHearts: 6,
+    // slow thorn-seeds that poison; foes that die poisoned burst into thorns
+    stats: { range: 30 },
+    statsMult: { shotSpeed: 0.82, damage: 0.88 },
+    mods: { poison: 1 },
+    pickups: { pennies: 0, bombs: 1, keys: 1 },
+    relics: [],
+    looks: ['witchhat', 'staff'],
     recolor: {
       tunic: ['#1a0e24', '#2e1a40', '#4a2a62', '#6a3e86', '#8a5aa8'],
       hair: ['#0e0e10', '#1a1a1e', '#2a2a30', '#3e3e46'],
     },
+    weapon: 'hex',
+    dodge: 'bramble',
+    passive: 'bloom',
     unlock: 'Defeat the Mad King.',
   },
   ghost: {
     name: 'The Nameless',
     title: 'Who Died in the Cells',
     flavour: 'Not every prisoner left. Not every prisoner stopped trying.',
-    halfHearts: 4,
-    statsMult: { moveSpeed: 1.12 },
-    pickups: { pennies: 0, bombs: 2, keys: 0 },
-    relics: ['ghost_candle'],
-    trinket: 'crow_feather',
-    looks: ['shackles'],
+    halfHearts: 6,
+    // soul bolts pass through stone and through a foe; a kill now and then feeds it
+    statsMult: { moveSpeed: 1.06, damage: 0.95 },
+    mods: { spectral: 1, pierce: 1 },
+    pickups: { pennies: 0, bombs: 1, keys: 1 },
+    relics: [],
+    looks: ['shackles', 'lantern'],
     recolor: {
       skin: ['#3a4250', '#56627a', '#7a88a0', '#9eacc0', '#c4d0e0'],
       tunic: ['#1a1c22', '#2a2e36', '#40444e', '#5a5e68', '#767a84'],
       hair: ['#5a6070', '#7a8090', '#9aa0b0', '#c0c6d4'],
     },
+    weapon: 'soul',
+    dodge: 'phase',
+    passive: 'hunger', // kills sometimes restore half a heart
     unlock: 'Break the Hollow Crown.',
   },
 };

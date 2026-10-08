@@ -19,6 +19,7 @@ import { WEAPON_DEFS, starterWeapon } from '../data/weapons.js';
 import * as THREE from 'three';
 
 const SLASH = new THREE.Color(2.2, 2.1, 1.8);
+const THORN = new THREE.Color(1.0, 1.5, 0.45); // Agnes's thorns
 import { SETS, SET_SIZE } from '../data/sets.js';
 
 // Wren (or whichever character was chosen: see data/characters.js). Moves with WASD / left
@@ -94,6 +95,10 @@ export class Player {
     this.martyrStacks = 0; // Martyr's Chain: hits taken this floor
     this.charge = 0; // Siege Crossbow: 0..1 while a shot is held
     this.rollT = 0; // > 0 while dodge-rolling
+    this.rollKind = 'roll'; // which dodge is rolling: 'roll' | 'reload' | 'lunge' | 'bramble'
+    this.phaseT = 0; // > 0 while the Nameless is a ghost
+    this.riposteT = 0; // Maud: > 0 just after a lunge (her next thrust is a sure critical)
+    this.thorns = []; // Agnes's bramble-roll thorns
     this.rollCool = 0;
     this.rollDir = { x: 0, y: -1 };
     this.chargeT = 0; // > 0 while shield-charging
@@ -252,8 +257,9 @@ export class Player {
 
   /** The swing of the melee weapon in hand. */
   get melee() {
+    const base = this.character.weapon === 'spear' ? WEAPONS.spear : WEAPONS.sword;
     const wd = this.weapon;
-    return wd && wd.melee ? { ...WEAPONS.sword, ...wd.melee } : WEAPONS.sword;
+    return wd && wd.melee ? { ...base, ...wd.melee } : base;
   }
 
   /** Take up a weapon; returns the one put down (left on the pedestal). */
@@ -316,7 +322,7 @@ export class Player {
    * `source` names what hurt him (shown on the death screen).
    */
   hurt(halfHearts, fromX, fromY, source = 'the Dark') {
-    if (this.invuln > 0 || this.dead || this.buffs.warding > 0 || this.rollT > 0 || this.chargeT > 0) return false;
+    if (this.invuln > 0 || this.dead || this.buffs.warding > 0 || this.rollT > 0 || this.chargeT > 0 || this.phaseT > 0) return false;
     // deep down, every hit costs a whole heart
     if (halfHearts === 1 && this.game.floorNumber >= DIFFICULTY.fullHeartFrom) halfHearts = 2;
     if (this.shieldReady && this.perks.shield) {
@@ -372,7 +378,7 @@ export class Player {
     const b = this.buffs;
     for (const k in b) if (b[k] > 0) b[k] -= dt;
     const wading = this.game.room && this.rollT <= 0 && this.game.room.inWater(this.x, this.y);
-    const speed = st.moveSpeed * (wading ? 0.75 : 1) * (this.slowT > 0 ? 0.45 : 1) * (b.haste > 0 ? CURIO_FX.haste.moveSpeed : 1);
+    const speed = st.moveSpeed * (this.phaseT > 0 ? SKILLS.phase.speed : 1) * (wading ? 0.75 : 1) * (this.slowT > 0 ? 0.45 : 1) * (b.haste > 0 ? CURIO_FX.haste.moveSpeed : 1);
     const flip = b.confusion > 0 ? -1 : 1; // a Potion of Confusion swaps every direction
     const tx = input.moveX * speed * flip;
     const ty = input.moveY * speed * flip;
@@ -388,12 +394,22 @@ export class Player {
         this.tryRoll(input);
       }
     }
+    if (this.riposteT > 0) this.riposteT -= dt;
+    if (this.phaseT > 0) {
+      this.phaseT -= dt;
+      if (this.phaseT <= 0) this._phaseEnd();
+    }
     if (this.rollT > 0) {
       // mid-roll: bursts out fast and eases off; the stick bends it a little
       this.rollT -= dt;
+      // Agnes's bramble roll: thorns spring up along the way
+      if (this.rollKind === 'bramble' && this.lastThorn && Math.hypot(this.x - this.lastThorn.x, this.y - this.lastThorn.y) >= SKILLS.bramble.every) {
+        this.lastThorn = { x: this.x, y: this.y };
+        this.thorns.push({ x: this.x, y: this.y, t: SKILLS.bramble.life, hit: new Set() });
+      }
       this._steerDodge(input, ROLL.steer, dt);
       const p = 1 - Math.max(0, this.rollT) / ROLL.time;
-      const v = ROLL.speed * (ROLL.burst + (ROLL.settle - ROLL.burst) * p);
+      const v = ROLL.speed * (ROLL.burst + (ROLL.settle - ROLL.burst) * p) * (this.rollKind === 'lunge' ? SKILLS.lunge.speed : 1);
       this.vx = this.rollDir.x * v;
       this.vy = this.rollDir.y * v;
       if (Math.random() < 0.6) this.game.effects.landDust(this.x, this.y, 1);
@@ -418,9 +434,11 @@ export class Player {
     const r = PLAYER.radius;
     const flying = this.perks.flight > 0;
     for (let i = 0; i < room.solids.length; i++) {
+      if (this.phaseT > 0) break; // a ghost passes through stone (and over pits)
       if (flying && room.solids[i].pit) continue; // wings carry him over pits
       pushCircleOutOfBox(this, r, room.solids[i]);
     }
+    this._updateThorns(dt);
     clampCircleToRect(this, r, room.bounds);
 
     // --- facing: shooting direction wins, otherwise the way we're walking ---
@@ -506,6 +524,20 @@ export class Player {
     const kind = this.character.dodge || 'roll';
     if (kind === 'blink') return this._blink();
     if (kind === 'charge') return this._charge();
+    if (kind === 'phase') return this._phase();
+    this.rollKind = kind;
+    if (kind === 'lunge') {
+      // Maud's lunge: shorter and faster than a roll - and her next thrust is a sure critical
+      const cfg = SKILLS.lunge;
+      this.rollT = cfg.time;
+      this.rollCool = cfg.time + cfg.cooldown;
+      this.riposteT = cfg.riposte;
+      this.rollSpin = 0;
+      this.game.audio.play('swing');
+      this.game.effects.landDust(this.x, this.y, 6);
+      return;
+    }
+    if (kind === 'bramble') this.lastThorn = { x: this.x, y: this.y };
     if (kind === 'reload') {
       this.fireCooldown = 0; // the crossbow is wound mid-tumble
       this.game.audio.play('reload');
@@ -565,6 +597,83 @@ export class Player {
     g.audio.play('wizBlink');
   }
 
+  /** The Nameless's phase: a ghost for a moment - through foes, shots and stone. */
+  _phase() {
+    const cfg = SKILLS.phase;
+    this.phaseT = cfg.time;
+    this.rollCool = cfg.time + cfg.cooldown;
+    this.game.audio.play('phase');
+    this.game.effects.burst(this.game.effects.presets.holy, this.x, this.y, 10, 10, 50, 30);
+  }
+
+  _phaseEnd() {
+    const g = this.game;
+    const cfg = SKILLS.phase;
+    // solid again: step out of any stone we ended inside
+    const r = PLAYER.radius;
+    for (let k = 0; k < 3; k++) for (const s of g.room.solids) pushCircleOutOfBox(this, r, s);
+    // a chilling burst
+    g.enemies.forEachAlive(g.room, (e) => {
+      if (e.hittable && Math.hypot(e.x - this.x, e.y - this.y) < cfg.radius + e.def.hitRadius) e.chill(cfg.chill);
+    });
+    g.effects.burst(g.effects.presets.holy, this.x, this.y, 18, 16, 90, 50);
+    g.audio.play('castFrost', 0.6);
+  }
+
+  /** Agnes's thorns: each bites a foe once, then withers. */
+  _updateThorns(dt) {
+    if (!this.thorns.length) return;
+    const g = this.game;
+    const cfg = SKILLS.bramble;
+    for (let i = this.thorns.length - 1; i >= 0; i--) {
+      const th = this.thorns[i];
+      th.t -= dt;
+      if (th.t <= 0) {
+        this.thorns.splice(i, 1);
+        continue;
+      }
+      g.enemies.forEachAlive(g.room, (e) => {
+        if (!e.hittable || th.hit.has(e) || e.def.flying) return;
+        if (Math.hypot(e.x - th.x, e.y - th.y) > cfg.radius + e.def.hitRadius) return;
+        th.hit.add(e);
+        const dmg = this.stats.damage * cfg.damage * this.damageScale;
+        const before = e.hp;
+        e.hit(dmg, 0, 0, true);
+        if (this.shot.poison) e.applyStatus('poison', 3, dmg * 0.2 * this.shot.poison);
+        g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), false);
+      });
+    }
+  }
+
+  _drawThorns(o) {
+    for (const th of this.thorns) {
+      const a = Math.min(1, th.t * 2);
+      o.ring(th.x, th.y, 4, THORN, a * 0.8, 3);
+      o.line(th.x - 3, th.y + 3, th.x + 3, th.y - 3, THORN, a, 3);
+      o.line(th.x - 3, th.y - 3, th.x + 3, th.y + 3, THORN, a, 3);
+    }
+  }
+
+  /** A foe died: the heroes' passives. */
+  onKill(e) {
+    const g = this.game;
+    const passive = this.character.passive;
+    if (passive === 'bloom' && e.poisonTime > 0) {
+      // Agnes: whatever dies poisoned bursts into thorns
+      const shot = this.shot;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        g.projectiles.spawn(e.x, e.y, 8, Math.cos(a) * 170, Math.sin(a) * 170, shot, 0, this.damageScale * 0.45);
+      }
+      g.audio.play('hexCast', 0.6);
+    } else if (passive === 'hunger' && this.halfHearts < this.maxHalfHearts && Math.random() < 0.07) {
+      // the Nameless: a kill now and then feeds it
+      this.heal(1);
+      g.effects.burst(g.effects.presets.holy, this.x, this.y, 8, 10, 40, 30);
+      g.audio.play('soulCast', 0.5);
+    }
+  }
+
   /** Sir Aldwin's shield charge. */
   _charge() {
     const cfg = SKILLS.charge;
@@ -620,7 +729,7 @@ export class Player {
       let diff = Math.atan2(ey, ex) - angle;
       diff = Math.atan2(Math.sin(diff), Math.cos(diff));
       if (Math.abs(diff) > w.arc && d > e.def.hitRadius + 4) return;
-      const crit = g.rollCrit();
+      const crit = this.riposteT > 0 || g.rollCrit();
       const dmg = this.stats.damage * w.damage * this.damageScale * (crit ? COMBAT.critMultiplier : 1);
       const before = e.hp;
       e.hit(dmg, ex / (d || 1), ey / (d || 1));
@@ -682,6 +791,8 @@ export class Player {
       g.feel.shake(0.2);
     }
     g.audio.play((this.weapon && this.weapon.sound) || 'sword');
+    if (this.riposteT > 0 && hits) g.audio.play('crit', 0.6);
+    this.riposteT = 0;
     if (hits) {
       g.audio.play('slash');
       g.feel.shake(0.18);
@@ -706,13 +817,22 @@ export class Player {
     if (this.slashT <= 0) return;
     const w = this.melee;
     const k = this.slashT / 0.16;
-    for (const r of [w.reach * 0.6, w.reach * 0.85, w.reach]) o.arc(this.x, this.y + 10, r, this.slashAngle - w.arc, this.slashAngle + w.arc, SLASH, k * (r === w.reach ? 1 : 0.5), 3, 0.8);
+    if (w.arc < 0.5) {
+      // a spear: three streaks straight out along the thrust
+      const a = this.slashAngle;
+      for (const off of [-0.12, 0, 0.12]) {
+        const x0 = this.x + Math.cos(a + off) * 10;
+        const y0 = this.y + 10 + Math.sin(a + off) * 8;
+        o.line(x0, y0, this.x + Math.cos(a + off * 0.4) * w.reach, this.y + 10 + Math.sin(a + off * 0.4) * w.reach * 0.8, SLASH, k * (off ? 0.5 : 1), 3);
+      }
+    } else for (const r of [w.reach * 0.6, w.reach * 0.85, w.reach]) o.arc(this.x, this.y + 10, r, this.slashAngle - w.arc, this.slashAngle + w.arc, SLASH, k * (r === w.reach ? 1 : 0.5), 3, 0.8);
+    this._drawThorns(o);
   }
 
   /** Throw a stone (or, for a wizard, cast a spell bolt). */
   fire(dx, dy) {
     const weapon = this.character.weapon || 'sling';
-    if (weapon === 'sword') {
+    if (weapon === 'sword' || weapon === 'spear') {
       this.swing(dx, dy);
       const st0 = this.stats;
       this.fireCooldown = st0.fireDelay * this.melee.cooldown * (this.buffs.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (this.buffs.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
@@ -755,7 +875,7 @@ export class Player {
     const b = this.buffs;
     this.fireCooldown = st.fireDelay * (b.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (b.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
     this.throwTimer = PLAYER.throwAnimTime;
-    this.game.audio.play((this.weapon && this.weapon.sound) || { wand: 'wand', crossbow: 'xbow' }[this.character.weapon] || 'sling');
+    this.game.audio.play((this.weapon && this.weapon.sound) || { wand: 'wand', crossbow: 'xbow', hex: 'hexCast', soul: 'soulCast' }[this.character.weapon] || 'sling');
     Save.data.stats.stonesThrown++;
   }
 
@@ -809,6 +929,15 @@ export class Player {
     } else if (mesh.scale.x !== 1 || mesh.rotation.z !== 0) {
       mesh.scale.set(1, 1, 1);
       mesh.rotation.z = 0;
+    }
+    // phasing: pale blue and flickering at the edges
+    if (this.phaseT > 0) {
+      this.sprite.material.color.setRGB(0.55, 0.85, 1.6);
+      mesh.scale.x = 1 + (Math.random() - 0.5) * 0.1;
+      this._wasPhasing = true;
+    } else if (this._wasPhasing) {
+      this._wasPhasing = false;
+      this.sprite.material.color.setRGB(1, 1, 1);
     }
     // transformations tint him
     if (this.transforms.size) {

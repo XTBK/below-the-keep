@@ -5,6 +5,7 @@
 
 import { SHARED as S } from '../../data/palettes.js';
 import { limb, shape } from './artKit.js';
+import { CLASS_LOOKS } from './classWeapons.js';
 
 const I = S.iron;
 const W = S.wood;
@@ -39,6 +40,7 @@ function perp(gx, gy, tx, ty) {
 }
 
 export const WEAPON_LOOKS = {
+  ...CLASS_LOOKS, // spears, staves and lanterns (classWeapons.js)
   // ---------------------------------------------------------------- melee
   longsword(p, dir, b, pose) {
     const [gx, gy, tx, ty, h] = meleeLine(dir, b, pose, 1.45);

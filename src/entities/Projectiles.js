@@ -113,7 +113,8 @@ export class Projectiles {
   /** 'sling' (stones) or 'wand' (spell bolts) - set from the character when a run starts. */
   setStyle(style) {
     // the Iron Knight's thrown sword-wave glows like a spell
-    this.style = style === 'wand' || style === 'sword' ? 'wand' : style === 'crossbow' ? 'crossbow' : 'sling';
+    // spell-like shots: a wand's bolts, a sword- or spear-wave, Agnes's seeds, the Nameless's soul bolts
+    this.style = ['wand', 'sword', 'spear', 'hex', 'soul'].includes(style) ? 'wand' : style === 'crossbow' ? 'crossbow' : 'sling';
     const mats = this.style === 'wand' ? this.spellMats : this.style === 'crossbow' ? this.boltMats : this.stoneMats;
     this.meshes.forEach((m, i) => (m.material = mats[i]));
   }

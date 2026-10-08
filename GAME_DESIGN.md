@@ -725,3 +725,19 @@ cliff (whole-heart hits plus two runaway bosses); the sword hero took 2-3x the b
 - Names: the king is Varick, the chronicler Tobiah (no more Aldric / Aldwin / Aldous mix-ups).
 - Checked: 24-floor soak (no memory or GPU-object growth, zero console warnings), corrupted saves, phone /
   tablet / ultrawide / 5:4 layouts.
+
+### The three later heroes, made full classes
+
+Maud, Agnes and the Nameless were the sling with stat changes and a starting relic. Each now has a kit as deep as
+the first three (attack style, signature dodge, passive, a weapon family of a starter + two finds), balanced on
+the training dummy against the first three (`scratchpad/shot/weapontest.mjs`):
+
+| Hero | Attack (`weapon`) | Dodge | Passive | Weapons |
+|---|---|---|---|---|
+| Maud (8 hp) | `spear`: a long narrow thrust through a line (`WEAPONS.spear`) | `lunge`: fast short dash | `riposte`: the thrust after a lunge is a sure crit | Her Lord's Spear, Boar Spear (stuns), Halberd (sweeping tip) |
+| Agnes (6 hp) | `hex`: slow poison thorn-seeds | `bramble`: a roll leaving thorns (each bites once) | `bloom`: foes that die poisoned burst into 6 thorns | Apprentice Staff, Nightshade Staff (double poison), Briar Staff (seeds split) |
+| The Nameless (6 hp) | `soul`: bolts through stone and one foe | `phase`: untouchable, through foes, shots and stone; a chill burst where it ends | `hunger`: 7% of kills restore half a heart | Grave Lantern, Chain of the Cells (chains), Bell of the Dead (slow, huge, chills) |
+
+Looks and icons: `render/art/classWeapons.js`. Sounds: thrust, hexCast, soulCast, phase.
+Also: your shots are see-through with faint trails and enemy shots draw on top (readability); REDUCE FLASHING
+setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.

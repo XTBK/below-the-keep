@@ -22,6 +22,23 @@ export const SOUNDS = {
     for (let i = 0; i < 10; i++) s.noise(o, t + i * 0.11 + Math.random() * 0.05, { type: 'bandpass', f: [300, 200], q: 5, gain: 0.13, dur: 0.07 });
     s.drum(o, t + 1.2, 70, 34, 0.6, 0.45, 0);
   }],
+  // --- the later heroes ---
+  thrust: [0.25, (s, o, t, p) => {
+    s.noise(o, t, { type: 'bandpass', f: [900 * p, 3200 * p], q: 2, gain: 0.32, attack: 0.01, dur: 0.12 }); // the shaft hisses forward
+    s.metal(o, t + 0.05, 1500 * p, 0.12, 0.08);
+  }],
+  hexCast: [0.4, (s, o, t, p) => {
+    s.sweep(o, t, 'triangle', 420 * p, 260 * p, 0.16, 0.12);
+    s.noise(o, t, { type: 'bandpass', f: [1800, 900], q: 3, gain: 0.08, dur: 0.12 }); // a rustle of leaves
+  }],
+  soulCast: [0.55, (s, o, t, p) => {
+    s.sweep(o, t, 'sine', 700 * p, 1100 * p, 0.18, 0.09);
+    s.sweep(o, t + 0.02, 'sine', 1050 * p, 1650 * p, 0.16, 0.05);
+  }],
+  phase: [0.6, (s, o, t, p) => {
+    s.noise(o, t, { type: 'highpass', f: [2000, 6000], gain: 0.12, attack: 0.05, dur: 0.4 });
+    s.sweep(o, t, 'sine', 320 * p, 160 * p, 0.45, 0.08);
+  }],
   // --- Beatrix the Wandering ---
   heartbeat: [0.15, (s, o, t) => {
     s.drum(o, t, 62, 38, 0.14, 0.55, 0.05); // lub

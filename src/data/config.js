@@ -93,6 +93,10 @@ export const WEAPONS = {
   sling: { recoil: 18, shake: 0 },
   wand: { recoil: 14, shake: 0 },
   crossbow: { recoil: 70, shake: 0.08 }, // a hard kick back
+  hex: { recoil: 10, shake: 0 }, // Agnes's staff: slow thorn-seeds
+  soul: { recoil: 8, shake: 0 }, // the Nameless's lantern: soul bolts
+  // Maud's spear: a long, narrow thrust that runs through everything in a line
+  spear: { reach: 68, arc: 0.3, damage: 1.85, knockback: 210, cooldown: 1.2, lunge: 38, waveDamage: 0.3, waveRange: 90 },
   sword: {
     reach: 40, // how far the swing reaches
     arc: 1.25, // half the width of the swing (radians)
@@ -146,6 +150,12 @@ export const SKILLS = {
   // ...and standing still steadies the aim: the next bolt is a sure critical hit.
   steady: { still: 0.5 },
   // Sir Aldwin: a short shield-first dash that knocks foes aside and stuns them.
+  // Maud: a quick dash forward; the next thrust within a second is a sure critical (Riposte)
+  lunge: { time: 0.18, speed: 1.45, cooldown: 0.5, riposte: 1.0 },
+  // Agnes: a roll that leaves a line of thorns behind it (each thorn bites a foe once)
+  bramble: { every: 12, life: 2.6, damage: 0.8, radius: 10 },
+  // the Nameless: becomes a ghost - through foes, shots and stone - then a chilling burst where it ends
+  phase: { time: 0.55, speed: 1.35, cooldown: 0.9, chill: 2.4, radius: 56 },
   charge: { time: 0.25, speed: 350, cooldown: 0.68, damage: 1, knockback: 260, stun: 0.8, burst: 1.25, settle: 0.65, steer: 3.5 },
 };
 

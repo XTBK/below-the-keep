@@ -3,7 +3,7 @@
 // more damage costs speed, an element costs raw damage, reach costs a tighter swing.
 //
 // A weapon is applied like a relic (stats, statsMult, mods, perks are added to the loadout), plus:
-//   class     'wand' | 'crossbow' | 'sword' - who can wield it (the hero's character.weapon)
+//   class     'wand' | 'crossbow' | 'sword' | 'spear' | 'hex' | 'soul' - who can wield it (the hero's character.weapon)
 //   tint      the colour of its shots (see STONE_TINTS in items/Relics.js)
 //   look      how it shows on the hero: { add: 'wand_fire' } or { replace: ['sword', 'greataxe'] }
 //   melee     for swords: overrides WEAPONS.sword in config (reach, arc, damage, cooldown, knockback,
@@ -143,6 +143,69 @@ export const WEAPON_DEFS = {
     melee: { damage: 2.2, cooldown: 1.55 },
     mods: { burn: 1 },
     tint: 'fire', look: { replace: ['sword', 'emberblade'] }, sound: 'sword',
+  },
+
+  // ================================================================ Maud's spears
+  squire_spear: {
+    class: 'spear', name: "Her Lord's Spear", quality: 1, starter: true,
+    flavour: 'Long, plain ash and a good steel point. He taught her well.',
+    sound: 'thrust',
+  },
+  boar_spear: {
+    class: 'spear', name: 'Boar Spear', quality: 2,
+    flavour: 'Heavy, with a crossbar to stop whatever runs onto it.',
+    melee: { damage: 2.45, cooldown: 1.55, knockback: 380, reach: 62, arc: 0.34, stun: 0.3 },
+    look: { replace: ['spear', 'boarspear'] }, sound: 'axe',
+  },
+  halberd: {
+    class: 'spear', name: 'Halberd', quality: 3,
+    flavour: 'A spear with an axe on it. The point reaches; the blade sweeps.',
+    melee: { damage: 2.2, cooldown: 1.42, reach: 72, arc: 0.72, knockback: 260 },
+    look: { replace: ['spear', 'halberd'] }, sound: 'axe',
+  },
+
+  // ================================================================ Agnes's staves
+  apprentice_staff: {
+    class: 'hex', name: 'Apprentice Staff', quality: 1, starter: true,
+    flavour: 'Cut from the queen\'s garden. It still grows a little, when no one looks.',
+    tint: 'green', sound: 'hexCast',
+  },
+  nightshade_staff: {
+    class: 'hex', name: 'Nightshade Staff', quality: 3,
+    flavour: 'The seeds it casts are black, and so is what grows from them.',
+    stats: { damage: -0.3 },
+    statsMult: { fireDelay: 1.12 },
+    mods: { poison: 1 },
+    tint: 'violet', look: { replace: ['staff', 'nightshade'] }, sound: 'hexCast',
+  },
+  briar_staff: {
+    class: 'hex', name: 'Briar Staff', quality: 2,
+    flavour: 'Every seed splits in two before it lands.',
+    stats: { damage: -1.1 },
+    perks: { multishot: 1 },
+    tint: 'green', look: { replace: ['staff', 'briarstaff'] }, sound: 'hexCast',
+  },
+
+  // ================================================================ the Nameless's lanterns
+  grave_lantern: {
+    class: 'soul', name: 'Grave Lantern', quality: 1, starter: true,
+    flavour: 'It lit the cells for the gaolers. Now it lights the way for the dead.',
+    tint: 'ghost', sound: 'soulCast',
+  },
+  cell_chain: {
+    class: 'soul', name: 'Chain of the Cells', quality: 2,
+    flavour: 'Its bolts leap from one foe to the next, like a chain gang.',
+    stats: { damage: -0.4 },
+    mods: { chain: 1 },
+    tint: 'storm', look: { replace: ['lantern', 'chainlantern'] }, sound: 'soulCast',
+  },
+  death_bell: {
+    class: 'soul', name: 'Bell of the Dead', quality: 3,
+    flavour: 'Rung once for every prisoner who never came up. It is still ringing.',
+    stats: { damage: 1.6 },
+    statsMult: { fireDelay: 1.6, shotSpeed: 0.8 },
+    mods: { size: 1, frost: 1 },
+    tint: 'ghost', look: { replace: ['lantern', 'deathbell'] }, sound: 'castFrost',
   },
 };
 

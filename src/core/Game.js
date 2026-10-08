@@ -472,6 +472,7 @@ export class Game {
   /** Hooks for relic perks. */
   onEnemyKilled(e) {
     onEnemyKilled(this, e);
+    if (this.player) this.player.onKill(e);
   }
 
   /** A new character can be chosen on the title screen. */
