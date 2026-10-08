@@ -16,6 +16,20 @@ function arpeggio(s, out, t, notes, step, gain, dur = 1.4, bright = 0.45) {
 }
 
 export const SOUNDS = {
+  // --- menus ---
+  menuMove: [0.2, (s, o, t, p) => {
+    s.drum(o, t, 900 * p, 600, 0.03, 0.12, 0.3); // a dry wooden tick
+    s.pluck(o, t, 440 * p, 0.2, 0.04, 0.6, 0.99);
+  }],
+  menuChoose: [0.45, (s, o, t, p) => {
+    s.metal(o, t, 1400 * p, 0.35, 0.12); // a blade drawn
+    s.noise(o, t, { type: 'bandpass', f: [1800, 5200], q: 2, gain: 0.12, attack: 0.02, dur: 0.12 });
+    s.drum(o, t, 120, 50, 0.15, 0.25, 0.3);
+  }],
+  menuBack: [0.3, (s, o, t, p) => {
+    s.drum(o, t, 500 * p, 260, 0.05, 0.15, 0.3);
+    s.pluck(o, t, 330 * p, 0.3, 0.04, 0.5, 0.99);
+  }],
   // --- Wren ---
   wand: [0.35, (s, o, t, p) => {
     // a spell cracks loose: a zap that falls, a thump of force, sparks of glass

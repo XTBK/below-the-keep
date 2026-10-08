@@ -20,19 +20,22 @@ npm run dev     # then open the http://localhost:5173 link it prints
 | Shoot (or swing, for the Iron Knight) | Arrow keys | Right stick |
 | Dodge (each hero has their own: roll, blink, shield charge) | Shift | B |
 | Active relic / scroll or potion / powder keg | Space / Q / E | RB / LB / LT (or A) |
-| Title screen: choose character / begin / seeded run / collection | A, D (or ← →) / Enter / F / C | D-pad / A / — / X |
+| Menus: move / choose / back (the mouse works too) | W, S (or ↑ ↓) / Enter / Esc | D-pad / A / B |
+| Title screen: change hero | A, D (or ← →) | D-pad left / right |
+| Settings sliders and switches | A, D (or ← →) | D-pad left / right |
 | Collection page: browse / next page / back | Arrows / Tab (or Q) / Esc | D-pad / RB / Start |
-| Quit to title (while paused) | T | |
-| Pause (shows the run seed) | Esc | Start |
-| New run (while paused) | R | Y |
+| Pause menu (resume, settings, controls, abandon run, quit) | Esc | Start |
 | Debug: FPS + draw calls | F3 | |
 | Debug: lighting-only view | F4 | |
 | Debug: reveal map / open secret walls / next floor | F5 / F6 / F7 | |
 
 Replay a run: add `?seed=XXXX-XXXX` to the URL.
 
-On a phone: left thumb moves, right thumb shoots; BOMB / ITEM / USE buttons at the top, ROLL at the bottom centre. On the title screen tap the
-sides to change character, the bottom for the collection, anywhere else to begin.
+On a phone: left thumb moves, right thumb shoots; BOMB / ITEM / USE buttons at the top, ROLL at the bottom centre. Tap a menu
+choice to pick it; on the title screen tap the arrows beside the hero to change hero.
+
+The title menu: **Begin the Descent**, **Daily Descent**, **Oaths** (after your first win), **Seeded Run**, **Collection**,
+**Settings** (music and sound volume, screen shake, slow-mo on crits, damage numbers, fullscreen).
 
 ## Heroes
 
@@ -49,6 +52,31 @@ Each has their own weapon and their own dodge:
 The three were balanced with a bot that plays each hero through the same fights on every chapter: they
 take about the same damage for their health (within ~10%); the Iron Knight kills fastest but takes the most.
 
+## Every run counts
+
+- **Relic quality.** Every relic is Common, Fine, Rare or Legendary (`src/data/quality.js`). After two weak relics in a row
+  the next pedestal is guaranteed Rare or better (bad-luck protection).
+- **Choices.** Some treasure rooms offer two relics: take one and the other crumbles.
+- **The Blacksmith's Anvil** (in every merchant's room): stand beside it to melt your newest relic and forge one a step better.
+- **Boss ranks.** All 40 bosses are ranked **Normal**, **Hard**, **Deadly** or **Legendary** (skulls on the title card). Higher
+  ranks hit harder and only appear deeper - and drop better relics; Deadly and Legendary ones offer a choice of two, and a
+  Legendary also leaves an iron chest.
+- **Oaths** (after your first win): swear oaths before a run - more health or speed on foes, more champions, deadlier bosses,
+  weaker healing, dearer shops, an omen every floor, no map, only two hearts. Each adds **heat** (up to 13); hotter runs find
+  better relics, and each hero's best heat won is remembered.
+- **The Daily Descent**: one seed and one hero for everyone, each day (UTC). Your first run of the day goes on the leaderboard
+  (deepest floor, then fastest time); replays are practice.
+
+### Turning on the Daily Descent leaderboard
+
+The board is a tiny serverless function (`api/daily.js`) that keeps scores in Redis. To switch it on for the Vercel site:
+
+1. In the Vercel dashboard open the **below-the-keep** project, then **Storage** → **Create** → **Upstash for Redis** (free tier is fine).
+2. Connect it to the project. Vercel adds the `KV_REST_API_URL` and `KV_REST_API_TOKEN` settings by itself.
+3. **Redeploy** (Deployments → the latest → Redeploy). The Daily Descent screen now shows the live board.
+
+Until then the game still works: the board says it's unreachable and your best daily run is kept on your device.
+
 ## Sound and music
 
 Everything you hear is synthesised live, no sound files: plucked lute and harp strings, cast bells, clanging
@@ -64,11 +92,14 @@ bells for the Catacombs, a strange pipe dance in the Hollow, war horns in the Bu
 
 - `src/data/` — **every tunable number** (speeds, damage, lights, particles), palettes, controls, room layouts, asset list
 - `src/data/chapters.js` — the four chapters, the throne and the Forgotten Vault (tiles, light, air, bosses)
-- `src/data/characters.js` — the four playable characters; `src/data/curios.js` — trinkets, scrolls, potions, seals, journal pages
+- `src/data/characters.js` — the six playable characters; `src/data/curios.js` — trinkets, scrolls, potions, seals, journal pages
 - `src/data/music.js` — which music file plays when
 - `src/data/difficulty.js` — **how much harder each floor gets**, and how random bosses are scaled
 - `src/data/omens.js`, `src/data/sets.js` — floor curses and the five transformations
-- `src/data/bosses2.js` — the second boss roster (every boss is data: phases + attack patterns)
+- `src/data/bosses2.js`, `src/data/bosses3.js` — the second and third boss rosters (every boss is data: phases + attack patterns)
+- `src/data/quality.js` — relic quality, bad-luck protection, choice pedestals, the anvil; `src/data/oaths.js` — the oaths
+- `src/data/settings.js` — the player's settings; `src/core/Daily.js` + `api/daily.js` — the Daily Descent and its board
+- `src/ui/Menus.js` — every menu (title, pause, settings, controls, oaths, daily); `src/ui/TitleBackdrop.js` — the castle
 - `src/render/` — pixel-perfect render pipeline, lighting, particles, procedural art (`render/art/`)
 - `src/core/` — game loop, input, seeded RNG, object pool, save data, sound
 - `src/world/` — floor generator, layout picker, rooms and collision

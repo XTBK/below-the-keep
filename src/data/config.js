@@ -109,8 +109,7 @@ export const WEAPONS = {
 export const COMBAT = {
   critChance: 0.08, // +2% per point of luck
   critMultiplier: 2,
-  hitStop: 0.022, // seconds the world freezes when a shot lands (at most once every 0.06 s)
-  critHitStop: 0.06,
+  critHitStop: 0.07, // seconds of slow motion on a critical hit (ordinary hits never slow the game)
   squash: 0.14, // how long a struck enemy squashes
   damageNumbers: true,
 };

@@ -11,7 +11,11 @@ import { Save } from '../core/Save.js';
 import { curioFrame } from '../items/Curios.js';
 import { CURIO_FRAME } from '../data/curios.js';
 import { drawCollection, drawCharacter } from './Collection.js';
+import { TIER_INFO, bossTier } from '../data/difficulty.js';
 import { CHARACTERS } from '../data/characters.js';
+import { TitleBackdrop } from './TitleBackdrop.js';
+import { daily } from '../core/Daily.js';
+import { drawPanel, wrap as wrapText } from './Menus.js';
 
 // Draws the HUD and menus onto a 640x360 canvas. It is only redrawn when something changes
 // (call markDirty), then uploaded once as a texture.
@@ -156,6 +160,7 @@ export class Hud {
   /** Once per frame, after the world has updated. */
   tick(dt, game) {
     this.time += dt;
+    this._dt = dt;
     const next = this._hoverNext;
     this._hoverNext = null;
     if ((next && next.def) !== (this.hover && this.hover.def)) this.dirty = true;
@@ -165,7 +170,7 @@ export class Hud {
       this.dirty = true;
     }
     // screens that animate need a redraw every frame
-    if (game.state !== 'play' || game.floorTitleT > 0 || game.enemies.boss || game.fade > 0 || (game.player && game.player.charge > 0)) this.dirty = true;
+    if (game.state !== 'play' || game.paused || game.floorTitleT > 0 || game.enemies.boss || game.fade > 0 || (game.player && game.player.charge > 0)) this.dirty = true;
   }
 
   _curioIcon(frame) {
@@ -295,11 +300,11 @@ export class Hud {
 
     // minimap + floor name
     if (state.floor) {
-      if (state.omen === 'lost' && !state.debugReveal) {
+      if ((state.omen === 'lost' || state.oath('blind')) && !state.debugReveal) {
         // the Omen of the Lost: no map at all
         drawText(ctx, '?', W - 40, 26, FAINT, { scale: 3, align: 'center' });
         drawText(ctx, state.floorName, W - 8, 52, DIM, { align: 'right' });
-        drawText(ctx, state.omenInfo.name.toUpperCase(), W - 8, 62, '#b080e0', { align: 'right' });
+        if (state.omen) drawText(ctx, state.omenInfo.name.toUpperCase(), W - 8, 62, '#b080e0', { align: 'right' });
       } else {
         const m = drawMinimap(ctx, state.floor, state.room.data.id, state.debugReveal);
         drawText(ctx, state.floorName, m.x + m.w, m.y + m.h + 6, DIM, { align: 'right' });
@@ -371,6 +376,17 @@ export class Hud {
     const slide = Math.round(Math.max(0, 1 - (BOSS_FX.introTime - t) * 3) * 40);
     drawText(ctx, boss.name, W / 2 - slide, H / 2 - 22, GOLD, { scale: 3, align: 'center' });
     drawText(ctx, boss.subtitle, W / 2 + slide, H / 2 + 12, INK, { align: 'center' });
+    // its rank: one skull per step, in the rank's colour
+    const tier = state.bossTierOf(boss.type);
+    const info = TIER_INFO[tier];
+    const label = info.name;
+    const tw = label.length * 6 + tier * 9 + 6;
+    let x = Math.round(W / 2 - tw / 2);
+    for (let i = 0; i < tier; i++) {
+      drawSkull(ctx, x, H / 2 + 25, info.color);
+      x += 9;
+    }
+    drawText(ctx, label, x + 4, H / 2 + 25, info.color);
     ctx.globalAlpha = 1;
   }
 
@@ -401,72 +417,81 @@ export class Hud {
     const ctx = this.ctx;
     const W = RENDER.width;
     const H = RENDER.height;
-    ctx.fillStyle = 'rgba(4,3,6,0.76)';
-    ctx.fillRect(0, 0, W, H);
-    // a slow red pulse behind the logo, like something breathing far below
-    const pulse = 0.5 + 0.5 * Math.sin(this.time * 1.3);
-    const g = ctx.createRadialGradient(W / 2, 76, 10, W / 2, 76, 220);
-    g.addColorStop(0, `rgba(120,24,12,${0.18 + 0.12 * pulse})`);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-    // embers drifting up out of the dark
-    for (let i = 0; i < 46; i++) {
-      const seed = i * 97.31;
-      const speed = 8 + (i % 7) * 3;
-      const y = H + 10 - ((this.time * speed + seed * 3) % (H + 20));
-      const x = ((seed * 13.7) % W) + Math.sin(this.time * 0.8 + i) * 6;
-      const life = 1 - y / H;
-      ctx.globalAlpha = Math.max(0, Math.min(1, (1 - life) * 1.4)) * (0.4 + 0.6 * Math.abs(Math.sin(this.time * 3 + i)));
-      ctx.fillStyle = i % 3 ? '#f68c2c' : '#ffc35a';
-      ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
-    }
+    const time = this.time;
+    // the castle under the moon
+    if (!this.backdrop) this.backdrop = new TitleBackdrop();
+    this.backdrop.draw(ctx, time, this._dt || 1 / 60);
+    // a dark wash on the left, behind the menu
+    const grad = ctx.createLinearGradient(0, 0, 230, 0);
+    grad.addColorStop(0, 'rgba(3,2,6,0.82)');
+    grad.addColorStop(1, 'rgba(3,2,6,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 96, 230, H - 96);
+
+    // the logo, with a flickering ember glow behind it
+    const flick = 0.85 + 0.15 * Math.sin(time * 7) * Math.sin(time * 3.1);
+    const pulse = 0.5 + 0.5 * Math.sin(time * 1.3);
+    ctx.globalAlpha = 0.4 * flick;
+    drawText(ctx, 'BELOW THE KEEP', W / 2 + 1, 19, '#d4521a', { scale: 5, align: 'center', shadow: null });
     ctx.globalAlpha = 1;
-    // the title, with a flickering ember glow behind it
-    const flick = 0.85 + 0.15 * Math.sin(this.time * 7) * Math.sin(this.time * 3.1);
-    ctx.globalAlpha = 0.35 * flick;
-    drawText(ctx, 'BELOW THE KEEP', W / 2 + 1, 59, '#d4521a', { scale: 5, align: 'center', shadow: null });
-    ctx.globalAlpha = 1;
-    drawText(ctx, 'BELOW THE KEEP', W / 2, 58, GOLD, { scale: 5, align: 'center', shadow: '#3a1206' });
-    // the one line that matters, bleeding red
+    drawText(ctx, 'BELOW THE KEEP', W / 2, 18, GOLD, { scale: 5, align: 'center', shadow: '#3a1206' });
     ctx.globalAlpha = 0.75 + 0.25 * pulse;
-    drawText(ctx, 'THE ONLY WAY OUT IS DOWN', W / 2, 100, '#c02634', { scale: 2, align: 'center', shadow: '#1a0406' });
+    drawText(ctx, 'THE ONLY WAY OUT IS DOWN', W / 2, 62, '#c02634', { scale: 2, align: 'center', shadow: '#1a0406' });
     ctx.globalAlpha = 1;
 
-    const touch = state.input.touchMode;
-    if (state.seedEntry !== null) {
-      drawText(ctx, 'TYPE A SEED', W / 2, 168, INK, { align: 'center' });
-      const shown = (state.seedEntry + '________').slice(0, 8);
-      const seedText = `${shown.slice(0, 4)}-${shown.slice(4)}`;
-      framedBox(ctx, W / 2 - 66, 182, 132, 26);
-      drawText(ctx, seedText, W / 2, 188, GOLD, { scale: 2, align: 'center' });
-      drawText(ctx, 'ENTER  BEGIN     ESC  BACK', W / 2, 222, DIM, { align: 'center' });
-    } else {
-      // who descends: the character picker
-      const id = state.characterId;
-      const ch = CHARACTERS[id];
-      const locked = !Save.data.unlocks.characters.includes(id);
-      drawCharacter(ctx, id, W / 2 - 32, 120, 2, locked);
-      const bob = Math.round(Math.sin(this.time * 4) * 2);
-      drawText(ctx, '<', W / 2 - 70 - bob, 144, GOLD, { scale: 2, align: 'center' });
-      drawText(ctx, '>', W / 2 + 70 + bob, 144, GOLD, { scale: 2, align: 'center' });
-      drawText(ctx, locked ? '???' : `${ch.name.toUpperCase()}, ${ch.title.toUpperCase()}`, W / 2, 188, locked ? DIM : INK, { align: 'center' });
-      drawText(ctx, locked ? 'LOCKED: ' + ch.unlock.toUpperCase() : ch.flavour.toUpperCase(), W / 2, 200, DIM, { align: 'center' });
-      if (!locked && Math.floor(this.time * 2) % 2 === 0) {
-        drawText(ctx, touch ? 'TAP TO BEGIN THE DESCENT' : 'PRESS ENTER TO BEGIN THE DESCENT', W / 2, 222, INK, { align: 'center' });
-      }
-      drawText(ctx, touch ? 'TAP THE SIDES TO CHOOSE      TAP HERE FOR THE COLLECTION' : 'A / D  CHOOSE      F  SEEDED RUN      C  COLLECTION', W / 2, touch ? H - 52 : 240, DIM, { align: 'center' });
+    const menus = state.menus;
+    const onTitle = menus.top && menus.top.id === 'title';
+    // the hero, on the cliff to the right
+    const id = state.characterId;
+    const ch = CHARACTERS[id];
+    const locked = !Save.data.unlocks.characters.includes(id);
+    const hx = 536;
+    // torchlight on the hero
+    const glow = ctx.createRadialGradient(hx, 236, 4, hx, 236, 70);
+    glow.addColorStop(0, `rgba(255,140,60,${0.16 + 0.04 * flick})`);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(hx - 80, 160, 160, 120);
+    drawCharacter(ctx, id, hx - 32, 206, 2, locked);
+    if (onTitle) {
+      const bob = Math.round(Math.sin(time * 4) * 2);
+      drawText(ctx, '<', hx - 52 - bob, 236, GOLD, { scale: 2, align: 'center' });
+      drawText(ctx, '>', hx + 52 + bob, 236, GOLD, { scale: 2, align: 'center' });
+    }
+    drawText(ctx, locked ? '???' : ch.name.toUpperCase(), hx, 278, locked ? DIM : GOLD, { scale: 2, align: 'center' });
+    drawText(ctx, locked ? 'LOCKED' : ch.title.toUpperCase(), hx, 296, locked ? DIM : INK, { align: 'center' });
+    const flav = locked ? 'UNLOCK: ' + (ch.unlock || 'available from the start').toUpperCase() : ch.flavour.toUpperCase();
+    wrapText(flav, 30).forEach((l, i) => drawText(ctx, l, hx, 308 + i * 9, DIM, { align: 'center' }));
+
+    // the menu
+    if (onTitle && state.seedEntry === null && !state.nameEntry) {
+      menus.drawList(ctx, time, { x: 44, y: 120, gap: 20, width: 190, noteX: 30, noteY: 256, noteWidth: 30 });
+      const touch = state.input.touchMode;
+      if (state.audio.ctx && state.audio.ctx.state === 'running') drawText(ctx, touch ? 'TAP A CHOICE  -  TAP THE ARROWS FOR ANOTHER HERO' : 'W/S CHOOSE    ENTER SELECT    A/D HERO', W / 2, H - 12, FAINT, { align: 'center' });
+    } else if (!onTitle) {
+      menus.draw(ctx, time);
+    }
+
+    // typing a seed or a name
+    if (state.seedEntry !== null || state.nameEntry) {
+      const naming = !!state.nameEntry;
+      ctx.fillStyle = 'rgba(3,2,6,0.7)';
+      ctx.fillRect(0, 0, W, H);
+      drawPanel(ctx, 170, 130, 300, 110, naming ? 'YOUR NAME' : 'SEEDED RUN');
+      const raw = naming ? state.nameEntry.value : state.seedEntry;
+      const shown = naming ? raw + (Math.floor(time * 2) % 2 ? '_' : ' ') : `${(raw + '________').slice(0, 4)}-${(raw + '________').slice(4, 8)}`;
+      drawText(ctx, naming ? 'FOR THE DAILY DESCENT BOARD' : 'TYPE A SEED', W / 2, 152, DIM, { align: 'center' });
+      drawText(ctx, shown, W / 2, 172, GOLD, { scale: 2, align: 'center' });
+      drawText(ctx, 'ENTER  OK     ESC  BACK', W / 2, 212, DIM, { align: 'center' });
     }
 
     const st = Save.data.stats;
-    drawText(ctx, `RUNS ${st.runsStarted}    VICTORIES ${st.victories}    BOSSES SLAIN ${st.bossesBeaten}    RELICS FOUND ${RELIC_IDS.filter((r) => Save.data.unlocks.itemsSeen.includes(r)).length}/${RELIC_IDS.length}`, W / 2, H - 36, FAINT, {
-      align: 'center',
-    });
+    if (onTitle) drawText(ctx, `RUNS ${st.runsStarted}    VICTORIES ${st.victories}    BOSSES SLAIN ${st.bossesBeaten}    RELICS FOUND ${RELIC_IDS.filter((r) => Save.data.unlocks.itemsSeen.includes(r)).length}/${RELIC_IDS.length}`, W / 2, H - 24, FAINT, { align: 'center' });
     // browsers keep quiet until the first key press or tap
     const audio = state.audio;
     if (!audio.ctx || audio.ctx.state !== 'running') {
       ctx.globalAlpha = 0.6 + 0.4 * pulse;
-      drawText(ctx, touch ? 'TAP ANYWHERE FOR SOUND' : 'PRESS ANY KEY FOR SOUND', W / 2, H - 22, DIM, { align: 'center' });
+      drawText(ctx, state.input.touchMode ? 'TAP ANYWHERE FOR SOUND' : 'PRESS ANY KEY FOR SOUND', W / 2, H - 12, DIM, { align: 'center' });
       ctx.globalAlpha = 1;
     }
   }
@@ -492,6 +517,7 @@ export class Hud {
       drawText(ctx, v, W / 2 + 8, 92 + i * 14, i === 0 ? GOLD : INK);
     });
     this._drawRelicRow(state, 164);
+    this._drawRunNote(state, H - 50);
     drawText(ctx, state.input.touchMode ? 'TAP TO DESCEND AGAIN' : 'R  DESCEND AGAIN      ESC  TITLE', W / 2, H - 34, INK, { align: 'center' });
     ctx.globalAlpha = 1;
   }
@@ -515,6 +541,7 @@ export class Hud {
       ctx.globalAlpha = 1;
     }
     this._drawRelicRow(state, 140);
+    this._drawRunNote(state, H - 50);
     drawText(ctx, state.input.touchMode ? 'TAP FOR A NEW RUN' : 'R  NEW RUN      ESC  TITLE', W / 2, H - 34, INK, { align: 'center' });
   }
 
@@ -534,48 +561,35 @@ export class Hud {
     });
   }
 
-  _drawPause(state) {
+  /** Under the death / victory screen: the Daily Descent's result, or the run's heat. */
+  _drawRunNote(state, y) {
     const ctx = this.ctx;
     const W = RENDER.width;
-    const H = RENDER.height;
-    ctx.fillStyle = 'rgba(5,4,8,0.72)';
-    ctx.fillRect(0, 0, W, H);
-    const cx = W / 2;
-    drawText(ctx, 'PAUSED', cx, 50, GOLD, { scale: 3, align: 'center' });
-    drawText(ctx, 'SEED', cx, 92, DIM, { align: 'center' });
-    drawText(ctx, state.seed, cx, 104, INK, { scale: 2, align: 'center' });
-
-    const touchLines = [
-      ['>', 'RESUME'],
-      ['NEW RUN', 'NEW RUN (NEW SEED)'],
-      ['', ''],
-      ['LEFT THUMB', 'DRAG TO MOVE'],
-      ['RIGHT THUMB', 'DRAG TO SHOOT'],
-      ['ROLL', 'DODGE (BOTTOM CENTRE)'],
-      ['ITEM / BOMB', 'BUTTONS AT THE TOP RIGHT'],
-    ];
-    const lines = state.input.touchMode
-      ? touchLines
-      : [
-          ['ESC', 'RESUME'],
-          [KEYS.newRun[0].replace('Key', ''), 'NEW RUN (NEW SEED)'],
-          ['T', 'QUIT TO TITLE'],
-          ['', ''],
-          ['WASD', 'MOVE'],
-          ['ARROWS', 'SHOOT'],
-          ['SHIFT', 'DODGE ROLL'],
-          ['SPACE / E', 'ACTIVE RELIC / POWDER KEG'],
-          ['F3 / F4', 'FPS / LIGHTING-ONLY VIEW'],
-          ['F5 / F6 / F7', 'DEBUG: MAP / OPEN SECRETS / NEXT FLOOR'],
-        ];
-    lines.forEach(([k, v], i) => {
-      const y = 140 + i * 12;
-      drawText(ctx, k, cx - 8, y, GOLD, { align: 'right' });
-      drawText(ctx, v, cx + 8, y, '#b8b0a0');
-    });
-    // relics carried, with their names
-    const p = state.player;
-    if (p.relics.length || p.active) this._drawRelicRow(state, H - 60);
-    if (!state.input.touchMode) drawText(ctx, 'ADD ?SEED=XXXX-XXXX TO THE URL TO REPLAY A SEED', cx, H - 18, FAINT, { align: 'center' });
+    let text = null;
+    let color = '#7ac0e0';
+    if (state.daily) {
+      const lp = daily.lastPost;
+      if (!lp || lp.pending) text = 'DAILY DESCENT: POSTING YOUR RUN...';
+      else if (lp.rank) text = `DAILY DESCENT: YOU PLACED #${lp.rank} TODAY`;
+      else if (lp.practice) text = 'DAILY DESCENT: A PRACTICE RUN - ONLY THE FIRST RUN COUNTS';
+      else text = 'DAILY DESCENT: KEPT ON THIS DEVICE (THE BOARD IS UNREACHABLE)';
+    } else if (state.heat) {
+      const rec = Save.data.heatRecord[state.characterId] || 0;
+      text = state.state === 'victory' && rec === state.heat ? `WON AT HEAT ${state.heat} - A NEW RECORD` : `SWORN TO HEAT ${state.heat}`;
+      color = '#e07a40';
+    }
+    if (text) drawText(ctx, text, W / 2, y, color, { align: 'center' });
   }
+
+  _drawPause(state) {
+    state.menus.draw(this.ctx, this.time);
+  }
+}
+
+const SKULL = ['.###.', '#####', '#.#.#', '#####', '.#.#.'];
+function drawSkull(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  SKULL.forEach((row, ry) => {
+    for (let rx = 0; rx < 5; rx++) if (row[rx] === '#') ctx.fillRect(x + rx, y + ry, 1, 1);
+  });
 }

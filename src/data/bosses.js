@@ -70,6 +70,7 @@ export const BOSSES = {
 // 10 shadow, 11 iron ball, 12 rune.
 // ---------------------------------------------------------------------------------------------
 import { PATTERN_BOSSES_2 } from './bosses2.js';
+import { PATTERN_BOSSES_3 } from './bosses3.js';
 
 export const PATTERN_BOSSES = {
   gravedigger: {
@@ -257,7 +258,7 @@ export const PATTERN_BOSSES = {
   },
 };
 
-Object.assign(PATTERN_BOSSES, PATTERN_BOSSES_2);
+Object.assign(PATTERN_BOSSES, PATTERN_BOSSES_2, PATTERN_BOSSES_3);
 
 // Every boss that can guard an ordinary floor. Each floor draws one AT RANDOM (seeded, no repeats in a
 // run) and scales it to the floor's depth (data/difficulty.js). The Mad King always waits on the

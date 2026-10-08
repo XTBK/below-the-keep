@@ -34,6 +34,8 @@ const BEAM = {
   shadow: [new THREE.Color(1.1, 0.5, 2.2), new THREE.Color(2.4, 1.8, 3.0)],
   fire: [new THREE.Color(2.6, 0.9, 0.3), new THREE.Color(3.2, 2.4, 1.2)],
   tongue: [new THREE.Color(1.6, 0.35, 0.45), new THREE.Color(2.2, 0.8, 0.9)],
+  holy: [new THREE.Color(2.6, 2.0, 0.8), new THREE.Color(3.2, 3.0, 2.2)],
+  abyss: [new THREE.Color(0.6, 2.2, 0.8), new THREE.Color(1.8, 3.0, 1.6)],
 };
 const GUST = new THREE.Color(1.0, 1.2, 1.4);
 

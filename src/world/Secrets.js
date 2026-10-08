@@ -7,6 +7,7 @@ import { nextPage, randomCurio } from '../items/Curios.js';
 import { RELICS, ROOM_DROPS } from '../data/items.js';
 import { PLAYER, LIGHTING } from '../data/config.js';
 import { Save } from '../core/Save.js';
+import { quality, QUALITY_NAMES, ANVIL } from '../data/quality.js';
 
 // The secrets hidden in feature rooms. Each is a small object the Room owns, with any of:
 //   update(dt)            every frame while you're in the room
@@ -599,3 +600,89 @@ export class Beggar {
     }
   }
 }
+
+// --- the Blacksmith's Anvil (every merchant's room): reforge your newest relic ---
+
+export class Anvil {
+  constructor(room, x, ground) {
+    this.room = room;
+    this.game = room.game;
+    this.x = x;
+    this.ground = ground;
+    this.sprite = room._staticSprite('anvil', x, ground - 2, 2, 3);
+    room.solids.push({ x0: x - 14, x1: x + 14, y0: ground - 2, y1: ground + 8, owner: null });
+    this.work = 0;
+    this.sparkT = 0;
+    if (room.data.anvilUsed) this.sprite.setFrame(2, 0);
+  }
+
+  /** The relic the anvil would melt: the newest passive one. */
+  get target() {
+    const r = this.game.player.relics;
+    return r.length ? r[r.length - 1] : null;
+  }
+
+  update(dt) {
+    const g = this.game;
+    const pl = g.player;
+    const near = Math.abs(pl.x - this.x) < 30 && pl.y > this.ground - 18 && pl.y < this.ground + 24;
+    const d = this.room.data;
+    if (!near) {
+      if (this.work > 0) this.sprite.setFrame(d.anvilUsed ? 2 : 0, 0);
+      this.work = 0;
+      return;
+    }
+    if (d.anvilUsed) {
+      g.hud.setHover(ANVIL_SPENT, 0);
+      return;
+    }
+    const id = this.target;
+    if (!id) {
+      g.hud.setHover(ANVIL_EMPTY, 0);
+      return;
+    }
+    const q = quality(id);
+    const better = QUALITY_NAMES[Math.min(4, q + 1)].toLowerCase();
+    g.hud.setHover({ name: "Blacksmith's Anvil", flavour: `Stay close to melt your ${RELICS[id].name} into something ${better}.` }, 0);
+    // the work: hold still beside it, the metal heats, the hammer rings
+    this.work += dt;
+    this.sprite.setFrame(1, 0);
+    this.sparkT -= dt;
+    if (this.sparkT <= 0) {
+      this.sparkT = 0.22;
+      g.audio.play('clang', 0.5 + this.work / ANVIL.holdTime);
+      g.effects.burst(g.effects.presets.gold, this.x, this.ground + 4, 20, 5, 70, 60);
+    }
+    if (this.work >= ANVIL.holdTime) this._reforge(id, q);
+  }
+
+  _reforge(id, q) {
+    const g = this.game;
+    const d = this.room.data;
+    // always one step better (a legendary stays legendary)
+    const newId = g.pickRelic('armoury', g.dropRng, { minQuality: Math.min(4, q + 1), bias: ANVIL.bias });
+    if (!newId) {
+      this.work = 0;
+      g.audio.play('deny');
+      return;
+    }
+    d.anvilUsed = true;
+    g.player.removeRelic(id);
+    this.sprite.setFrame(2, 0);
+    g.audio.play('explosion', 0.4);
+    g.feel.shake(0.25);
+    g.effects.burst(g.effects.presets.gold, this.x, this.ground + 6, 22, 24, 110, 90);
+    this.room.addRewardPedestal(this.x - 34, this.ground, { kind: 'relic', id: newId, price: 0, gone: false }); // it rises beside the anvil
+  }
+
+  drawOverlay(o) {
+    if (this.work <= 0) return;
+    // a ring that fills as the metal heats
+    const k = Math.min(1, this.work / ANVIL.holdTime);
+    o.arc(this.x, this.ground + 34, 9, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2, ANVIL_RING, 1, 3, 1);
+  }
+}
+
+const ANVIL_SPENT = { name: "Blacksmith's Anvil", flavour: 'The coals are dead. It has done its work.' };
+const ANVIL_EMPTY = { name: "Blacksmith's Anvil", flavour: 'Bring a relic, and the anvil will make it something new.' };
+const ANVIL_RING = new THREE.Color(2.4, 1.4, 0.4);

@@ -22,6 +22,11 @@ import * as B2 from '../render/art/bossesArt2.js';
 import * as SA from '../render/art/secretsArt.js';
 import * as E3 from '../render/art/enemiesArt3.js';
 import * as B3 from '../render/art/bossesArt3.js';
+import * as B4 from '../render/art/bossesArt4.js'; // redrawn bosses
+import * as B5 from '../render/art/bossesArt5.js';
+import * as B6 from '../render/art/bossesArt6.js';
+import * as B7 from '../render/art/bossesArt7.js';
+import * as E4 from '../render/art/enemiesArt4.js'; // redrawn enemies
 import * as I3 from '../render/art/itemsArt3.js';
 import { spellFrame, quarrelFrame } from '../render/art/wizardArt.js';
 import { wrenFrame, WREN_FRAMES } from '../render/art/wrenArt.js';
@@ -138,12 +143,12 @@ const E2_SHEETS = {
   sapling: [32, 36, 11, E2.saplingFrame, E2.SAPLING_ANIMS],
   cutpurse: [24, 24, 12, E2.cutpurseFrame, E2.CUTPURSE_ANIMS],
   blackknight: [36, 32, 12, E2.blackknightFrame, E2.BLACKKNIGHT_ANIMS],
-  flailbrute: [40, 40, 11, E2.flailbruteFrame, E2.FLAILBRUTE_ANIMS],
+  flailbrute: [40, 40, 11, E4.flailbruteFrame, E2.FLAILBRUTE_ANIMS],
   gargoyle: [36, 32, 12, E2.gargoyleFrame, E2.GARGOYLE_ANIMS],
   magus: [32, 36, 12, E2.magusFrame, E2.MAGUS_ANIMS],
   livingarmour: [32, 32, 13, E2.livingarmourFrame, E2.LIVINGARMOUR_ANIMS],
   drake: [40, 32, 11, E2.drakeFrame, E2.DRAKE_ANIMS],
-  executioner: [40, 44, 11, E2.executionerFrame, E2.EXECUTIONER_ANIMS],
+  executioner: [40, 44, 11, E4.executionerFrame, E2.EXECUTIONER_ANIMS],
 };
 for (const [key, [w, h, cols, generate, anims]] of Object.entries(E2_SHEETS)) {
   ASSETS[key] = { frameW: w, frameH: h, cols, rows: 2, generate, anims, selfLight: 0x8a / 255 };
@@ -151,17 +156,17 @@ for (const [key, [w, h, cols, generate, anims]] of Object.entries(E2_SHEETS)) {
 
 // --- Pattern bosses (0-1 idle, 2-5 walk, 6 wind-up, 7 attack, 8-10 death, 11 cast) ---
 const B2_SHEETS = {
-  gravedigger: [56, 56, B2.gravediggerFrame],
+  gravedigger: [56, 56, B7.gravediggerFrame],
   colossus: [96, 96, B2.colossusFrame],
   briarhound: [72, 48, B2.briarhoundFrame],
-  thornwitch: [64, 64, B2.thornwitchFrame],
-  pyrebishop: [56, 64, B2.pyrebishopFrame],
+  thornwitch: [64, 64, B7.thornwitchFrame],
+  pyrebishop: [56, 64, B7.pyrebishopFrame],
   champion: [72, 72, B2.championFrame],
   madking1: [64, 72, B2.madking1Frame],
   madking2: [64, 72, B2.madking2Frame],
   madking3: [64, 72, B2.madking3Frame],
-  crownwraith: [64, 64, B2.crownwraithFrame],
-  keeper: [64, 72, B2.keeperFrame],
+  crownwraith: [64, 64, B6.crownwraithFrame],
+  keeper: [64, 72, B6.keeperFrame],
 };
 for (const [key, [w, h, generate]] of Object.entries(B2_SHEETS)) {
   ASSETS[key] = { frameW: w, frameH: h, cols: B2.BOSS2_COLS, rows: 2, generate, anims: B2.boss2Anims(), selfLight: 0x8a / 255 };
@@ -182,7 +187,7 @@ Object.assign(ASSETS, {
 // --- the second bestiary (same column layout as chapters 2-4) ---
 const E3_SHEETS = {
   hound: [36, 28, 11, E3.houndFrame, E3.HOUND_ANIMS],
-  torturer: [32, 36, 11, E3.torturerFrame, E3.TORTURER_ANIMS],
+  torturer: [32, 36, 11, E4.torturerFrame, E3.TORTURER_ANIMS],
   ratnest: [36, 28, 11, E3.ratnestFrame, E3.RATNEST_ANIMS],
   monk: [32, 34, 11, E3.monkFrame, E3.MONK_ANIMS],
   slime: [32, 24, 11, E3.slimeFrame, E3.SLIME_ANIMS],
@@ -210,27 +215,39 @@ for (const [key, [w, h, cols, generate, anims]] of Object.entries(E3_SHEETS)) {
 
 // --- the second boss roster ---
 const B3_SHEETS = {
-  mastiff: [64, 44, B3.mastiffFrame],
-  friar: [64, 64, B3.friarFrame],
-  ratking: [64, 48, B3.ratkingFrame],
-  headsman: [72, 80, B3.headsmanFrame],
-  maiden: [56, 72, B3.maidenFrame],
-  choir: [64, 56, B3.choirFrame],
+  mastiff: [64, 44, B6.mastiffFrame],
+  friar: [64, 64, B4.friarFrame],
+  ratking: [64, 48, B4.ratkingFrame],
+  headsman: [72, 80, B4.headsmanFrame],
+  maiden: [56, 72, B5.maidenFrame],
+  choir: [64, 56, B6.choirFrame],
   gravemother: [72, 48, B3.gravemotherFrame],
-  physician: [56, 64, B3.physicianFrame],
-  lich: [56, 72, B3.lichFrame],
-  entombed: [56, 72, B3.entombedFrame],
-  greattoad: [72, 56, B3.greattoadFrame],
-  matron: [64, 64, B3.matronFrame],
-  stag: [72, 64, B3.stagFrame],
-  ancientoak: [88, 96, B3.ancientoakFrame],
+  physician: [56, 64, B7.physicianFrame],
+  lich: [56, 72, B5.lichFrame],
+  entombed: [56, 72, B5.entombedFrame],
+  greattoad: [72, 56, B4.greattoadFrame],
+  matron: [64, 64, B5.matronFrame],
+  stag: [72, 64, B6.stagFrame],
+  ancientoak: [88, 96, B5.ancientoakFrame],
   mothqueen: [80, 64, B3.mothqueenFrame],
-  courtjester: [56, 64, B3.courtjesterFrame],
-  moltenknight: [64, 72, B3.moltenknightFrame],
-  gargoylelord: [80, 72, B3.gargoylelordFrame],
-  ashwing: [96, 80, B3.ashwingFrame],
-  burnedqueen: [64, 72, B3.burnedqueenFrame],
+  courtjester: [56, 64, B6.courtjesterFrame],
+  moltenknight: [64, 72, B6.moltenknightFrame],
+  gargoylelord: [80, 72, B5.gargoylelordFrame],
+  ashwing: [96, 80, B6.ashwingFrame],
+  burnedqueen: [64, 72, B6.burnedqueenFrame],
 };
+// the third roster
+Object.assign(B3_SHEETS, {
+  turnkey: [64, 64, B7.turnkeyFrame],
+  bellringer: [64, 64, B7.bellringerFrame],
+  widow: [56, 72, B7.widowFrame],
+  hangedman: [56, 80, B7.hangedmanFrame],
+  fenhag: [64, 64, B7.fenhagFrame],
+  wickerman: [72, 96, B7.wickermanFrame],
+  inquisitor: [56, 72, B7.inquisitorFrame],
+  dreadknight: [72, 80, B7.dreadknightFrame],
+  abyssaleye: [72, 72, B7.abyssaleyeFrame],
+});
 for (const [key, [w, h, generate]] of Object.entries(B3_SHEETS)) {
   ASSETS[key] = { frameW: w, frameH: h, cols: B2.BOSS2_COLS, rows: 2, generate, anims: B2.boss2Anims(), selfLight: 0x8a / 255 };
 }
@@ -242,6 +259,7 @@ Object.assign(ASSETS, {
   dice_table: { frameW: 40, frameH: 32, cols: 2, rows: 1, generate: (c) => I3.diceTableFrame(c) },
   beggar: { frameW: 24, frameH: 32, cols: 2, rows: 1, generate: (c) => I3.beggarFrame(c) },
   war_banner: { frameW: 20, frameH: 40, cols: 2, rows: 1, generate: (c) => I3.warBannerFrame(c) },
+  anvil: { frameW: 36, frameH: 30, cols: 3, rows: 1, generate: (c) => I3.anvilFrame(c) }, // the Blacksmith's Anvil: cold, glowing, spent
 });
 
 // --- Wren's wand: spell bolts in the three stone sizes ---

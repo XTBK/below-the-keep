@@ -44,6 +44,33 @@ export function bossScale(n, home) {
   };
 }
 
+// Boss ranks. On top of depth scaling, a boss's rank makes it tougher and quicker - and its reward
+// better. Higher ranks only turn up deeper (minFloor). Unlisted bosses are rank 1.
+export const BOSS_TIERS = {
+  // 1 Normal
+  ratmother: 1, mastiff: 1, friar: 1, warden: 1, ratking: 1, gravedigger: 1, briarhound: 1, greattoad: 1,
+  // 2 Hard
+  headsman: 2, maiden: 2, choir: 2, physician: 2, colossus: 2, thornwitch: 2, matron: 2, stag: 2, entombed: 2,
+  // 3 Deadly
+  gravemother: 3, lich: 3, ancientoak: 3, mothqueen: 3, pyrebishop: 3, courtjester: 3, moltenknight: 3, gargoylelord: 3,
+  // 4 Legendary
+  champion: 4, ashwing: 4, burnedqueen: 4,
+  // the third roster
+  turnkey: 1, bellringer: 1, widow: 2, hangedman: 2, fenhag: 2, wickerman: 3, inquisitor: 3, dreadknight: 4, abyssaleye: 4,
+};
+
+export const TIER_INFO = [
+  null,
+  { name: 'NORMAL', color: '#b8b0a0', hp: 1, tempo: 1, minFloor: 1, reward: { bias: 0 } },
+  { name: 'HARD', color: '#e0a040', hp: 1.15, tempo: 1.05, minFloor: 2, reward: { bias: 0.5 } },
+  { name: 'DEADLY', color: '#e04030', hp: 1.35, tempo: 1.1, minFloor: 4, reward: { bias: 0.9, minQuality: 2, choice: true } },
+  { name: 'LEGENDARY', color: '#c070ff', hp: 1.6, tempo: 1.16, minFloor: 6, reward: { bias: 1.2, minQuality: 3, choice: true, chest: true } },
+];
+
+export function bossTier(type) {
+  return BOSS_TIERS[type] || 1;
+}
+
 export function championChance(base, n) {
   return base + D.championPerFloor * Math.max(0, n - 1);
 }

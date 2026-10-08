@@ -19,7 +19,8 @@
 | 8 | Final boss, unlocks, characters, collection page, polish & performance pass | Done |
 | E1 | Expansion: 20 enemies, 20 bosses, 25 relics, random scaled bosses, depth difficulty, Isaac-style systems | Done |
 | E2 | Its own soul: songs per place, new title, Ranger + Iron Knight, parchment map, weighty combat, dodge roll | Done |
-| E3 | Hero skills (blink / steady aim + reload roll / shield charge), bot-tested balance, punchier attack sounds | **Done — awaiting OK** |
+| E3 | Hero skills (blink / steady aim + reload roll / shield charge), bot-tested balance, punchier attack sounds | Done |
+| E4 | Smooth hits, relic quality + anvil + choices, oaths, Daily Descent, 40 bosses with ranks, redrawn bosses, real menus, castle title | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -488,7 +489,7 @@ Goal: keep the Isaac skeleton (rooms, relics, floors) but give the game its own 
 - **Dodge roll** (`ROLL` in config; Shift / gamepad B / touch ROLL): 0.3 s tumble at 270 px/s, untouchable,
   can't shoot mid-roll, 0.7 s cooldown. The biggest change in how fights play.
 
-### Expansion 3 — hero skills (awaiting OK)
+### Expansion 3 — hero skills — done
 
 Each starting hero gets their own dodge (`dodge` in `data/characters.js`, numbers in `SKILLS` in config):
 - **Wren - Blink:** teleports 84 px (passes enemies and pits, stops at walls and rocks; nothing happens if there's
@@ -511,3 +512,38 @@ glass sparks), crossbow (latch clack, string slam, stock kick, hiss), sword (ris
 blow landing (crunch, thud, iron ring), parry, crit, roll (cloth whip + boots on stone + grit), blink (air
 rushing in, pop, shimmer), reload (windlass clicks + latch), steady chime, aimed-shot crack, shield charge (armour
 rattle, pounding, grunt) and shield bash (booming clang).
+
+### Expansion 4 — every run counts (awaiting OK)
+
+- **The hitch on hits, fixed.** Every landed blow used to freeze the game for ~2 frames (hit-stop), which read as stutter
+  with fast fire. Ordinary hits no longer slow anything; crits and big blows dip into slow motion (x0.2) instead of a dead
+  freeze (`core/Feel.js`). The ~85 ms shader-compile spike the first time an enemy appeared in a run is gone: one hidden
+  frame with an enemy, its shots and Wren's shots is drawn on the title (`Game._warmUp`). Measured: 99% of frames under
+  1.3 ms during fights; walking through doors 1-2 ms per new room.
+- **Relic quality** (`data/quality.js`): Common / Fine / Rare / Legendary. `Game.pickRelic(type, rng, { minQuality, bias })`;
+  bad-luck protection after 2 weak relics in a row; **choice pedestals** (35% of treasure rooms; `slot.choiceOf` -
+  taking one crumbles the other); the **Blacksmith's Anvil** (tile `F`, merchant room): hold still beside it for 1.4 s to
+  melt the newest passive relic into one a quality step better.
+- **Boss ranks** (`BOSS_TIERS`, `TIER_INFO` in `data/difficulty.js`): Normal / Hard (x1.15 hp, from floor 2) / Deadly (x1.35,
+  from floor 4) / Legendary (x1.6, from floor 6), tempo up too. Rewards lean better (bias 0 / 0.5 / 0.9 / 1.2); Deadly and
+  Legendary offer a choice of two, Legendary also leaves an iron chest. The rank shows as skulls on the title card.
+- **Nine new bosses** (`data/bosses3.js`, art `render/art/bossesArt7.js`) for **40 in all**: the Turnkey, the Bellringer (Cells);
+  the Weeping Widow, the Hanged Man (Catacombs); the Fen Hag, the Wicker Man (Hollow); the Grand Inquisitor, the Dread Knight,
+  the Eye Below (Halls). New beam colours: holy, abyss. All tested through their phases.
+- **Redrawn bosses** with a new art kit (`render/art/artKit.js`: tapered shaded limbs, pillow-shaded polygons, rim light):
+  the Headsman, the Great Toad, the Bloated Friar, the Rat King, the Iron Maiden, the Lich, the Entombed Bishop, the Ancient Oak,
+  the Gargoyle Lord, the Fungal Matron, the Court Jester, the Molten Knight, the Burned Queen, the Ossuary Choir, the Stag of
+  Thorns, Old Gnasher, Ashwing, the Forgotten Keeper, the Hollow Crown, the Gravedigger, the Thorn Witch, the Pyre Bishop and the
+  Plague Physician; and the enemies the Executioner, the Flail Brute and the Torturer (`enemiesArt4.js`).
+- **Enemies made distinct**: the 50 already had their own attacks; the two clearest overlaps were reworked - the Kennel Hound now
+  barks (a cone that shoves you back) and snaps in short hop-bites (the Hellhound keeps the long fiery dashes), and the Mummy
+  unravels into whirling strips of linen that bind your legs (no longer a second Torturer-style pull).
+- **Oaths** (`data/oaths.js`): 9 oaths, heat 1-3 each, max 13; each heat point adds 0.08 relic bias; best heat won per hero.
+- **Daily Descent** (`data/dailySeed.js` shared with `api/daily.js`, `core/Daily.js`): UTC date -> seed + hero; score =
+  depth x 100000 + (99999 - seconds); first run of the day posts; the server checks the seed and date, keeps each name's best,
+  and keeps 14 days. Needs Upstash Redis env vars on Vercel (README); without them the board reports offline.
+- **Menus** (`ui/Menus.js`): one cursor menu system for the title, pause (with the run's stats and relics), settings
+  (music / sound / shake sliders, slow-mo, damage numbers, fullscreen - `data/settings.js`), controls, oaths, daily and yes/no
+  confirmations; keyboard, gamepad, mouse hover/click and touch. New menu sounds.
+- **The title**: a castle on a crag under a huge moon, mountains, layered pine forest, drifting mist, bats, flickering windows,
+  distant lightning (`ui/TitleBackdrop.js`); the hero stands on a cliff to the right; the menu on the left.

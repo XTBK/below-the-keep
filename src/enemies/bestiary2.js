@@ -8,6 +8,8 @@ import { PLAYER } from '../data/config.js';
 // The second bestiary: five more creatures per chapter. Every attack has a telegraph (a red line,
 // ring or arc, or an obvious wind-up pose) before it can hurt. See data/enemies.js for the numbers.
 
+const BARK = new THREE.Color(1.6, 1.4, 1.1);
+const LINEN_GLOW = new THREE.Color(1.5, 1.4, 1.1);
 const v = { x: 0, y: 0, dist: 0 };
 const end = { x: 0, y: 0 };
 const CHAIN = new THREE.Color('#6a6c78');
@@ -126,7 +128,8 @@ export class KennelHound extends Enemy {
     this.setState('trot');
     this.restFor = fxRng.float(...this.def.restTime);
   }
-  think() {
+  think(dt) {
+    if (this.type === 'hound') return this._packThink(dt);
     const d = this.def;
     this.toPlayer(v);
     if (this.state === 'trot') {
@@ -154,8 +157,82 @@ export class KennelHound extends Enemy {
       }
     }
   }
+  /** The Kennel Hound: close in, bark (a shove), snap in short hop-bites. */
+  _packThink() {
+    const d = this.def;
+    this.toPlayer(v);
+    const st = this.state;
+    if (st === 'trot') {
+      this.chase(this.speed);
+      this.faceX(v.x);
+      this.anim.play('walk');
+      if (!this.canAct || this.stateTime < this.restFor) return;
+      if (v.dist < d.barkRange && this.canSeePlayer()) {
+        this.setState('barkWarn');
+        this.dx = v.x / v.dist;
+        this.dy = v.y / v.dist;
+        this.game.audio.play('ghoulGroan', 0.3);
+      } else if (v.dist < d.biteRange && this.canSeePlayer()) {
+        this.setState('biteWarn');
+        this.dx = v.x / v.dist;
+        this.dy = v.y / v.dist;
+      }
+    } else if (st === 'barkWarn') {
+      this.stop();
+      this.faceX(this.dx);
+      this.anim.play('windup');
+      if (this.stateTime >= d.barkWarn) {
+        this.setState('bark');
+        this.game.audio.play('howl', 0.7);
+        this.game.feel.shake(0.08);
+        // the bark: a cone that hurts close up and shoves you back
+        const pl = this.game.player;
+        const px = pl.x - this.x;
+        const py = pl.y - this.y;
+        const dist = Math.hypot(px, py) || 1;
+        const ang = Math.acos(Math.max(-1, Math.min(1, (px * this.dx + py * this.dy) / dist)));
+        if (dist < d.barkRange + 10 && ang < d.barkCone) {
+          pl.hurt(1, this.x, this.y, d.name);
+          pl.vx += (px / dist) * d.barkPush;
+          pl.vy += (py / dist) * d.barkPush;
+        }
+      }
+    } else if (st === 'bark') {
+      this.stop();
+      this.anim.play('attack');
+      if (this.stateTime >= 0.3) this._rest();
+    } else if (st === 'biteWarn') {
+      this.stop();
+      this.faceX(this.dx);
+      this.anim.play('windup');
+      if (this.stateTime >= d.biteWarn) this.setState('bite');
+    } else if (st === 'bite') {
+      this.vx = this.dx * d.biteSpeed;
+      this.vy = this.dy * d.biteSpeed;
+      this.h = Math.sin((this.stateTime / d.biteTime) * Math.PI) * 6;
+      this.anim.play('attack');
+      if (this.stateTime >= d.biteTime) {
+        this.h = 0;
+        this._rest();
+      }
+    } else this._rest();
+  }
+
+  _rest() {
+    this.setState('trot');
+    this.restFor = fxRng.float(...this.def.restTime);
+  }
+
   drawOverlay(o, time) {
-    if (this.state === 'warn') line(o, this, this.dx, this.dy, this.def.dashSpeed * this.def.dashTime, this.stateTime / this.def.dashWarn, time);
+    const d = this.def;
+    if (this.state === 'warn') line(o, this, this.dx, this.dy, d.dashSpeed * d.dashTime, this.stateTime / d.dashWarn, time);
+    if (this.state === 'biteWarn') line(o, this, this.dx, this.dy, d.biteSpeed * d.biteTime, this.stateTime / d.biteWarn, time);
+    if (this.state === 'barkWarn' || (this.state === 'bark' && this.stateTime < 0.2)) {
+      // the bark's cone, filling as it builds
+      const k = this.state === 'bark' ? 1 : this.stateTime / d.barkWarn;
+      const a = Math.atan2(this.dy, this.dx);
+      o.arc(this.x, this.y + 8, d.barkRange * (0.4 + 0.6 * k), a - d.barkCone, a + d.barkCone, BARK, this.state === 'bark' ? 1 : 0.4 + 0.5 * k, 3, 0.8);
+    }
   }
   onDeath() {
     this.game.effects.burst(this.game.effects.presets.blood, this.x, this.y, 8, 10, 70, 60);
@@ -546,6 +623,10 @@ export class Mummy extends Enemy {
     this.setState('walk');
     this.cool = fxRng.float(...this.def.cooldown);
     this.enraged = false;
+    this.spinA = 0;
+  }
+  get stripCount() {
+    return this.def.strips + (this.enraged ? 2 : 0);
   }
   think(dt) {
     const d = this.def;
@@ -560,26 +641,32 @@ export class Mummy extends Enemy {
       this.faceX(v.x);
       this.anim.play('walk');
       this.cool -= dt;
-      if (this.canAct && this.cool <= 0 && v.dist < d.lashRange && this.canSeePlayer()) {
+      if (this.canAct && this.cool <= 0 && v.dist < d.unwindRange) {
         this.setState('warn');
-        this.dx = v.x / v.dist;
-        this.dy = v.y / v.dist;
+        this.spinA = Math.atan2(v.y, v.x) + Math.PI / this.stripCount; // never starts right on top of you
       }
     } else if (this.state === 'warn') {
       this.stop();
       this.anim.play('windup');
-      if (this.stateTime >= d.lashWarn) {
-        this.setState('lash');
+      if (this.stateTime >= d.unwindWarn) {
+        this.setState('unwind');
         this.game.audio.play('swing');
-        const pl = this.game.player;
-        if (segDist(pl.x, pl.y, this.x, this.y, this.x + this.dx * d.lashRange, this.y + this.dy * d.lashRange) < PLAYER.radius + 5) {
-          if (pl.hurt(1, this.x, this.y, d.name)) pullPlayer(this.game, this.x, this.y, d.pull);
-        }
       }
     } else {
+      // the strips whirl: anything they sweep through is hurt and bound
       this.stop();
       this.anim.play('attack');
-      if (this.stateTime >= d.lashTime + 0.3) {
+      this.spinA += d.spin * (this.enraged ? 1.3 : 1) * dt;
+      const pl = this.game.player;
+      const n = this.stripCount;
+      const len = d.stripLength * Math.min(1, this.stateTime / 0.25);
+      for (let i = 0; i < n; i++) {
+        const a = this.spinA + (i / n) * Math.PI * 2;
+        if (segDist(pl.x, pl.y, this.x, this.y, this.x + Math.cos(a) * len, this.y + Math.sin(a) * len) < PLAYER.radius + 3) {
+          if (pl.hurt(1, this.x, this.y, d.name)) pl.slowT = Math.max(pl.slowT, d.bindTime);
+        }
+      }
+      if (this.stateTime >= d.unwindTime) {
         this.setState('walk');
         this.cool = fxRng.float(...d.cooldown) / (this.enraged ? 1.5 : 1);
       }
@@ -591,9 +678,20 @@ export class Mummy extends Enemy {
   }
   drawOverlay(o, time, solid) {
     const d = this.def;
-    if (this.state === 'warn') line(o, this, this.dx, this.dy, d.lashRange, this.stateTime / d.lashWarn, time);
-    if (this.state === 'lash' && this.stateTime < d.lashTime + 0.1 && !this.dying) {
-      solid.line(this.x, this.y + 14, this.x + this.dx * d.lashRange, this.y + this.dy * d.lashRange + 10, LINEN, 1, depthFor(this.y) + 0.001, 0);
+    const n = this.stripCount;
+    if (this.state === 'warn') {
+      // a pale ring: the reach of the strips about to fly
+      const k = this.stateTime / d.unwindWarn;
+      o.ring(this.x, this.y + 8, d.stripLength, LINEN_GLOW, 0.25 + 0.5 * k, 3);
+    }
+    if (this.state === 'unwind' && !this.dying) {
+      const len = d.stripLength * Math.min(1, this.stateTime / 0.25);
+      for (let i = 0; i < n; i++) {
+        const a = this.spinA + (i / n) * Math.PI * 2;
+        // each strip flutters a little as it whirls
+        const wob = Math.sin(time * 18 + i) * 2;
+        solid.line(this.x, this.y + 10, this.x + Math.cos(a) * len, this.y + Math.sin(a) * len + 10 + wob, LINEN, 1, depthFor(this.y) + 0.001, 0);
+      }
     }
   }
   onDeath() {

@@ -13,7 +13,7 @@
 //   1-7  a specific enemy:  1 Plague Rats (a pack)  2 Gaoler  3 Chained Prisoner (chained right there)
 //        4 Torch Imp  5 Ghoul  6 Crossbowman  7 Barrel Mimic (looks just like a barrel!)
 //   A  relic pedestal       M  merchant's table      S  merchant's stand (goods for sale)
-//   K  the floor's boss (boss rooms only)
+//   K  the floor's boss (boss rooms only)   F  the Blacksmith's Anvil (forge)
 //
 // Keep these tiles free so doors are never blocked (the game also clears them for you):
 //   row 3, columns 0 and 12  (left/right doors)   and   column 6, rows 0 and 6 (top/bottom doors)
@@ -292,7 +292,7 @@ export const CELLS_LAYOUTS = {
         '.............',
         '...S..S..S...',
         '.............',
-        '.............',
+        '..........F..',
         '.............',
       ],
     },

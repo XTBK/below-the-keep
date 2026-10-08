@@ -121,6 +121,16 @@ const CLASSES = {
   gargoylelord: patternBossClass('gargoylelord', { anchorY: 6, shadow: 3, blood: 'iron' }),
   ashwing: patternBossClass('ashwing', { anchorY: 4, shadow: 3, blood: 'ash' }),
   burnedqueen: patternBossClass('burnedqueen', { anchorY: 6, shadow: 2, blood: 'ash' }),
+  // the third roster
+  turnkey: patternBossClass('turnkey', { anchorY: 2, shadow: 3, blood: 'blood' }),
+  bellringer: patternBossClass('bellringer', { anchorY: 2, shadow: 3, blood: 'blood' }),
+  widow: patternBossClass('widow', { anchorY: 6, shadow: 2, blood: 'ash' }),
+  hangedman: patternBossClass('hangedman', { anchorY: 6, shadow: 2, blood: 'blood' }),
+  fenhag: patternBossClass('fenhag', { anchorY: 2, shadow: 3, blood: 'goo' }),
+  wickerman: patternBossClass('wickerman', { anchorY: 4, shadow: 3, blood: 'ash' }),
+  inquisitor: patternBossClass('inquisitor', { anchorY: 4, shadow: 2, blood: 'blood' }),
+  dreadknight: patternBossClass('dreadknight', { anchorY: 2, shadow: 3, blood: 'iron' }),
+  abyssaleye: patternBossClass('abyssaleye', { anchorY: 6, shadow: 2, blood: 'goo' }),
 };
 
 export class EnemyManager {

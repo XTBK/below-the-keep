@@ -165,7 +165,7 @@ export class Pickups {
     const pl = this.game.player;
     if (def.needsMissingHealth && pl.halfHearts >= pl.maxHalfHearts) return false;
     for (const k in def.give) {
-      if (k === 'halfHearts') pl.heal(def.give[k]);
+      if (k === 'halfHearts') pl.heal(this.game.oath('iron') ? Math.max(1, Math.floor(def.give[k] / 2)) : def.give[k]); // the Oath of Iron
       else pl[k] += def.give[k];
     }
     this.game.audio.play(def.sound);

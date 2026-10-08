@@ -25,6 +25,9 @@ function defaults() {
       bossesSeen: [],
     },
     settings: {},
+    oaths: [], // the oaths sworn for the next run
+    heatRecord: {}, // best heat won, per hero
+    daily: {}, // Daily Descent: { date, played, best } and the leaderboard name
   };
 }
 
@@ -44,6 +47,8 @@ export const Save = {
           stats: { ...d.stats, ...parsed.stats },
           unlocks: { ...d.unlocks, ...parsed.unlocks },
           settings: { ...d.settings, ...parsed.settings },
+          heatRecord: { ...d.heatRecord, ...parsed.heatRecord },
+          daily: { ...d.daily, ...parsed.daily },
           version: VERSION,
         };
       }

@@ -12,9 +12,10 @@ import { fxRng, Rng, hashString } from '../core/Rng.js';
 import { drawText } from '../ui/PixelFont.js';
 import { TILESETS } from '../render/art/tilesets.js';
 import { NavGrid } from './NavGrid.js';
-import { CandlePuzzle, Bookcases, WishingWell, Rug, SwordInStone, TrialChamber, DiceTable, Beggar } from './Secrets.js';
+import { CandlePuzzle, Bookcases, WishingWell, Rug, SwordInStone, TrialChamber, DiceTable, Beggar, Anvil } from './Secrets.js';
 import { ENEMIES, CHAMPION, LAYOUT_DIGITS, SPAWN_POOLS } from '../data/enemies.js';
-import { championChance } from '../data/difficulty.js';
+import { championChance, TIER_INFO, bossTier } from '../data/difficulty.js';
+import { CHOICE_CHANCE } from '../data/quality.js';
 
 const GEM_ROCK_CHANCE = 0.06; // a rock with gems in it (bomb it!)
 const GEM_ROCK_LOOT = { penny: 4, purse: 2, ironHeart: 2, bomb: 1, key: 1, chest: 1 };
@@ -448,18 +449,31 @@ export class Room {
           const hs = PROPS.brazier.halfSize;
           this.solids.push({ x0: x - hs, x1: x + hs, y0: ground - 1, y1: ground + 10, owner: null });
         } else if (ch === 'A') {
-          this._staticSprite('pedestal', x, ground, 2, 3);
-          const hs = PROPS.pedestal.halfSize;
-          this.solids.push({ x0: x - hs, x1: x + hs, y0: ground - 2, y1: ground + 12, owner: null });
           // the relic on it is chosen once per pedestal (seeded) and remembered.
           // In a Shrine of the Old God it costs a heart container (a dark deal).
+          // Some treasure rooms offer a choice of two: take one and the other crumbles.
           if (!this.data.pedestals) this.data.pedestals = {};
           if (!this.data.pedestals[key]) {
             const hearts = this.data.type === 'shrine' ? 2 : 0;
-            this.data.pedestals[key] = { kind: 'relic', id: this.game.pickRelic(this.data.type, this.rng), price: 0, hearts, gone: false };
+            const slot = { kind: 'relic', id: this.game.pickRelic(this.data.type, this.rng), price: 0, hearts, gone: false };
+            this.data.pedestals[key] = slot;
+            if (this.rng.chance(CHOICE_CHANCE[this.data.type] || 0)) {
+              const other = { kind: 'relic', id: this.game.pickRelic(this.data.type, this.rng), price: 0, hearts, gone: false };
+              if (other.id) {
+                slot.choiceOf = [other];
+                other.choiceOf = [slot];
+                slot.pair = other;
+              }
+            }
           }
           const slot = this.data.pedestals[key];
-          if (slot.id) this.stands.push(new ItemStand(this.game, this, x, ground, slot, null));
+          const hs = PROPS.pedestal.halfSize;
+          const spots = slot.pair ? [[x - 26, slot], [x + 26, slot.pair]] : [[x, slot]];
+          for (const [sx, s] of spots) {
+            this._staticSprite('pedestal', sx, ground, 2, 3);
+            this.solids.push({ x0: sx - hs, x1: sx + hs, y0: ground - 2, y1: ground + 12, owner: null });
+            if (s.id) this.stands.push(new ItemStand(this.game, this, sx, ground, s, null));
+          }
         } else if (ch === 'S') {
           // merchant's stand: slot 0 a relic, the rest pickups
           if (!this.data.shop) this.data.shop = [];
@@ -495,6 +509,8 @@ export class Room {
           this.features.push(new SwordInStone(this, x, ground));
         } else if (ch === 'D') {
           this.features.push(new DiceTable(this, x, ground));
+        } else if (ch === 'F') {
+          this.features.push(new Anvil(this, x, ground)); // the forge: the Blacksmith's Anvil
         } else if (ch === 'N') {
           this.features.push(new Beggar(this, x, ground));
         } else if (ch === 'M') {
@@ -644,7 +660,8 @@ export class Room {
     }
     const def = ENEMIES[type];
     const count = def.packSize ? this.rng.int(def.packSize[0], def.packSize[1]) : 1;
-    const champion = this.rng.chance(championChance(CHAMPION.chance, this.game.floorNumber) * (this.game.omen === 'hunt' ? 3 : 1));
+    const horde = this.game.oath('horde') ? 0.22 : 0; // the Oath of the Horde
+    const champion = this.rng.chance(championChance(CHAMPION.chance, this.game.floorNumber) * (this.game.omen === 'hunt' ? 3 : 1) + horde);
     // enemies stand at the middle of their tile (y is where their feet are);
     // a mimic stands exactly where a real barrel would
     this.spawns.push({ type, x, y: type === 'mimic' ? y - 12 : y - 6, count, champion });
@@ -721,11 +738,31 @@ export class Room {
     const c = this.slotCenter(7, 6);
     this.trapdoor = new Trapdoor(this.game, c.x, c.y);
     const top = this.slotCenter(7, 3);
-    if (!this.data.pedestal) this.data.pedestal = { kind: 'relic', id: this.game.pickRelic('boss', this.rng), price: 0, gone: false };
-    if (this.data.pedestal.id) {
-      this._staticSprite('pedestal', top.x, top.y - 12, 2, 3);
-      this.solids.push({ x0: top.x - 11, x1: top.x + 11, y0: top.y - 14, y1: top.y, owner: null });
-      this.stands.push(new ItemStand(this.game, this, top.x, top.y - 12, this.data.pedestal, null));
+    // the tougher the boss, the better the spoils (and a Deadly or Legendary one offers a choice)
+    const reward = this.data.type === 'boss' ? TIER_INFO[this.game.bossTierOf(this.game.bossForFloor())].reward : {};
+    if (!this.data.pedestal) {
+      const slot = { kind: 'relic', id: this.game.pickRelic('boss', this.rng, reward), price: 0, gone: false };
+      if (reward.choice) {
+        const other = { kind: 'relic', id: this.game.pickRelic('boss', this.rng, reward), price: 0, gone: false };
+        if (other.id) {
+          slot.choiceOf = [other];
+          other.choiceOf = [slot];
+          slot.pair = other;
+        }
+      }
+      this.data.pedestal = slot;
+      if (reward.chest) {
+        const cc = this.slotCenter(3, 5);
+        this.game.pickups.spawn(this, 'ironchest', cc.x, cc.y);
+      }
+    }
+    const slot = this.data.pedestal;
+    const spots = slot.pair ? [[top.x - 26, slot], [top.x + 26, slot.pair]] : [[top.x, slot]];
+    for (const [sx, s] of spots) {
+      if (!s.id) continue;
+      this._staticSprite('pedestal', sx, top.y - 12, 2, 3);
+      this.solids.push({ x0: sx - 11, x1: sx + 11, y0: top.y - 14, y1: top.y, owner: null });
+      this.stands.push(new ItemStand(this.game, this, sx, top.y - 12, s, null));
     }
   }
 

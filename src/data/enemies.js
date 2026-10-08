@@ -241,6 +241,9 @@ export const ENEMIES = {
   // --- the Cells ---
   hound: {
     name: 'Kennel Hound', hp: 9, speed: 70, radius: 7, hitRadius: 9, contactDamage: 1, mass: 1, tier: 'easy',
+    // the Kennel Hound barks (a cone that shoves you back) and snaps in short hop-bites;
+    // the Hellhound (which shares its body) keeps the long dashes
+    barkRange: 64, barkWarn: 0.45, barkCone: 0.7, barkPush: 260, biteRange: 120, biteWarn: 0.28, biteSpeed: 230, biteTime: 0.2,
     dashWarn: 0.4, dashSpeed: 260, dashTime: 0.35, restTime: [0.6, 1.2],
   },
   torturer: {
@@ -277,7 +280,9 @@ export const ENEMIES = {
   },
   mummy: {
     name: 'Mummy', hp: 28, speed: 22, radius: 8, hitRadius: 10, contactDamage: 1, mass: 2, tier: 'medium',
-    lashRange: 110, lashWarn: 0.6, lashTime: 0.2, pull: 180, enrageAt: 0.5, enrageSpeed: 2.0, cooldown: [1.6, 2.4],
+    // it unravels: strips of grave-linen whirl around it; caught, you're hurt and your legs are bound (slowed)
+    unwindRange: 70, unwindWarn: 0.7, unwindTime: 1.8, stripLength: 50, strips: 4, spin: 2.6, bindTime: 1.2,
+    enrageAt: 0.5, enrageSpeed: 1.6, cooldown: [1.8, 2.6],
   },
   bat: {
     name: 'Crypt Bat', hp: 4, speed: 85, radius: 5, hitRadius: 8, contactDamage: 1, mass: 0.3, flying: true, tier: 'easy', packSize: [2, 3],

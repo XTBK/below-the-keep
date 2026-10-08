@@ -22,10 +22,16 @@ import { CHAPTERS } from '../data/palettes.js';
 import { SIM, DEBUG, TRANSITION, PLAYER, FEEL } from '../data/config.js';
 import { RELICS, RELIC_IDS, ROOM_DROPS, BOSS_DROPS, PRICES, SHOP_GOODS } from '../data/items.js';
 import { BOSS_FX, BOSS_ROSTER, bossHome } from '../data/bosses.js';
-import { enemyScale, bossScale, EARLY_BOSS_LIMIT } from '../data/difficulty.js';
+import { enemyScale, bossScale, EARLY_BOSS_LIMIT, TIER_INFO, bossTier } from '../data/difficulty.js';
 import { OMENS, OMEN_IDS, OMEN_CHANCE, OMEN_FX } from '../data/omens.js';
 import { Familiars } from '../items/Familiars.js';
 import { DamageNumbers } from '../ui/DamageNumbers.js';
+import { quality, BAD_LUCK_LIMIT } from '../data/quality.js';
+import { OATHS, heatOf, HEAT_RELIC_BIAS } from '../data/oaths.js';
+import { Menus } from '../ui/Menus.js';
+import { applySettings } from '../data/settings.js';
+import { daily, submitDaily } from './Daily.js';
+import { cleanName } from '../data/dailySeed.js';
 import { COMBAT } from '../data/config.js';
 import { tickSets, setsOnFloorStart } from '../items/Sets.js';
 import { FEATURES, SPECIAL_LAYOUTS } from '../data/rooms/specialLayouts.js';
@@ -93,7 +99,6 @@ export class Game {
     this.bombs = new Bombs(this);
     this.familiars = new Familiars(this);
     this.damageNumbers = new DamageNumbers();
-    this.hitStopCool = 0;
     this.warBanner = null; // { x, y, t, room } while a War Banner stands
     this.hud = new Hud(this.renderer.hudCanvas, this.renderer.hudTexture);
 
@@ -123,6 +128,11 @@ export class Game {
     this.characterId = saved && Save.data.unlocks.characters.includes(saved) ? saved : 'wren';
     this.unlockNotice = null;
     this.collection = { tab: 0, cursor: 0 };
+    this.menus = new Menus(this);
+    this.menus.reset('title');
+    this.nameEntry = null; // { value, then } while typing a name for the Daily Descent board
+    this.daily = null; // { date } during a Daily Descent run
+    applySettings(this, Save);
 
     // the title screen shows a fresh start room behind it
     const urlSeed = normaliseSeed(new URLSearchParams(location.search).get('seed'));
@@ -131,6 +141,17 @@ export class Game {
     this._buildRun(urlSeed || randomSeedString());
 
     window.addEventListener('keydown', (e) => this._seedTyping(e));
+    // the mouse works in menus too: hover to point, click to choose
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || !this._menuOpen) return;
+      const { fx, fy } = this.renderer.toPicture(e.clientX, e.clientY);
+      this.menus.hover(fx, fy);
+    });
+    window.addEventListener('click', (e) => {
+      if (!this._menuOpen || this.input.touchMode) return;
+      const { fx, fy } = this.renderer.toPicture(e.clientX, e.clientY);
+      this._menuTap(fx, fy, true);
+    });
     window.addEventListener('blur', () => {
       if (this.state === 'play') this.setPaused(true);
     });
@@ -158,15 +179,23 @@ export class Game {
     this.bossesUsed = new Set(); // bosses already met this run (no repeats)
     this.ending = 'king';
     this.slowTime = 0;
+    // the oaths sworn for this run (only once a run has been won, and never on the Daily Descent)
+    this.oaths = new Set(this.daily || !Save.data.stats.victories ? [] : Save.data.oaths.filter((id) => OATHS[id]));
+    this.heat = heatOf(this.oaths);
     if (this.player) this.player.dispose();
     this.player = null;
     this.startFloor();
   }
 
   /** Start playing a new run (from the title, the death screen or the pause menu). */
-  startRun(seed) {
+  startRun(seed, opts = {}) {
     if (!Save.data.unlocks.characters.includes(this.characterId)) this.characterId = 'wren';
     Save.data.settings.character = this.characterId;
+    // the Daily Descent: everyone plays the same hero today (your own pick is kept for next time)
+    this.daily = opts.daily ? { date: daily.date } : null;
+    this.heroBeforeDaily = this.daily ? this.characterId : null;
+    if (this.daily) this.characterId = daily.hero;
+    this.menus.reset(null);
     this.unlockNotice = null;
     this.descending = null; // never carry a half-finished descent into a new run
     this.fade = 0;
@@ -231,9 +260,19 @@ export class Game {
   }
 
   /** Now and then a floor is cursed (data/omens.js). */
+  /** Is an oath sworn this run? */
+  oath(id) {
+    return this.oaths ? this.oaths.has(id) : false;
+  }
+
+  /** A boss's rank, after the Oath of Ruin. */
+  bossTierOf(type) {
+    return Math.min(4, bossTier(type) + (this.oath('ruin') ? 1 : 0));
+  }
+
   _rollOmen(rng) {
     if (this.floorNumber < 2 || this.chapterKey === 'throne' || this.chapterKey === 'vault') return null;
-    if (!rng.chance(OMEN_CHANCE)) return null;
+    if (!rng.chance(this.oath('moon') ? 1 : OMEN_CHANCE)) return null;
     return OMEN_IDS[Math.floor(rng.next() * OMEN_IDS.length)];
   }
 
@@ -312,15 +351,12 @@ export class Game {
 
   /** The feel of a landed blow: a tiny freeze, a number, and for a crit a gold flash. */
   combatFeedback(enemy, dmg, crit) {
-    if (COMBAT.damageNumbers && dmg > 0) this.damageNumbers.add(enemy.x, enemy.y + (enemy.sprite.def.frameH - enemy.look.anchorY) * 0.6, dmg, crit);
+    if (COMBAT.damageNumbers && this.damageNumbersOn !== false && dmg > 0) this.damageNumbers.add(enemy.x, enemy.y + (enemy.sprite.def.frameH - enemy.look.anchorY) * 0.6, dmg, crit);
     if (crit) {
-      this.feel.hitStop(COMBAT.critHitStop);
+      if (this.slowmoOnCrits !== false) this.feel.hitStop(COMBAT.critHitStop);
       this.feel.shake(0.12);
       this.effects.burst(this.effects.presets.gold, enemy.x, enemy.y, 12, 12, 90, 60);
       this.audio.play('crit');
-    } else if (this.hitStopCool <= 0) {
-      this.feel.hitStop(COMBAT.hitStop);
-      this.hitStopCool = 0.06;
     }
   }
 
@@ -379,7 +415,8 @@ export class Game {
     if (this.chapterKey === 'throne' || this.chapterKey === 'vault') return this.chapterInfo.bosses[0];
     // early floors only draw from the gentler bosses (EARLY_BOSS_LIMIT); later, anything goes
     const limit = EARLY_BOSS_LIMIT[this.floorNumber] || 99;
-    const allowed = BOSS_ROSTER.filter((b) => bossHome(b) <= limit);
+    // ...and harder ranks only turn up deeper down
+    const allowed = BOSS_ROSTER.filter((b) => bossHome(b) <= limit && TIER_INFO[bossTier(b)].minFloor <= this.floorNumber);
     let pool = allowed.filter((b) => !this.bossesUsed.has(b));
     if (!pool.length) pool = allowed;
     const b = pool[Math.floor(rng.next() * pool.length)];
@@ -389,8 +426,16 @@ export class Game {
 
   /** How much tougher an enemy is on this floor (see data/difficulty.js). */
   scaleFor(e) {
-    if (e.isBoss) return bossScale(this.floorNumber, bossHome(e.type));
-    return enemyScale(this.floorNumber);
+    const o = this.oaths;
+    const hp = o && o.has('stone') ? OATHS.stone.enemyHp : 1;
+    const tempo = o && o.has('haste') ? OATHS.haste.enemyTempo : 1;
+    if (e.isBoss) {
+      const s = bossScale(this.floorNumber, bossHome(e.type));
+      const t = TIER_INFO[this.bossTierOf(e.type)];
+      return { ...s, hp: s.hp * t.hp * hp, tempo: s.tempo * t.tempo * tempo };
+    }
+    const s = enemyScale(this.floorNumber);
+    return { ...s, hp: s.hp * hp, tempo: s.tempo * tempo };
   }
 
   /** "The Catacombs II", "The Throne of the Mad King"... */
@@ -429,21 +474,48 @@ export class Game {
   // Items, drops and shops (all choices use the run's seeded generators)
   // ------------------------------------------------------------------------------------------
 
-  /** Choose a relic for a room's pedestal from its pool. Never repeats within a run. */
-  pickRelic(roomType, rng) {
-    const pool = POOL_FOR_ROOM[roomType] || 'armoury';
+  /**
+   * Choose a relic for a room's pedestal from its pool. Never repeats within a run.
+   * opts.minQuality: only relics at least this good (if any are left)
+   * opts.bias: lean toward better relics (each quality step multiplies the weight by 1 + bias)
+   * opts.pool: draw from another room's pool. Bad-luck protection may raise minQuality.
+   */
+  pickRelic(roomType, rng, opts = {}) {
+    const pool = opts.pool || POOL_FOR_ROOM[roomType] || 'armoury';
+    let minQ = opts.minQuality || 0;
+    if (this.player && this.player.badLuck >= BAD_LUCK_LIMIT) minQ = Math.max(minQ, 3);
+    const bias = (opts.bias || 0) + (this.heat || 0) * HEAT_RELIC_BIAS; // hotter runs, better relics
+    const collect = (minQuality) => {
+      const weights = {};
+      let any = false;
+      for (const id of RELIC_IDS) {
+        const w = (RELICS[id].pools || {})[pool];
+        if (!w || this.offered.has(id) || (this.player && this.player.hasRelic(id))) continue;
+        const q = quality(id);
+        if (q < minQuality) continue;
+        weights[id] = w * Math.pow(1 + bias, q - 1);
+        any = true;
+      }
+      return any ? weights : null;
+    };
+    // fall back to any quality, then to the armoury pool, rather than an empty pedestal
+    const weights = collect(minQ) || collect(0) || (pool !== 'armoury' ? this._armouryWeights() : null);
+    if (!weights) return null;
+    const id = weightedKey(rng, weights);
+    this.offered.add(id);
+    return id;
+  }
+
+  _armouryWeights() {
     const weights = {};
     let any = false;
     for (const id of RELIC_IDS) {
-      const w = (RELICS[id].pools || {})[pool];
+      const w = (RELICS[id].pools || {}).armoury;
       if (!w || this.offered.has(id) || (this.player && this.player.hasRelic(id))) continue;
       weights[id] = w;
       any = true;
     }
-    if (!any) return null;
-    const id = weightedKey(rng, weights);
-    this.offered.add(id);
-    return id;
+    return any ? weights : null;
   }
 
   /** What one of the merchant's stands sells. Slot 0 is a relic. */
@@ -643,11 +715,19 @@ export class Game {
     }
   }
 
+  /** A run ended (won or lost): the Daily Descent posts its score. */
+  runEnded(won) {
+    if (this.daily) submitDaily(this, won);
+  }
+
   /** The run is won. */
   win() {
     if (this.state !== 'play') return;
     this.state = 'victory';
     Save.data.stats.victories++;
+    // the best heat beaten, per hero
+    if (this.heat > (Save.data.heatRecord[this.characterId] || 0)) Save.data.heatRecord[this.characterId] = this.heat;
+    this.runEnded(true);
     Save.write();
     this.audio.play('victory');
   }
@@ -680,13 +760,36 @@ export class Game {
   setPaused(p) {
     if (this.paused === p) return;
     this.paused = p;
+    this.menus.reset(p ? 'pause' : null);
     this.hud.markDirty();
     this.touch.setPaused(p);
     if (p) Save.write();
   }
 
   start() {
+    this._warmUp();
     requestAnimationFrame(this._frame);
+  }
+
+  /** Draw one hidden frame with an enemy, its shots and Wren's shots in it, so the graphics card
+   *  prepares their shaders now (behind the title) instead of stuttering in the first fight. */
+  _warmUp() {
+    try {
+      const c = this.room.slotCenter(7, 5);
+      const e = this.enemies.spawn('rat', this.room, c.x, c.y, { noGrace: true });
+      this.enemies.shots.fireOrb(c.x, c.y, 8, 1, 0, 1, 0, 1, 'warm-up');
+      this.enemies.shots.fireBolt(c.x, c.y, 8, 1, 0, 1, 1);
+      this.projectiles.spawn(c.x, c.y, 8, 1, 0, this.player.shot, 0, 1);
+      e.sync?.();
+      this.enemies.sync(0);
+      this.projectiles.sync();
+      this.renderer.render();
+    } catch (err) {
+      console.warn('warm-up skipped', err);
+    }
+    this.enemies.clear();
+    this.enemies.shots.clear();
+    this.projectiles.clear();
   }
 
   _frame(now) {
@@ -701,8 +804,8 @@ export class Game {
     this._handleMenuInput();
 
     if (!this.paused) {
-      const frozen = this.feel.update(dt); // hit-stop freezes the world for a few frames
-      if (!frozen) this._updateState(dt);
+      const timeScale = this.feel.update(dt); // a heavy blow slows the world for a moment
+      this._updateState(dt * timeScale);
       this._updateAmbient(dt);
       Save.data.stats.playSeconds += dt;
     }
@@ -761,7 +864,6 @@ export class Game {
     this.enemies.update(edt);
     this.familiars.update(dt);
     this.damageNumbers.update(dt);
-    if (this.hitStopCool > 0) this.hitStopCool -= dt;
     tickSets(this, dt);
     if (this.warBanner) {
       this.warBanner.t -= dt;
@@ -778,6 +880,7 @@ export class Game {
         this.state = 'dead';
         this.deathTimer = 0;
         Save.data.stats.deaths++;
+        this.runEnded(false);
         Save.write();
         this.audio.play('death');
       } else {
@@ -816,7 +919,13 @@ export class Game {
   // ------------------------------------------------------------------------------------------
 
   /** A touch tap anywhere: confirms menus. Returns true if it was used. */
-  _menuTap(fx = 0.5, fy = 0.5) {
+  /** A tap (or a mouse click) at (fx, fy): 0..1 across the game picture (window fractions for touch). */
+  _menuTap(fx = 0.5, fy = 0.5, picture = false) {
+    if (!picture) {
+      const pt = this.renderer.toPicture(fx * window.innerWidth, fy * window.innerHeight);
+      fx = pt.fx;
+      fy = pt.fy;
+    }
     if (this.state === 'collection') {
       // a tap flips the page; past the last page, back to the title
       if (this.collection.tab < COLLECTION_TABS.length - 1) this.collection.tab++;
@@ -826,11 +935,17 @@ export class Game {
       return true;
     }
     if (this.state === 'title') {
-      // tap the sides to change character, the bottom for the collection, anywhere else to begin
-      if (fy > 0.84) this._openCollection();
-      else if (fx < 0.22) this._cycleCharacter(-1);
-      else if (fx > 0.78) this._cycleCharacter(1);
-      else this._beginFromTitle();
+      if (this.nameEntry || this.seedEntry !== null) return true; // typing (the keyboard pops up on phones)
+      if (this.menus.tap(fx, fy)) return true;
+      // on the title itself, the arrows beside the hero change hero
+      if (this.menus.top && this.menus.top.id === 'title' && fy > 0.25 && fy < 0.75) {
+        if (fx > 0.62 && fx < 0.74) this._cycleCharacter(-1);
+        else if (fx > 0.9) this._cycleCharacter(1);
+      }
+      return true;
+    }
+    if (this.paused) {
+      this.menus.tap(fx, fy);
       return true;
     }
     if ((this.state === 'dead' && this.deathTimer > 1.6) || this.state === 'victory') {
@@ -841,6 +956,13 @@ export class Game {
   }
 
   _seedTyping(e) {
+    if (this.state === 'title' && this.nameEntry) {
+      const n = this.nameEntry;
+      if (/^[a-zA-Z0-9 ]$/.test(e.key) && n.value.length < 12) n.value += e.key.toUpperCase();
+      else if (e.key === 'Backspace') n.value = n.value.slice(0, -1);
+      this.hud.markDirty();
+      return;
+    }
     if (this.state !== 'title' || this.seedEntry === null) return;
     if (/^[a-zA-Z0-9]$/.test(e.key) && this.seedEntry.length < 8) this.seedEntry += e.key.toUpperCase();
     else if (e.key === 'Backspace') this.seedEntry = this.seedEntry.slice(0, -1);
@@ -862,11 +984,31 @@ export class Game {
         if (input.pressed('pause')) this.seedEntry = null;
         return;
       }
-      if (input.pressed('confirm')) this._beginFromTitle();
-      if (input.pressed('seed')) this.seedEntry = '';
-      if (input.pressed('left') || input.pressed('shootLeft')) this._cycleCharacter(-1);
-      if (input.pressed('right') || input.pressed('shootRight')) this._cycleCharacter(1);
-      if (input.pressed('collection')) this._openCollection();
+      if (this.nameEntry) {
+        const n = this.nameEntry;
+        if (input.pressed('confirm')) {
+          const name = cleanName(n.value);
+          if (!name) return this.audio.play('deny');
+          daily.name = name;
+          this.nameEntry = null;
+          this.audio.play('menuChoose');
+          if (n.then) n.then();
+        }
+        if (input.pressed('pause')) this.nameEntry = null;
+        return;
+      }
+      if (this.menus.top && this.menus.top.id === 'title') {
+        // on the title itself, left / right choose the hero; the shortcuts still work
+        if (input.pressed('left') || input.pressed('shootLeft')) this._cycleCharacter(-1);
+        if (input.pressed('right') || input.pressed('shootRight')) this._cycleCharacter(1);
+        if (input.pressed('seed')) return this.openSeedEntry();
+        if (input.pressed('collection')) return this.openCollection();
+        if (input.pressed('up') || input.pressed('shootUp')) this.menus.move(-1);
+        if (input.pressed('down') || input.pressed('shootDown')) this.menus.move(1);
+        if (input.pressed('confirm')) this.menus.choose();
+        return;
+      }
+      this.menus.handle(input);
       return;
     }
 
@@ -899,16 +1041,18 @@ export class Game {
       return;
     }
 
-    if (input.pressed('pause')) this.setPaused(!this.paused);
     if (this.paused) {
+      // the phone's NEW RUN button (and R) still work as a shortcut
       if (input.pressed('newRun')) {
         this.setPaused(false);
-        this.startRun(randomSeedString());
+        this.restartRun();
+        return;
       }
-      if (input.pressed('quitTitle')) {
-        this.setPaused(false);
-        this._toTitle();
-      }
+      this.menus.handle(input);
+      return;
+    }
+    if (input.pressed('pause')) {
+      this.setPaused(true);
       return;
     }
 
@@ -971,11 +1115,57 @@ export class Game {
     this.hud.markDirty();
   }
 
+  /** Is a menu on screen (so the mouse works)? */
+  get _menuOpen() {
+    return this.state === 'title' || this.paused;
+  }
+
+  // --- what the menus call ---
+  beginFromTitle() {
+    this._beginFromTitle();
+  }
+
+  openSeedEntry() {
+    this.seedEntry = '';
+    this.hud.markDirty();
+  }
+
+  openCollection() {
+    this._openCollection();
+  }
+
+  openNameEntry(then) {
+    this.nameEntry = { value: daily.name || '', then };
+    this.hud.markDirty();
+  }
+
+  /** The Daily Descent: today's seed and hero, no oaths. */
+  startDaily() {
+    this.menus.reset('title');
+    this.startRun(daily.seed, { daily: true });
+  }
+
+  restartRun() {
+    this.startRun(randomSeedString());
+  }
+
+  toTitle() {
+    this._toTitle();
+  }
+
   _toTitle() {
+    if (this.heroBeforeDaily) {
+      this.characterId = this.heroBeforeDaily;
+      this.heroBeforeDaily = null;
+    }
     this.descending = null;
     this.fade = 0;
     this.state = 'title';
     this.seedEntry = null;
+    this.nameEntry = null;
+    this.daily = null;
+    this.menus.reset('title');
+    if (!daily.board) daily.fetchBoard();
     this._buildRun(randomSeedString());
     this.hud.markDirty();
   }

@@ -16,6 +16,8 @@ export class Audio {
   constructor() {
     this.ctx = null;
     this.volume = 0.8;
+    this.musicVolume = 1; // the player's settings (0..1)
+    this.soundVolume = 1;
     this.musicName = null;
     // phones only allow audio to start when a finger LIFTS (touchend / pointerup), so listen for those too
     const unlock = () => this._ensure();
@@ -51,9 +53,16 @@ export class Audio {
     const wet = ctx.createGain();
     wet.gain.value = 0.55;
     this.reverb.connect(wet).connect(comp);
+    // sound effects have their own volume (Settings)
+    this.sfxBus = ctx.createGain();
+    this.sfxBus.gain.value = this.soundVolume;
+    this.sfxBus.connect(this.dry);
+    this.sfxSend = ctx.createGain();
+    this.sfxSend.gain.value = this.soundVolume;
+    this.sfxSend.connect(this.reverb);
     // the music bus: quieter, a little reverb too
     this.musicBus = ctx.createGain();
-    this.musicBus.gain.value = MUSIC.generatedVolume;
+    this.musicBus.gain.value = MUSIC.generatedVolume * this.musicVolume;
     this.musicBus.connect(this.dry);
     const musicSend = ctx.createGain();
     musicSend.gain.value = 0.35;
@@ -61,6 +70,18 @@ export class Audio {
     this.ambience = new Ambience(this.synth, this.musicBus);
     if (this.musicName) this._applyMusic(this.musicName);
     return true;
+  }
+
+  /** Settings: music and sound-effect volume, 0..1. */
+  setVolumes(music, sound) {
+    this.musicVolume = music;
+    this.soundVolume = sound;
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.musicBus.gain.setTargetAtTime(MUSIC.generatedVolume * music, t, 0.05);
+    this.sfxBus.gain.setTargetAtTime(sound, t, 0.05);
+    this.sfxSend.gain.setTargetAtTime(sound, t, 0.05);
+    if (this.musicEl) this.musicEl.volume = MUSIC.volume * music;
   }
 
   /** Play a sound effect by name (see core/Sounds.js). volume scales it (1 = normal). */
@@ -72,11 +93,11 @@ export class Audio {
     const ctx = this.ctx;
     const out = ctx.createGain();
     out.gain.value = volume;
-    out.connect(this.dry);
+    out.connect(this.sfxBus);
     if (wet > 0) {
       const send = ctx.createGain();
       send.gain.value = wet;
-      out.connect(send).connect(this.reverb);
+      out.connect(send).connect(this.sfxSend);
     }
     recipe(this.synth, out, ctx.currentTime + 0.005, fxRng.float(0.94, 1.06));
   }
@@ -108,7 +129,7 @@ export class Audio {
         this.musicEl = el;
         const start = () => {
           el.play()
-            .then(() => this._fade(el, MUSIC.volume, MUSIC.fadeTime))
+            .then(() => this._fade(el, MUSIC.volume * this.musicVolume, MUSIC.fadeTime))
             .catch(() => window.addEventListener('pointerdown', start, { once: true })); // waits for a first tap/click
         };
         start();

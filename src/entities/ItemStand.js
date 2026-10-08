@@ -88,7 +88,15 @@ export class ItemStand {
 
   update(dt) {
     this.time += dt;
-    if (this.slot.gone) return;
+    if (this.slot.gone) {
+      // its partner was taken: crumble away
+      if (this.item.visible) {
+        this.item.visible = false;
+        this.game.effects.burst(this.game.effects.presets.stoneDust || this.game.effects.presets.gold, this.x, this.y, 22, 14, 50, 40);
+        this.game.audio.play('snuff');
+      }
+      return;
+    }
     const pl = this.game.player;
     const d = Math.hypot(pl.x - this.x, pl.y - (this.y + 4));
     // stand near a relic to read what it is
@@ -148,6 +156,7 @@ export class ItemStand {
       } else {
         s.gone = true;
       }
+      if (s.choiceOf) for (const other of s.choiceOf) other.gone = true; // a choice: the other crumbles
     } else {
       const give = PICKUPS[s.id].give;
       for (const k in give) {

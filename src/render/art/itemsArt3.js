@@ -352,3 +352,29 @@ export function mysteryIcon(p) {
   });
   p.glow(8, 8, '#8a80d0', 0.5);
 }
+
+/** The Blacksmith's Anvil on its stump, with a hammer. k = 0 cold, 1 glowing (being worked), 2 spent. */
+export function anvilFrame(k) {
+  const p = new Painter(36, 30);
+  // the stump
+  p.cyl(11, 18, 14, 11, W, 3);
+  for (const x of [13, 18, 22]) p.vline(x, 20, 28, W[0], 3.2);
+  // the anvil: base, waist, face and horn
+  p.bevelRect(12, 14, 12, 5, IRON.slice(1, 5), 5, 1);
+  p.rect(15, 11, 6, 3, IRON[2], 6);
+  p.bevelRect(9, 7, 20, 5, IRON.slice(2, 6), 7, 1);
+  for (let i = 0; i < 6; i++) p.hline(3 + i, 9, 8 + Math.floor(i / 2), IRON[3 + (i < 2 ? 1 : 0)], 7 - i * 0.1); // the horn
+  p.px(2, 9, IRON[3], 6.8);
+  p.hline(10, 27, 7, IRON[5], 7.4); // the worn bright face
+  if (k === 1) {
+    // white-hot metal on the face
+    for (let x = 13; x <= 24; x++) p.glow(x, 6, x % 3 ? S.fire[3] : S.fire[4], 1.6);
+    for (let x = 15; x <= 22; x++) p.glow(x, 5, S.fire[4], 1.4);
+  }
+  // the hammer leaning on the stump
+  p.line(28, 28, 32, 16, W[3], 4);
+  p.bevelRect(30, 12, 5, 4, IRON.slice(2, 5), 5, 1);
+  if (k === 2) for (let y = 5; y < 19; y++) for (let x = 2; x < 30; x++) p.tint(x, y, '#000000', 0.35); // spent: cold and sooty
+  p.outline(S.outline);
+  return p;
+}

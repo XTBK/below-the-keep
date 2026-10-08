@@ -107,6 +107,16 @@ export class Renderer {
     u.uHighlightTint.value.fromArray(grade.highlightTint);
   }
 
+  /** A point on the page (CSS pixels) as 0..1 across the game picture (which sits centred, in bars). */
+  toPicture(clientX, clientY) {
+    const dpr = window.devicePixelRatio || 1;
+    const vw = this.W * this.scale;
+    const vh = this.H * this.scale;
+    const ox = Math.floor((this.screenW - vw) / 2);
+    const oy = Math.floor((this.screenH - vh) / 2);
+    return { fx: (clientX * dpr - ox) / vw, fy: (clientY * dpr - oy) / vh };
+  }
+
   resize() {
     const dpr = window.devicePixelRatio || 1;
     const cssW = window.innerWidth;

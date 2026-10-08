@@ -10,6 +10,7 @@ import { ACTIVE } from '../data/items.js';
 import { PERKS, onPlayerHurt } from '../items/Perks.js';
 import { CHARACTERS } from '../data/characters.js';
 import { DIFFICULTY } from '../data/difficulty.js';
+import { quality } from '../data/quality.js';
 import { WEAPONS, ROLL, COMBAT, SKILLS } from '../data/config.js';
 import * as THREE from 'three';
 
@@ -54,10 +55,13 @@ export class Player {
     this.slowT = 0; // > 0 while stuck in a web
 
     this.relics = []; // passive relic ids, in pickup order
+    this.badLuck = 0; // weak relics in a row (see data/quality.js)
     this.active = null; // { id, charge, max }
     const ch = (this.character = CHARACTERS[game.characterId] || CHARACTERS.wren);
-    this.halfHearts = ch.halfHearts;
-    this.baseMaxHalfHearts = ch.halfHearts;
+    // the Oath of Glass: just two hearts
+    const hearts = game.oath('glass') ? Math.min(ch.halfHearts, 4) : ch.halfHearts;
+    this.halfHearts = hearts;
+    this.baseMaxHalfHearts = hearts;
     this.pennies = ch.pickups.pennies;
     this.bombs = ch.pickups.bombs;
     this.keys = ch.pickups.keys;
@@ -116,6 +120,7 @@ export class Player {
 
   /** What something costs him (the Merchant's Seal haggles 30% off). */
   priceOf(price) {
+    if (this.game.oath('purse')) price = Math.ceil(price * 1.5); // the Oath of the Lean Purse
     return this.perks.haggle ? Math.max(1, Math.ceil(price * 0.7)) : price;
   }
 
@@ -199,12 +204,26 @@ export class Player {
       this.relics.push(id);
     }
     for (const k in r.pickups || {}) this[k] += r.pickups[k];
+    // bad-luck protection keeps count of weak relics in a row
+    const q = quality(id);
+    if (q <= 1) this.badLuck++;
+    else if (q >= 3) this.badLuck = 0;
     this.recompute();
     if (r.heal) this.heal(r.heal);
     const seen = Save.data.unlocks.itemsSeen;
     if (!seen.includes(id)) seen.push(id);
     this.game.hud.markDirty();
     return dropped;
+  }
+
+  /** Take a passive relic away again (the Blacksmith's Anvil melts it down). */
+  removeRelic(id) {
+    const i = this.relics.lastIndexOf(id);
+    if (i < 0) return false;
+    this.relics.splice(i, 1);
+    this.recompute();
+    this.game.hud.markDirty();
+    return true;
   }
 
   hasRelic(id) {
