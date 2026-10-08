@@ -76,6 +76,14 @@ export const MOMENTS = {
     melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.08 },
     drums: '................', bellEvery: 2, bellGain: 0.09,
   },
+  // the Gatehouse: home - a slow lute by the fire
+  gatehouse: {
+    bpm: 72, root: 43, mode: 'ionian', progression: [0, 5, 3, 4], barsPerChord: 2,
+    pad: 'choir', padGain: 0.03, bass: 'R.......R.......', bassInst: 'pluck', bassGain: 0.1,
+    arp: '0.2.1.2.0.2.1.2.', arpInst: 'lute', arpGain: 0.06, arpOct: 1,
+    melody: { inst: 'harp', rhythm: 'slow', octave: 2, gain: 0.05 },
+    drums: '................', drumGain: 0,
+  },
   // the secret realms
   // the Drowned Cistern: slow drips of harp over a low choir, a bell for a melody
   cistern: {

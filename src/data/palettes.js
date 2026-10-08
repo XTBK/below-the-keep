@@ -143,3 +143,13 @@ export const SPECIAL_GRADES = {
   throne: { saturation: 0.85, contrast: 1.15, shadowTint: [0.9, 0.78, 1.0], highlightTint: [1.15, 1.0, 0.78], lift: 0.003 },
   vault: { saturation: 0.7, contrast: 1.05, shadowTint: [0.9, 0.95, 1.05], highlightTint: [1.1, 1.06, 0.85], lift: 0.008 },
 };
+
+// the Gatehouse (home, above the Keep): warm sandstone in firelight
+CHAPTERS.gatehouse = {
+  ...CHAPTERS.cells,
+  name: 'The Gatehouse',
+  stone: ['#1e1814', '#2c241c', '#3c3226', '#4e4232', '#625440', '#7a6a52', '#968468'],
+  mortar: ['#100c0a', '#18120e'],
+  ambient: { color: 0xffc890, level: 0.42 },
+  grade: { ...CHAPTERS.cells.grade, saturation: 0.95, shadowTint: [1.0, 0.94, 0.88], highlightTint: [1.08, 1.0, 0.88] },
+};

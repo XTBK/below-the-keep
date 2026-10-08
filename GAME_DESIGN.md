@@ -22,7 +22,8 @@
 | E3 | Hero skills (blink / steady aim + reload roll / shield charge), bot-tested balance, punchier attack sounds | Done |
 | E4 | Smooth hits, relic quality + anvil + choices, oaths, Daily Descent, 40 bosses with ranks, redrawn bosses, real menus, castle title | Done |
 | E5 | No stutter, readable fights (attack budget, glowing shots, brighter Hollow and Halls), story cutscenes, new obstacles, 100 relics, real beams and fire, balance pass, itch.io + link preview | Done |
-| E6 | Found weapons (18 + 3 starters) and three secret realms with 6 secret enemies and 5 secret bosses | **Done — awaiting OK** |
+| E6 | Found weapons (18 + 3 starters) and three secret realms with 6 secret enemies and 5 secret bosses | Done |
+| E7 | Its own shape: the Gatehouse and five prisoners to free, the fork in the road, shaped rooms, water, boss arenas | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -588,7 +589,7 @@ rattle, pounding, grunt) and shield bash (booming clang).
 - **Sharing**: a 1200x630 link-preview image and Open Graph / Twitter tags; an itch.io package in `itch/` (relative-path
   build, cover, page text, upload steps); the leaderboard API answers other sites (CORS) so the itch copy shares the board.
 
-### Expansion 6 — weapons and secret realms (awaiting OK)
+### Expansion 6 — weapons and secret realms — done
 
 - **Weapons** (`data/weapons.js`): a weapon slot per hero. A weapon is applied like a relic (stats, statsMult, mods,
   perks, a shot tint) plus a look on the hero (`render/art/weaponLooks.js`: wand tips by element; longbow, arbalest,
@@ -612,3 +613,27 @@ rattle, pounding, grunt) and shield bash (booming clang).
 - **Secret bosses** (`data/bosses4.js`, art `bossesArt8.js`, ranked Deadly): the Cistern Leviathan, the Mirror Queen,
   the First King's Shade, the Bone Organist, the Faceless Saint - drawn at random, never twice in a run. Their spoils:
   a weapon for your class and a rare-or-better relic, both kept.
+
+### Expansion 7 — its own shape (awaiting OK)
+
+Three systems so a run feels like this game's own, not a borrowed loop.
+
+- **The Gatehouse** (`world/Gatehouse.js`, `data/prisoners.js`, art `render/art/gatehouseArt.js`): floor 0, a
+  hand-made one-room floor (`gatehouseFloor()`) in its own warm palette and song. Runs start there (the Daily
+  Descent starts on floor 1). Five prisoners (`PRISONERS`, each with a `minFloor`) can be found in chains, at most
+  one per floor (40% on a floor while any are left, `Game._rollPrisoner`), in a normal room away from the start;
+  clear the room and touch them with a key. Saved in `Save.data.rescued`. Their help (never on the Daily Descent):
+  smith = choose a starting weapon among `Save.data.weaponsCarried` (`Save.data.forged[class]`); quartermaster =
+  +1 bomb, +1 key, +5 pennies; priest = `Player.prayer`, one revive at 2 hearts; cartographer = boss/armoury/merchant
+  rooms `seen` at floor start; archivist = `ShortcutStair` to floor 3 (`descend(false, null, 3)`) plus a Q2+ relic.
+- **The fork in the road** (`data/routes.js`, the `route` screen in `ui/Menus.js`): when a trapdoor leads from
+  one ordinary floor to the next, the descent pauses at full black and offers three roads (`rollRoutes`): the Old
+  Stair plus two of Bloodied (hard-room weight +0.3, champions +0.12, boss pair relic), Pilgrim's (near-room weights
+  everywhere, heal 4), Market (+12 pennies, 25% discount via `priceOf`), Whispering (forced omen, a Q2+ relic
+  pedestal at the start); and 30% of the time, if the next floor's realm is unvisited, the Hidden Way (into that realm,
+  skipping the ordinary floor). `Game.route` holds the road for the floor it leads to.
+- **Shaped rooms and arenas** (`data/rooms/shapedLayouts.js`): ten shaped layouts added to every chapter's pools
+  (pits carve crosses, rings, balconies, islands; `w` shallow water: walkable, x0.75 speed for the player unless
+  rolling and for walking enemies; rendered as a pool with a rim, flat normals). Walkways between two pits get rope
+  bridge planks. Six boss arenas chosen by `arenaFor(boss, chapter)` (some bosses have a fixed home, otherwise a
+  stable pick from the chapter's list) and written into the boss room after the boss is drawn.

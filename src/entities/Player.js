@@ -1,3 +1,5 @@
+import { rescued } from '../data/prisoners.js';
+import { ROUTES } from '../data/routes.js';
 import { PLAYER, FEEL } from '../data/config.js';
 import { RELICS } from '../data/items.js';
 import { Sprite, Animator, LAYER } from '../render/Sprite.js';
@@ -60,6 +62,10 @@ export class Player {
     this.active = null; // { id, charge, max }
     const ch = (this.character = CHARACTERS[game.characterId] || CHARACTERS.wren);
     this.weaponId = starterWeapon(ch.weapon); // the weapon in hand (data/weapons.js); null for sling heroes
+    // Hollis the Smith re-forges the weapon you chose at the Gatehouse
+    const forged = !game.daily && rescued('smith') && Save.data.forged && Save.data.forged[ch.weapon];
+    if (forged && WEAPON_DEFS[forged] && WEAPON_DEFS[forged].class === ch.weapon) this.weaponId = forged;
+    this.prayer = !game.daily && rescued('priest'); // Sister Ottilie's prayer: rise once
     // the Oath of Glass: just two hearts
     const hearts = game.oath('glass') ? Math.min(ch.halfHearts, 4) : ch.halfHearts;
     this.halfHearts = hearts;
@@ -67,6 +73,12 @@ export class Player {
     this.pennies = ch.pickups.pennies;
     this.bombs = ch.pickups.bombs;
     this.keys = ch.pickups.keys;
+    if (!game.daily && rescued('quartermaster')) {
+      // Bram's stores
+      this.bombs++;
+      this.keys++;
+      this.pennies += 5;
+    }
     this.trinket = ch.trinket || null; // trinket id
     this.consumable = ch.consumable ? { ...ch.consumable } : null; // { type: 'scroll' | 'potion', id }
     this.seals = [false, false, false];
@@ -123,6 +135,8 @@ export class Player {
   /** What something costs him (the Merchant's Seal haggles 30% off). */
   priceOf(price) {
     if (this.game.oath('purse')) price = Math.ceil(price * 1.5); // the Oath of the Lean Purse
+    const road = this.game.route && ROUTES[this.game.route];
+    if (road && road.discount) price = Math.max(1, Math.round(price * (1 - road.discount))); // the Market Road
     return this.perks.haggle ? Math.max(1, Math.ceil(price * 0.7)) : price;
   }
 
@@ -237,6 +251,9 @@ export class Player {
   /** Take up a weapon; returns the one put down (left on the pedestal). */
   equipWeapon(id) {
     const old = this.weaponId;
+    // remembered for Hollis the Smith
+    if (!Save.data.weaponsCarried) Save.data.weaponsCarried = [];
+    if (id && !Save.data.weaponsCarried.includes(id)) Save.data.weaponsCarried.push(id);
     this.weaponId = id;
     this.recompute();
     this.game.hud.markDirty();
@@ -323,6 +340,15 @@ export class Player {
     g.audio.play('hurt');
     g.hud.markDirty();
     g.tookDamageThisFloor = true;
+    if (this.halfHearts === 0 && this.prayer) {
+      // Sister Ottilie's prayer is answered
+      this.prayer = false;
+      this.halfHearts = Math.min(this.maxHalfHearts, 4);
+      this.invuln = 2.5;
+      g.audio.play('holy');
+      g.effects.holySplash(this.x, this.y, 60);
+      g.hud.banner({ name: 'A Prayer Answered', flavour: 'Somewhere above, Sister Ottilie is praying for you. Rise.' });
+    }
     if (this.halfHearts === 0) this.dead = true;
     else onPlayerHurt(g);
     return true;
@@ -337,7 +363,8 @@ export class Player {
     if (this.slowT > 0) this.slowT -= dt;
     const b = this.buffs;
     for (const k in b) if (b[k] > 0) b[k] -= dt;
-    const speed = st.moveSpeed * (this.slowT > 0 ? 0.45 : 1) * (b.haste > 0 ? CURIO_FX.haste.moveSpeed : 1);
+    const wading = this.game.room && this.rollT <= 0 && this.game.room.inWater(this.x, this.y);
+    const speed = st.moveSpeed * (wading ? 0.75 : 1) * (this.slowT > 0 ? 0.45 : 1) * (b.haste > 0 ? CURIO_FX.haste.moveSpeed : 1);
     const flip = b.confusion > 0 ? -1 : 1; // a Potion of Confusion swaps every direction
     const tx = input.moveX * speed * flip;
     const ty = input.moveY * speed * flip;

@@ -226,7 +226,8 @@ export class Enemy {
     const fr = Math.exp(-ENEMY_FX.knockbackFriction * dt);
     this.kbx *= fr;
     this.kby *= fr;
-    const slow = (this.poisonTime > 0 ? MODS.poison.slow : 1) * (this.buffT > 0 ? ENEMY_FX.rallySpeed : 1) * (this.chillTime > 0 ? MODS.frost.slow : 1);
+    const wading = !this.def.flying && this.h <= 6 && this.room.inWater(this.x, this.y);
+    const slow = (wading ? 0.75 : 1) * (this.poisonTime > 0 ? MODS.poison.slow : 1) * (this.buffT > 0 ? ENEMY_FX.rallySpeed : 1) * (this.chillTime > 0 ? MODS.frost.slow : 1);
     this.x += (this.vx * slow + this.kbx) * dt;
     this.y += (this.vy * slow + this.kby) * dt;
     this.collide();

@@ -57,6 +57,39 @@ Each has their own weapon and their own dodge:
 The three were balanced with a bot that plays each hero through the same fights on every chapter: they
 take about the same damage for their health (within ~10%); the Iron Knight kills fastest but takes the most.
 
+## The Gatehouse
+
+Every run (except the Daily Descent) begins at **the Gatehouse**, home above the Keep. Its walls hold five empty
+sets of shackles: the king sent five people down before you, and they're still alive somewhere below, in chains.
+Find one (from floor 2 on), clear their room and **spend a key** to free them. From then on they wait at the
+Gatehouse and help you on every run:
+
+| Prisoner | Found from | Their help |
+|---|---|---|
+| **Hollis the Smith** | floor 2 | Re-forges any weapon you've ever carried: touch him to pick the weapon you start with |
+| **Bram the Quartermaster** | floor 2 | You set out with an extra bomb, an extra key and 5 pennies |
+| **Sister Ottilie** | floor 3 | Her prayer: the first time you fall in a run, you rise again with 2 hearts |
+| **Wynn the Cartographer** | floor 4 | Every floor's boss, armoury and merchant are on your map from the start |
+| **Old Ambrose** | floor 5 | Opens a forgotten stair in the Gatehouse: start in the Catacombs with a relic in hand |
+
+## The road forks
+
+After each floor's boss, the trapdoor drops you at **a fork in the road**: three ways down, shown on a map. The
+Old Stair is always there; the other two are drawn from:
+
+- **The Bloodied Road**: harder rooms and more champions, but its boss leaves an extra relic.
+- **The Pilgrim's Way**: gentler rooms, and you're healed 2 hearts on arrival.
+- **The Market Road**: 12 pennies on arrival, and the floor's merchant sells for 25% less.
+- **The Whispering Road**: an omen always hangs over the floor, but a relic waits where you land.
+- **The Hidden Way** (now and then): straight down into a secret realm. You skip the ordinary floor above it.
+
+## Rooms and arenas
+
+Rooms aren't all open boxes any more. Shaped rooms are carved with **chasms** (crosses, rings, balconies, islands,
+rope bridges with planks) and **shallow water** that slows anyone walking through it (dodge-rolling skims over it).
+Each boss fights in an **arena that suits it**: pillared halls, round pits, flooded chambers, chasm rims, rings of
+fire and candlelit altars (`src/data/rooms/shapedLayouts.js`).
+
 ## Weapons
 
 Wren, Rowan and Sir Aldwin can find new weapons on pedestals (in treasure rooms now and then, from Deadly and

@@ -4,6 +4,8 @@ import { LAYOUTS_BY_CHAPTER, EXTRA_CELLS_LAYOUTS } from '../data/rooms/chapterLa
 for (const pool of ['easy', 'medium', 'hard']) CELLS_LAYOUTS[pool].push(...EXTRA_CELLS_LAYOUTS[pool]);
 import { SPECIAL_LAYOUTS, SWORD_CHANCE } from '../data/rooms/specialLayouts.js';
 import { FLOOR } from '../data/config.js';
+import { SHAPED_LAYOUTS, ARENAS } from '../data/rooms/shapedLayouts.js';
+import { GATEHOUSE_LAYOUT } from './Gatehouse.js';
 
 // Picks a hand-made layout for each cell of each room, by room type and difficulty,
 // and makes sure the chosen layout never blocks the way between that cell's doors.
@@ -13,6 +15,8 @@ const BY_CHAPTER = { cells: CELLS_LAYOUTS, ...LAYOUTS_BY_CHAPTER };
 BY_CHAPTER.cistern = BY_CHAPTER.cells;
 BY_CHAPTER.chapel = BY_CHAPTER.catacombs;
 BY_CHAPTER.forge = BY_CHAPTER.halls;
+// every chapter also gets the shaped rooms (chasms, bridges, water)
+for (const set of new Set(Object.values(BY_CHAPTER))) for (const pool of ['easy', 'medium', 'hard']) set[pool].push(...SHAPED_LAYOUTS[pool]);
 const BY_NAME = new Map();
 for (const set of new Set(Object.values(BY_CHAPTER))) {
   for (const pool of ['easy', 'medium', 'hard']) {
@@ -25,15 +29,19 @@ for (const set of new Set(Object.values(BY_CHAPTER))) {
 }
 for (const l of Object.values(CELLS_LAYOUTS.special)) BY_NAME.set(l.name, l);
 for (const l of Object.values(SPECIAL_LAYOUTS)) BY_NAME.set(l.name, l);
+for (const l of Object.values(ARENAS)) BY_NAME.set(l.name, l);
+BY_NAME.set(GATEHOUSE_LAYOUT.name, GATEHOUSE_LAYOUT);
 const SPECIAL = { ...CELLS_LAYOUTS.special, ...SPECIAL_LAYOUTS };
 
 let layouts = CELLS_LAYOUTS;
 let features = [];
+let road = null; // the road taken to this floor (data/routes.js): harder or gentler rooms
 /**
  * Which chapter's layouts the next generated floor uses, and which feature rooms (puzzle,
  * library, well, rug) it should slip in. Set by the Game before generating a floor.
  */
-export function setLayoutChapter(key, featureList = []) {
+export function setLayoutChapter(key, featureList = [], route = null) {
+  road = route;
   layouts = BY_CHAPTER[key] || CELLS_LAYOUTS;
   features = featureList.slice();
 }
@@ -107,9 +115,9 @@ export function pickLayout(room, cell, rng, floorNumber) {
 
   const diff = FLOOR.difficulty;
   let weights;
-  if (room.distance <= 1) weights = diff.near;
+  if (room.distance <= 1 || (road && road.easy)) weights = diff.near;
   else {
-    const bonus = diff.perFloorHardBonus * (floorNumber - 1);
+    const bonus = diff.perFloorHardBonus * (floorNumber - 1) + (road && road.hard ? road.hard : 0);
     weights = { easy: Math.max(0, diff.far.easy - bonus), medium: diff.far.medium, hard: diff.far.hard + bonus };
   }
 

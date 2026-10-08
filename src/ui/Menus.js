@@ -5,6 +5,7 @@ import { settingsOf, setSetting, applySettings } from '../data/settings.js';
 import { OATHS, OATH_IDS, MAX_HEAT, heatOf } from '../data/oaths.js';
 import { CHARACTERS } from '../data/characters.js';
 import { daily } from '../core/Daily.js';
+import { ROUTES } from '../data/routes.js';
 
 // Every menu in the game: the title menu, pause, settings, controls, oaths, the Daily Descent and
 // yes/no questions. A screen is a list of items; the cursor moves with W/S, the arrows or the d-pad,
@@ -368,6 +369,89 @@ const SCREENS = {
         { label: 'COLLECTION', action: () => g.openCollection() },
         { label: 'SETTINGS', action: () => menus.open('settings') },
       ];
+    },
+  },
+
+  // the fork in the road after a boss: three roads down, drawn as a map
+  route: {
+    back() {}, // there's no going back up
+    items(g, menus, t) {
+      return t.routes.map((id) => ({
+        label: ROUTES[id].name.toUpperCase(),
+        action: () => g.chooseRoute(id),
+        adjust: (d) => (t.cursor = (t.cursor + d + t.routes.length) % t.routes.length),
+      }));
+    },
+    draw(ctx, menus, time, t) {
+      const g = menus.game;
+      ctx.fillStyle = '#060508';
+      ctx.fillRect(0, 0, W, H);
+      // the parchment
+      const px = 40;
+      const py = 24;
+      const pw = W - 80;
+      const ph = H - 58;
+      ctx.fillStyle = '#c8b48a';
+      ctx.fillRect(px, py, pw, ph);
+      ctx.fillStyle = '#b29a6e';
+      for (let i = 0; i < 90; i++) ctx.fillRect(px + ((i * 97) % (pw - 6)) + 3, py + ((i * 53) % (ph - 6)) + 3, 2 + (i % 3), 1);
+      ctx.fillStyle = '#8a7048';
+      ctx.fillRect(px, py, pw, 2);
+      ctx.fillRect(px, py + ph - 2, pw, 2);
+      ctx.fillRect(px, py, 2, ph);
+      ctx.fillRect(px + pw - 2, py, 2, ph);
+      drawText(ctx, 'THE ROAD FORKS', W / 2, py + 10, '#3a2412', { scale: 2, align: 'center' });
+      const next = g.routeNextName || '';
+      if (next) drawText(ctx, 'ON TO ' + next.toUpperCase(), W / 2, py + 32, '#6a4a2a', { align: 'center' });
+      // you are here: a little lantern at the top
+      const ox = W / 2;
+      const oy = py + 56;
+      ctx.fillStyle = '#3a2412';
+      ctx.fillRect(ox - 3, oy - 3, 7, 7);
+      ctx.fillStyle = '#ffd060';
+      ctx.fillRect(ox - 1, oy - 1, 3, 3);
+      const n = t.routes.length;
+      const cw = 168;
+      const gap = 14;
+      const x0 = W / 2 - (n * cw + (n - 1) * gap) / 2;
+      const cy = py + 112;
+      menus.rows = [];
+      t.routes.forEach((id, i) => {
+        const r = ROUTES[id];
+        const sel = i === t.cursor;
+        const cx = x0 + i * (cw + gap) + cw / 2;
+        // the path: a dotted line winding down to the road's sign
+        for (let s = 0; s <= 24; s++) {
+          const f = s / 24;
+          const x = ox + (cx - ox) * f + Math.sin(f * Math.PI * 2 + i) * 6 * (1 - f);
+          const y = oy + (cy - oy) * f;
+          if (s % 2 === 0) {
+            ctx.fillStyle = sel ? '#7a1a10' : '#8a7048';
+            ctx.fillRect(Math.round(x), Math.round(y), sel ? 3 : 2, sel ? 3 : 2);
+          }
+        }
+        // the road's card
+        const bx = Math.round(cx - cw / 2);
+        const by = cy + 6;
+        const bh = 112;
+        ctx.fillStyle = sel ? '#1a1014' : '#2a2018';
+        ctx.fillRect(bx, by, cw, bh);
+        ctx.fillStyle = sel ? '#e8c46c' : '#6a5438';
+        ctx.fillRect(bx, by, cw, 2);
+        ctx.fillRect(bx, by + bh - 2, cw, 2);
+        ctx.fillRect(bx, by, 2, bh);
+        ctx.fillRect(bx + cw - 2, by, 2, bh);
+        // its mark
+        ctx.fillStyle = r.color;
+        const pulse = sel ? Math.round(Math.sin(time * 5) * 1) : 0;
+        ctx.fillRect(cx - 4 - pulse, by + 10 - pulse, 9 + pulse * 2, 9 + pulse * 2);
+        ctx.fillStyle = '#0a0806';
+        ctx.fillRect(cx - 1, by + 13, 3, 3);
+        drawText(ctx, r.name.toUpperCase(), cx, by + 28, sel ? C.gold : C.ink, { align: 'center' });
+        wrap(r.text, 25).forEach((line, k) => drawText(ctx, line, cx, by + 46 + k * 11, sel ? C.ink : C.dim, { align: 'center' }));
+        menus.rows.push({ x0: bx, x1: bx + cw, y0: by - 20, y1: by + bh, i });
+      });
+      drawText(ctx, g.input.touchMode ? 'TAP A ROAD' : 'A/D CHOOSE    ENTER TAKE THE ROAD', W / 2, H - 22, C.faint, { align: 'center' });
     },
   },
 

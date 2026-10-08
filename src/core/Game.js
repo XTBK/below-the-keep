@@ -22,6 +22,10 @@ import { CHAPTERS } from '../data/palettes.js';
 import { SIM, DEBUG, TRANSITION, PLAYER, FEEL } from '../data/config.js';
 import { RELICS, RELIC_IDS, ROOM_DROPS, BOSS_DROPS, PRICES, SHOP_GOODS } from '../data/items.js';
 import { BOSS_FX, BOSS_ROSTER, bossHome } from '../data/bosses.js';
+import { arenaFor } from '../data/rooms/shapedLayouts.js';
+import { ROUTES, rollRoutes } from '../data/routes.js';
+import { gatehouseFloor } from '../world/Gatehouse.js';
+import { PRISONERS, PRISONER_IDS, rescued } from '../data/prisoners.js';
 import { enemyScale, bossScale, EARLY_BOSS_LIMIT, TIER_INFO, bossTier } from '../data/difficulty.js';
 import { OMENS, OMEN_IDS, OMEN_CHANCE, OMEN_FX } from '../data/omens.js';
 import { Familiars } from '../items/Familiars.js';
@@ -172,7 +176,9 @@ export class Game {
   _buildRun(seed) {
     this.seed = seed;
     this.rng = rngFromSeed(seed);
-    this.floorNumber = 1;
+    this.floorNumber = this.daily ? 1 : 0; // 0: the Gatehouse, home (the Daily Descent starts in the Keep)
+    this.prisonerHere = null; // { roomId, id }: a prisoner in chains on this floor
+    this.prisonerFreed = null;
     this.inVault = false; // on the hidden floor under the rug
     this.runTime = 0;
     this.offered = new Set(); // relics already shown this run (no duplicates)
@@ -181,6 +187,7 @@ export class Game {
     this.darkDeal = false; // took a deal at a Shrine of the Old God (then no Chapel will open)
     this.sealsGiven = new Set(); // Seal Fragments already handed out this run
     this.vaultVisited = false;
+    this.route = null; // the road taken to this floor (data/routes.js)
     this.realm = null; // the secret realm we're in, if any (data/chapters.js REALMS)
     this.realmsVisited = new Set();
     this.secretBossesUsed = new Set();
@@ -228,6 +235,7 @@ export class Game {
 
   /** Generate the current floor and put Wren in its start room. */
   startFloor() {
+    if (this.floorNumber === 0) return this._startGatehouse();
     this._clearRooms();
     this.enemies.clear();
     this.pickups.clear();
@@ -240,7 +248,7 @@ export class Game {
     const tag = this.realm ? `realm_${this.realm}` : this.inVault ? 'vault' : this.floorNumber;
     const floorRng = this.rng.fork(`floor${tag}`);
     this.dropRng = this.rng.fork(`drops${tag}`);
-    setLayoutChapter(this.chapterInfo.layouts || this.chapterKey, this._rollFeatures(this.rng.fork(`features${tag}`)));
+    setLayoutChapter(this.chapterInfo.layouts || this.chapterKey, this._rollFeatures(this.rng.fork(`features${tag}`)), this.route && ROUTES[this.route]);
     this.omen = this._rollOmen(this.rng.fork(`omen${tag}`));
     if (this.omen === 'darkness') this.lighting.setAmbient({ color: this.chapterInfo.ambient.color, level: this.chapterInfo.ambient.level * OMEN_FX.darknessAmbient });
     const size = floorSize(this.chapterKey, this.floorNumber) + (this.omen === 'maze' ? OMEN_FX.mazeExtraSize : 0);
@@ -250,8 +258,15 @@ export class Game {
     if (this.inVault) this.vaultVisited = true;
     if (this.realm) this.realmsVisited.add(this.realm);
     this.realmEntrance = this._rollRealmEntrance(this.rng.fork(`realm${tag}`));
+    this.prisonerHere = this._rollPrisoner(this.rng.fork(`prisoner${tag}`));
+    // Wynn the Cartographer's maps: the boss, armoury and merchant are known from the start
+    if (!this.daily && rescued('cartographer')) for (const r of this.floor.rooms) if (['boss', 'armoury', 'merchant'].includes(r.type)) r.seen = true;
     this._prepareAltar();
     this.floorBoss = this._drawBoss(this.rng.fork(`boss${tag}`));
+    // the boss fights in an arena that suits it
+    const arena = arenaFor(this.floorBoss, this.chapterKey);
+    const bossRoom = this.floor.rooms.find((r) => r.type === 'boss');
+    if (arena && bossRoom) for (const c of bossRoom.cells) bossRoom.layouts.set(`${c.x},${c.y}`, arena.name);
     this.tookDamageThisFloor = false;
     const f = this.floor;
     const mainCells = f.rooms.filter((r) => r.type !== 'secret' && r.type !== 'supersecret').reduce((n, r) => n + r.cells.length, 0);
@@ -272,6 +287,14 @@ export class Game {
     this._snapCamera();
     this.onEnteredRoom();
     onFloorStart(this);
+    this._arriveByRoute();
+    if (this.shortcutGift) {
+      // down Ambrose's stair: a relic for the road
+      this.shortcutGift = false;
+      const id = this.pickRelic('armoury', this.rng.fork('shortcut'), { minQuality: 2 });
+      const sc = this.room.slotCenter(7, 3);
+      if (id) this.room.addRewardPedestal(sc.x, sc.y, { kind: 'relic', id, price: 0, gone: false });
+    }
     setsOnFloorStart(this);
     this.familiars.warp();
   }
@@ -303,6 +326,7 @@ export class Game {
 
   _rollOmen(rng) {
     if (this.realm) return null;
+    if (this.route && ROUTES[this.route].omen) return OMEN_IDS[Math.floor(rng.next() * OMEN_IDS.length)];
     if (this.floorNumber < 2 || this.chapterKey === 'throne' || this.chapterKey === 'vault') return null;
     if (!rng.chance(this.oath('moon') ? 1 : OMEN_CHANCE)) return null;
     return OMEN_IDS[Math.floor(rng.next() * OMEN_IDS.length)];
@@ -486,14 +510,93 @@ export class Game {
   /** "The Catacombs II", "The Throne of the Mad King"... */
   get floorName() {
     const ROMAN = ['I', 'II', 'III'];
-    if (this.chapterKey === 'throne' || this.chapterKey === 'vault' || this.realm) return this.chapterInfo.name;
+    if (this.chapterKey === 'throne' || this.chapterKey === 'vault' || this.chapterKey === 'gatehouse' || this.realm) return this.chapterInfo.name;
     return `${this.chapterInfo.name} ${ROMAN[floorInChapter(this.floorNumber) - 1]}`;
   }
 
+  /** Home: the Gatehouse, one room above the Keep. */
+  _startGatehouse() {
+    this._clearRooms();
+    this.enemies.clear();
+    this.pickups.clear();
+    this.bombs.clear();
+    this.projectiles.clear();
+    for (const k in this.particles) this.particles[k].clear();
+    this._setChapter('gatehouse');
+    this.dropRng = this.rng.fork('dropsGatehouse');
+    this.omen = null;
+    this.realmEntrance = null;
+    this.prisonerHere = null;
+    this.floorBoss = null;
+    this.floor = gatehouseFloor();
+    this.room = this._makeRoom(this.floor.rooms[0]);
+    const c = this.room.slotCenter(7, 4);
+    if (!this.player) {
+      this.player = new Player(this, c.x, c.y);
+      this.projectiles.setStyle(this.player.character.weapon);
+    }
+    this.player.x = c.x;
+    this.player.y = c.y;
+    this.player.vx = this.player.vy = 0;
+    this._snapCamera();
+    this.onEnteredRoom();
+    this.familiars.warp();
+  }
+
+  /** Now and then, a prisoner still in chains (one you haven't freed yet). */
+  _rollPrisoner(rng) {
+    if (this.daily || this.realm || this.inVault || this.chapterKey === 'throne' || this.prisonerFreed) return null;
+    const ids = PRISONER_IDS.filter((id) => !rescued(id) && PRISONERS[id].minFloor <= this.floorNumber);
+    if (!ids.length || !rng.chance(0.4)) return null;
+    const rooms = this.floor.rooms.filter((r) => r.type === 'normal' && r.cells.length === 1 && r.distance >= 2);
+    if (!rooms.length) return null;
+    return { roomId: rooms[Math.floor(rng.next() * rooms.length)].id, id: ids[Math.floor(rng.next() * ids.length)] };
+  }
+
+  /** Should a fork in the road be offered on the way down? (only between ordinary floors) */
+  _routeDue(d) {
+    if (d.toVault || d.toRealm || this.inVault) return false;
+    const next = this.floorNumber + 1;
+    return next <= LAST_NORMAL_FLOOR && this.chapterKey !== 'throne' && this.chapterKey !== 'gatehouse' && !d.toFloor;
+  }
+
+  _nextFloorName() {
+    const n = this.floorNumber + 1;
+    const ch = CHAPTER_INFO[chapterForFloor(n)];
+    return ch ? ch.name : '';
+  }
+
+  /** The player took a road at the fork. */
+  chooseRoute(id) {
+    this.route = id;
+    this.paused = false;
+    this.menus.reset(null);
+    this.touch.setPaused(false);
+    this.hud.markDirty();
+    this.audio.play('menuChoose');
+  }
+
+  /** A road's gifts when you arrive on its floor. */
+  _arriveByRoute() {
+    const r = this.route && ROUTES[this.route];
+    if (!r || !this.player) return;
+    const p = this.player;
+    if (r.heal) p.heal(r.heal);
+    if (r.pennies) p.pennies += r.pennies;
+    if (r.relic) {
+      const id = this.pickRelic('armoury', this.rng.fork(`routeRelic${this.floorNumber}`), { minQuality: 2 });
+      if (id) {
+        const c = this.room.slotCenter(7, 3);
+        this.room.addRewardPedestal(c.x, c.y, { kind: 'relic', id, price: 0, gone: false });
+      }
+    }
+    this.hud.banner({ name: r.name, flavour: r.text });
+  }
+
   /** Step onto a trapdoor: fade out, build the next floor, fade in. */
-  descend(toVault = false, toRealm = null) {
+  descend(toVault = false, toRealm = null, toFloor = 0) {
     if (this.descending || this.state !== 'play') return;
-    this.descending = { t: 0, done: false, toVault, toRealm };
+    this.descending = { t: 0, done: false, toVault, toRealm, toFloor };
     this.audio.play('descend');
   }
 
@@ -502,12 +605,41 @@ export class Game {
     d.t += dt;
     this.fade = d.t < 0.6 ? d.t / 0.6 : Math.max(0, 1 - (d.t - 0.6) / 0.6);
     if (!d.done && d.t >= 0.6) {
+      // a fork in the road: wait in the dark while the player chooses
+      if (!d.routeAsked && this._routeDue(d)) {
+        d.routeAsked = true;
+        d.t = 0.6;
+        this.fade = 1;
+        const realm = realmForFloor(this.floorNumber + 1);
+        const routes = rollRoutes(this.rng.fork(`routes${this.floorNumber}${this.realm || ''}`), !!realm && !this.realmsVisited.has(realm));
+        this.routeNextName = this._nextFloorName();
+        this.paused = true;
+        this.menus.reset(null);
+        this.menus.open('route', { routes });
+        this.touch.setPaused(true);
+        this.hud.markDirty();
+        return;
+      }
       d.done = true;
+      const road = d.routeAsked ? this.route : null;
+      if (!d.routeAsked) this.route = null;
       if (d.toVault) this.inVault = true;
       else if (this.inVault) this.inVault = false; // the vault's trapdoor leads on to the next floor
       if (d.toRealm) this.realm = d.toRealm; // down the Sealed Stair (the floor number stays)
       else if (this.realm) this.realm = null; // a realm's trapdoor leads on to the next floor
+      if (d.toFloor) {
+        this.floorNumber = d.toFloor - 1; // Ambrose's stair skips ahead
+        this.shortcutGift = true;
+      }
       if (!d.toVault && !d.toRealm) this.floorNumber = Math.min(THRONE_FLOOR, this.floorNumber + 1);
+      // the Hidden Way: straight down into the secret realm under the next floor
+      if (road && ROUTES[road].realm && !d.toVault && !d.toRealm) {
+        const realm = realmForFloor(this.floorNumber);
+        if (realm && !this.realmsVisited.has(realm)) {
+          this.realm = realm;
+          this.route = null;
+        }
+      }
       this.startFloor();
       this.floorTitleT = 2.4;
     }

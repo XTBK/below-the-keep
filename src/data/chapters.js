@@ -97,6 +97,13 @@ export const REALMS = {
 };
 Object.assign(CHAPTER_INFO, REALMS);
 
+// home: the Gatehouse above the Keep, where runs begin (world/Gatehouse.js)
+CHAPTER_INFO.gatehouse = {
+  enemies: 'cells', name: 'The Gatehouse', tileset: 'gatehouse',
+  grade: CHAPTERS.gatehouse.grade, ambient: CHAPTERS.gatehouse.ambient, atmosphere: 'dust',
+  torch: { color: 0xffb070, flame: 'flame' }, bosses: [],
+};
+
 /** Which secret realm lies under a floor (by depth). */
 export function realmForFloor(n) {
   if (n < 2 || n > 7) return null;

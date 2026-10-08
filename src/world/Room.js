@@ -1,3 +1,5 @@
+import { furnishGatehouse, Prisoner } from './Gatehouse.js';
+import { ROUTES } from '../data/routes.js';
 import * as THREE from 'three';
 import { ROOM, FLOOR, LIGHTING, PROPS, PARTICLES, HAZARDS } from '../data/config.js';
 import { getSheet, makeTexture } from '../render/Assets.js';
@@ -134,6 +136,12 @@ export class Room {
     return this.isFloor(c, r) ? this.tiles[this.slot(c, r)] : null;
   }
 
+  /** Is this world point standing in shallow water? */
+  inWater(x, y) {
+    if (!this.hasWater) return false;
+    return this.tileAt(Math.floor((x - this.rect.x0) / T), Math.floor((this.rect.y1 - y) / T)) === 'w';
+  }
+
   /** world centre of slot (c, r) */
   slotCenter(c, r) {
     return { x: this.rect.x0 + c * T + T / 2, y: this.rect.y1 - r * T - T / 2 };
@@ -261,6 +269,62 @@ export class Room {
     // straw piles (only where the decor has pixels, in both maps)
     const decor = getSheet(`${this.ts}_decor`);
     for (let r = 0; r < gh; r++) for (let c = 0; c < gw; c++) if (this.tileAt(c, r) === 's') this._stampMasked(cctx, nctx, decor, 0, c * T, r * T);
+    // bridges: a walkway with a chasm on both sides gets wooden planks and rope rails
+    for (let r = 0; r < gh; r++) {
+      for (let c = 0; c < gw; c++) {
+        if (!F(c, r) || isPit(c, r)) continue;
+        const across = isPit(c - 1, r) && isPit(c + 1, r); // a bridge running up-down
+        const along = isPit(c, r - 1) && isPit(c, r + 1); // a bridge running left-right
+        if (!across && !along) continue;
+        const x = c * T;
+        const y = r * T;
+        for (let k = 0; k < T; k += 6) {
+          cctx.fillStyle = (k / 6) % 2 ? '#5a3c22' : '#6e4a2a';
+          if (across) cctx.fillRect(x + 2, y + k, T - 4, 5);
+          else cctx.fillRect(x + k, y + 2, 5, T - 4);
+          cctx.fillStyle = '#2a1a0e';
+          if (across) cctx.fillRect(x + 2, y + k + 5, T - 4, 1);
+          else cctx.fillRect(x + k + 5, y + 2, 1, T - 4);
+        }
+        cctx.fillStyle = '#a08050'; // the ropes
+        if (across) {
+          cctx.fillRect(x + 1, y, 1, T);
+          cctx.fillRect(x + T - 2, y, 1, T);
+        } else {
+          cctx.fillRect(x, y + 1, T, 1);
+          cctx.fillRect(x, y + T - 2, T, 1);
+        }
+      }
+    }
+    // shallow water: a sheet of the chapter's water over the floor, a pale rim, ripples, flat and glossy
+    const isW = (c, r) => this.tileAt(c, r) === 'w';
+    const wpal = (TILESETS[this.ts].pal && TILESETS[this.ts].pal.water) || ['#0c2630', '#123642', '#1e5464', '#4a8ea0'];
+    this.hasWater = false;
+    for (let r = 0; r < gh; r++) {
+      for (let c = 0; c < gw; c++) {
+        if (!isW(c, r)) continue;
+        this.hasWater = true;
+        const x = c * T;
+        const y = r * T;
+        cctx.globalAlpha = 0.72;
+        cctx.fillStyle = wpal[2];
+        cctx.fillRect(x, y, T, T);
+        cctx.globalAlpha = 0.35;
+        cctx.fillStyle = wpal[0]; // deeper toward the middle of the pool
+        if (isW(c, r - 1) && isW(c, r + 1) && isW(c - 1, r) && isW(c + 1, r)) cctx.fillRect(x, y, T, T);
+        cctx.globalAlpha = 1;
+        cctx.fillStyle = wpal[3]; // a bright rim where the water meets the stone
+        if (!isW(c, r - 1)) cctx.fillRect(x, y, T, 2);
+        if (!isW(c, r + 1)) cctx.fillRect(x, y + T - 2, T, 2);
+        if (!isW(c - 1, r)) cctx.fillRect(x, y, 2, T);
+        if (!isW(c + 1, r)) cctx.fillRect(x + T - 2, y, 2, T);
+        cctx.globalAlpha = 0.8; // ripples
+        for (let k = 0; k < 4; k++) cctx.fillRect(x + 3 + Math.floor(rng.next() * (T - 12)), y + 4 + Math.floor(rng.next() * (T - 8)), 3 + Math.floor(rng.next() * 6), 1);
+        cctx.globalAlpha = 1;
+        nctx.fillStyle = 'rgb(128,128,255)';
+        nctx.fillRect(x, y, T, T);
+      }
+    }
 
     // --- walls: decide each wall slot's piece from its floor neighbours ---
     const done = new Uint8Array(gw * gh);
@@ -402,7 +466,7 @@ export class Room {
     for (let r = 0; r < this.gh; r++) {
       for (let c = 0; c < this.gw; c++) {
         const ch = this.tileAt(c, r);
-        if (!ch || ch === '.' || ch === 's' || ch === 'p') {
+        if (!ch || ch === '.' || ch === 's' || ch === 'p' || ch === 'w') {
           if (ch === 'p') {
             // pits block walking but not stones
             const { x, y } = this.slotCenter(c, r);
@@ -551,6 +615,9 @@ export class Room {
     const re = this.game.realmEntrance;
     if (re && re.roomId === this.data.id) this.features.push(new SealedStair(this, re.realm));
     if (bookSpots.length) this.features.push(new Bookcases(this, bookSpots));
+    if (this.data.type === 'gatehouse') this.features.push(...furnishGatehouse(this));
+    const pr = this.game.prisonerHere;
+    if (pr && pr.roomId === this.data.id) this.features.push(new Prisoner(this, pr.id));
     // rewards that rose up after a secret was solved
     for (const e of this.data.extraStands || []) this._rewardPedestal(e.x, e.ground, e.slot);
 
@@ -675,7 +742,7 @@ export class Room {
     const def = ENEMIES[type];
     const count = def.packSize ? this.rng.int(def.packSize[0], def.packSize[1]) : 1;
     const horde = this.game.oath('horde') ? 0.22 : 0; // the Oath of the Horde
-    const champion = this.rng.chance(championChance(CHAMPION.chance, this.game.floorNumber) * (this.game.omen === 'hunt' ? 3 : 1) + horde);
+    const champion = this.rng.chance(championChance(CHAMPION.chance, this.game.floorNumber) * (this.game.omen === 'hunt' ? 3 : 1) + horde + ((this.game.route && ROUTES[this.game.route].champions) || 0));
     // enemies stand at the middle of their tile (y is where their feet are);
     // a mimic stands exactly where a real barrel would
     this.spawns.push({ type, x, y: type === 'mimic' ? y - 12 : y - 6, count, champion });
@@ -778,6 +845,11 @@ export class Room {
           other.choiceOf = [slot];
           slot.pair = other;
         }
+      }
+      // the Bloodied Road: its boss guards an extra relic (both yours)
+      if (this.data.type === 'boss' && this.game.route && ROUTES[this.game.route].bossBonus && !slot.pair) {
+        const extra = this.game.pickRelic('boss', this.rng, { minQuality: 2 });
+        if (extra) slot.pair = { kind: 'relic', id: extra, price: 0, gone: false };
       }
       this.data.pedestal = slot;
       if (reward.chest) {

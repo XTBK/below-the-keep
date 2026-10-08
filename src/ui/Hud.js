@@ -212,8 +212,8 @@ export class Hud {
     if (state.floorTitleT > 0) this._drawFloorTitle(state);
     if (state.state === 'dead' && state.deathTimer > 1.1) this._drawDeath(state);
     if (state.state === 'victory') this._drawVictory(state);
-    if (state.paused) this._drawPause(state);
     this._drawFade(state);
+    if (state.paused) this._drawPause(state); // (over the fade: the fork in the road shows in the dark)
     this.texture.needsUpdate = true;
   }
 
