@@ -3,7 +3,7 @@ import { rescued } from '../data/prisoners.js';
 import { ROUTES } from '../data/routes.js';
 import { PLAYER, FEEL } from '../data/config.js';
 import { RELICS } from '../data/items.js';
-import { Sprite, Animator, LAYER } from '../render/Sprite.js';
+import { Sprite, Animator, LAYER, VISUAL } from '../render/Sprite.js';
 import { buildWrenSheet } from '../render/Assets.js';
 import { pushCircleOutOfBox, clampCircleToRect } from '../world/Collision.js';
 import { computeLoadout, useActive } from '../items/Relics.js';
@@ -818,7 +818,8 @@ export class Player {
     }
     // blink while invincible
     const onTitle = this.game.state === 'title' || this.game.state === 'collection';
-    this.sprite.visible = !onTitle && (this.invuln <= 0 || Math.floor(this.invuln * PLAYER.blinkRate) % 2 === 0);
+    // invincible: blink (or, with Reduce Flashing, just stay a little see-through... and visible)
+    this.sprite.visible = !onTitle && (this.invuln <= 0 || VISUAL.calm || Math.floor(this.invuln * PLAYER.blinkRate) % 2 === 0);
     this.shadow.visible = !onTitle;
     if (this.buffs.warding > 0 && Math.random() < 0.3) this.game.effects.glow.emit(this.game.effects.presets.holy, this.x + (Math.random() - 0.5) * 14, this.y, Math.random() * 24, 0, 0, 20);
     this.shadow.place(this.x, this.y - 6, 0, LAYER.shadow);

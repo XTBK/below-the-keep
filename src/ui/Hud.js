@@ -1,3 +1,4 @@
+import { VISUAL } from '../render/Sprite.js';
 import { drawText } from './PixelFont.js';
 import { Painter } from '../render/Painter.js';
 import { SHARED as S } from '../data/palettes.js';
@@ -329,7 +330,7 @@ export class Hud {
       g.addColorStop(1, `rgba(6,0,3,${(0.82 * state.dread).toFixed(3)})`);
       ctx.fillStyle = g;
       ctx.fillRect(SIDE, 0, W - SIDE * 2, H);
-      if (this.dreadFlash > 0) {
+      if (this.dreadFlash > 0 && !VISUAL.calm) {
         ctx.fillStyle = `rgba(120,0,10,${(this.dreadFlash * 0.5).toFixed(3)})`;
         ctx.fillRect(SIDE, 0, W - SIDE * 2, H);
       }

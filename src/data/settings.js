@@ -1,5 +1,7 @@
 // Player settings (the Settings menu), kept in the save. Each is applied by applySettings().
 
+import { VISUAL } from '../render/Sprite.js';
+
 export const SETTINGS_DEFAULTS = {
   music: 8, // 0..10
   sound: 8, // 0..10
@@ -8,6 +10,7 @@ export const SETTINGS_DEFAULTS = {
   numbers: true, // damage numbers over struck foes
   fullscreen: false,
   story: true, // the little story scenes (the intro, and a vignette at each new place)
+  calm: false, // reduce flashing: soft hit tints instead of white strobes, no blinking, no lightning
 };
 
 /** The player's settings, with defaults for anything missing. */
@@ -27,4 +30,5 @@ export function applySettings(game, save) {
   game.feel.shakeScale = s.shake / 10;
   game.slowmoOnCrits = s.slowmo;
   game.damageNumbersOn = s.numbers;
+  VISUAL.calm = !!s.calm;
 }

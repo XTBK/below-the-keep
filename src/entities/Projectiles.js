@@ -26,6 +26,14 @@ const TIER_RADIUS = [PROJECTILE.hitRadius, PROJECTILE.hitRadius + MODS.size.hitR
 const MAX_HITS = 8;
 const ARC_COLOR = new THREE.Color(1.4, 2.2, 3.4);
 
+/** Your own shots are a touch see-through: solid, bright shots always mean danger (enemy shots). */
+function ownShot(mat) {
+  mat.transparent = true;
+  mat.opacity = 0.8;
+  mat.depthWrite = false;
+  return mat;
+}
+
 export class Projectiles {
   constructor(game) {
     this.game = game;
@@ -61,13 +69,14 @@ export class Projectiles {
       normal.repeat.set(1 / 3, 1);
       normal.offset.set(tier / 3, 0);
       const mat = makeLitMaterial(map, normal, { emissive: 0x3a3a3a });
+      ownShot(mat);
       this.stoneMats.push(mat);
       // spell bolts: unlit and brighter than white, so they glow and bloom
       const smap = spells.map.clone();
       smap.needsUpdate = true;
       smap.repeat.set(1 / 3, 1);
       smap.offset.set(tier / 3, 0);
-      this.spellMats.push(new THREE.MeshBasicMaterial({ map: smap, alphaTest: 0.4 }));
+      this.spellMats.push(ownShot(new THREE.MeshBasicMaterial({ map: smap, alphaTest: 0.4 })));
       // crossbow bolts: lit like the stones, rotated to fly point-first
       const qmap = quarrels.map.clone();
       qmap.needsUpdate = true;
@@ -77,7 +86,7 @@ export class Projectiles {
       qn.needsUpdate = true;
       qn.repeat.set(1 / 3, 1);
       qn.offset.set(tier / 3, 0);
-      this.boltMats.push(makeLitMaterial(qmap, qn, { emissive: 0x4a4a4a }));
+      this.boltMats.push(ownShot(makeLitMaterial(qmap, qn, { emissive: 0x4a4a4a })));
       const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(16, 16), mat, PROJECTILE.poolSize);
       mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(PROJECTILE.poolSize * 3), 3);
       mesh.frustumCulled = false;
@@ -492,20 +501,23 @@ export class Projectiles {
     return best;
   }
 
-  /** Little particle trails that show what a stone carries. */
+  /**
+   * A faint whisper of a trail showing what a shot carries (fire, frost, poison...). Kept sparse on
+   * purpose: a screen full of your own sparkle hides the enemy shots you need to see.
+   */
   _trail(p, dt) {
-    p.trailAcc += dt * 30;
+    p.trailAcc += dt * 12;
     if (p.trailAcc < 1) return;
     p.trailAcc = 0;
     const fx = this.game.effects;
-    if (this.wand && fxRng.chance(0.45)) fx.glow.emit(fx.presets.holy, p.x, p.y, p.h, fxRng.float(-8, 8), fxRng.float(-8, 8), fxRng.float(-4, 8)); // a trail of motes
-    if (p.burn > 0) fx.glow.emit(fx.presets.ember, p.x, p.y, p.h, fxRng.float(-10, 10), fxRng.float(-10, 10), fxRng.float(5, 20));
-    if (p.chain > 0 && fxRng.chance(0.5)) fx.glow.emit(fx.presets.spark, p.x, p.y, p.h, fxRng.float(-40, 40), fxRng.float(-40, 40), fxRng.float(-10, 30));
-    if (p.explode > 0 && fxRng.chance(0.4)) fx.glow.emit(fx.presets.spark, p.x, p.y, p.h + 3, fxRng.float(-15, 15), fxRng.float(-15, 15), fxRng.float(10, 30));
-    if (p.poison > 0 && fxRng.chance(0.5)) fx.lit.emit(fx.presets.goo, p.x, p.y, p.h, 0, 0, -10);
-    if (p.spectral > 0 && fxRng.chance(0.5)) fx.lit.emit(fx.presets.crackDust, p.x, p.y, p.h, 0, 0, 4);
-    if (p.frost > 0 && fxRng.chance(0.5)) fx.glow.emit(fx.presets.holy, p.x, p.y, p.h, fxRng.float(-8, 8), fxRng.float(-8, 8), 0);
-    if (p.gild > 0 && fxRng.chance(0.3)) fx.glow.emit(fx.presets.gold, p.x, p.y, p.h, 0, 0, 5);
+    if (this.wand && fxRng.chance(0.1)) fx.glow.emit(fx.presets.holy, p.x, p.y, p.h, fxRng.float(-8, 8), fxRng.float(-8, 8), fxRng.float(-4, 8)); // a trail of motes
+    if (p.burn > 0 && fxRng.chance(0.35)) fx.glow.emit(fx.presets.ember, p.x, p.y, p.h, fxRng.float(-10, 10), fxRng.float(-10, 10), fxRng.float(5, 20));
+    if (p.chain > 0 && fxRng.chance(0.2)) fx.glow.emit(fx.presets.spark, p.x, p.y, p.h, fxRng.float(-40, 40), fxRng.float(-40, 40), fxRng.float(-10, 30));
+    if (p.explode > 0 && fxRng.chance(0.15)) fx.glow.emit(fx.presets.spark, p.x, p.y, p.h + 3, fxRng.float(-15, 15), fxRng.float(-15, 15), fxRng.float(10, 30));
+    if (p.poison > 0 && fxRng.chance(0.25)) fx.lit.emit(fx.presets.goo, p.x, p.y, p.h, 0, 0, -10);
+    if (p.spectral > 0 && fxRng.chance(0.2)) fx.lit.emit(fx.presets.crackDust, p.x, p.y, p.h, 0, 0, 4);
+    if (p.frost > 0 && fxRng.chance(0.2)) fx.glow.emit(fx.presets.holy, p.x, p.y, p.h, fxRng.float(-8, 8), fxRng.float(-8, 8), 0);
+    if (p.gild > 0 && fxRng.chance(0.15)) fx.glow.emit(fx.presets.gold, p.x, p.y, p.h, 0, 0, 5);
   }
 
   _release(p) {
@@ -529,7 +541,7 @@ export class Projectiles {
       } else _m.makeTranslation(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
       mesh.setMatrixAt(k, _m);
       // your own shots glow less when the air is thick with them, so enemy shots stay easy to see
-      const k2 = (this.wand ? 1.3 : 1) * dim;
+      const k2 = (this.wand ? 1.05 : 0.95) * dim;
       _c.setRGB(p.r * k2, p.g * k2, p.b * k2);
       mesh.setColorAt(k, _c);
       _m.makeTranslation(Math.round(p.x), Math.round(p.y) - 1, LAYER.shadow + 0.01);

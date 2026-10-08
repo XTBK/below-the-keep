@@ -341,6 +341,7 @@ const settingsItems = (g, menus) => {
     toggle('slowmo', 'SLOW-MO ON CRITS', 'A split second of slow motion when a critical hit lands.'),
     toggle('numbers', 'DAMAGE NUMBERS', 'Numbers float up from struck foes.'),
     toggle('story', 'STORY SCENES', 'The tale of the Keep, and a scene at each new place below.'),
+    toggle('calm', 'REDUCE FLASHING', 'Soft tints instead of white flashes, no blinking, no lightning on the title.'),
     {
       label: 'FULLSCREEN',
       value: () => (document.fullscreenElement ? 'ON' : 'OFF'),

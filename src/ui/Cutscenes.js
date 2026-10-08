@@ -1,3 +1,4 @@
+import { VISUAL } from '../render/Sprite.js';
 import { RENDER } from '../data/config.js';
 import { drawText } from './PixelFont.js';
 import { TitleBackdrop } from './TitleBackdrop.js';
@@ -454,7 +455,7 @@ const SCENES = {
     s.wall('halls');
     s.floor('halls', 56, 111);
     s.sprite('crownwraith', Math.min(10, 8 + Math.floor(t * 1.4)), 0, 240, 170);
-    const flash = Math.max(0, 1 - t * 0.6);
+    const flash = Math.max(0, 1 - t * 0.6) * (VISUAL.calm ? 0.3 : 1);
     s.light(240, 120, 260, '255,240,200', 0.4 + flash * 0.6);
     s.motes('rgba(255,240,200,0.8)', 40, -20);
     s.shade(0.55 - flash * 0.4);

@@ -1,5 +1,5 @@
 import { Pool } from '../core/Pool.js';
-import { Sprite, Animator, LAYER } from '../render/Sprite.js';
+import { Sprite, Animator, LAYER, depthFor } from '../render/Sprite.js';
 import { PLAYER, LIGHTING } from '../data/config.js';
 import { TELE, telegraphAlpha } from './telegraph.js';
 
@@ -10,6 +10,9 @@ import { TELE, telegraphAlpha } from './telegraph.js';
 //  - orbs: slower round shots (plague globs, stone shards, thrown keys) used by bosses.
 
 const FIRE_LIGHT = { brightness: 0.9, height: 20, radius: 120, color: 0xff8030, flicker: 0.3, flickerSpeed: 14 };
+
+// enemy shots are always drawn over everything around them (your shots, creatures, props): you must see them
+const ON_TOP = 0.06;
 
 export class EnemyShots {
   constructor(game, manager) {
@@ -254,11 +257,11 @@ export class EnemyShots {
   sync() {
     for (let i = 0; i < this.bolts.count; i++) {
       const b = this.bolts.active[i];
-      b.sprite.place(b.x, b.y, b.h);
+      b.sprite.place(b.x, b.y, b.h, depthFor(b.y) + ON_TOP);
     }
     for (let i = 0; i < this.orbs.count; i++) {
       const o = this.orbs.active[i];
-      o.sprite.place(o.x, o.y, o.h);
+      o.sprite.place(o.x, o.y, o.h, depthFor(o.y) + ON_TOP);
       // a quick pop when it appears, then a gentle pulse
       const pop = Math.min(1, (o.t || 0) * 14);
       const pulse = 1 + Math.sin((o.t || 0) * 18) * 0.08;
@@ -267,7 +270,7 @@ export class EnemyShots {
     for (let i = 0; i < this.fireballs.count; i++) {
       const f = this.fireballs.active[i];
       f.sprite.place(f.x, f.y, f.h);
-      f.orb.place(f.x, f.y, f.h);
+      f.orb.place(f.x, f.y, f.h, depthFor(f.y) + ON_TOP);
       f.shadow.place(f.x, f.y - 6, 0, LAYER.shadow);
     }
   }

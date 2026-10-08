@@ -10,6 +10,9 @@ import { getSheet, makeTexture, shareTexture } from './Assets.js';
 // edges), so no sorting is ever needed. DEPTH_BIAS nudges something just in front of what
 // stands at the same spot (a flame on its brazier, dust in front of a barrel).
 
+/** Visual comfort switches (set from the settings): calm = reduce flashing. */
+export const VISUAL = { calm: false };
+
 export const LAYER = {
   background: 0,
   floorDecal: 0.5,
@@ -199,7 +202,7 @@ export class Sprite {
   update(dt) {
     if (this.flashTime > 0) {
       this.flashTime -= dt;
-      if (this.material.userData.flash) this.material.userData.flash.value = this.flashTime > 0 ? 1 : 0;
+      if (this.material.userData.flash) this.material.userData.flash.value = this.flashTime > 0 ? (VISUAL.calm ? 0.3 : 1) : 0;
     }
   }
 

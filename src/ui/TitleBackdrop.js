@@ -1,3 +1,4 @@
+import { VISUAL } from '../render/Sprite.js';
 import { RENDER } from '../data/config.js';
 
 // The title screen's backdrop: a castle on a crag under a huge moon, mountains behind, a dark pine
@@ -132,6 +133,50 @@ function paintMountains() {
   return { c };
 }
 
+// ---------------------------------------------------------------- clouds
+/** A soft cloud: overlapping puffs, dark violet, the moon catching their upper edges. */
+function paintCloud(w, seed) {
+  const h = 22;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  const rand = rng(seed * 31);
+  const puffs = [];
+  for (let i = 0; i < 9; i++) {
+    const t = i / 8;
+    const r = 5 + Math.sin(t * Math.PI) * 6 + rand() * 2;
+    puffs.push({ x: 8 + t * (w - 16) + (rand() - 0.5) * 6, y: h - 5 - r * 0.55, r });
+  }
+  // the moonlit tops first, then the body over them, shifted down a pixel
+  g.fillStyle = 'rgba(92,72,120,0.55)';
+  for (const p of puffs) {
+    g.beginPath();
+    g.ellipse(p.x, p.y, p.r * 1.25, p.r * 0.7, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.fillStyle = 'rgba(24,16,38,0.9)';
+  for (const p of puffs) {
+    g.beginPath();
+    g.ellipse(p.x, p.y + 1.5, p.r * 1.25, p.r * 0.7, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  // a flat, fading underside
+  const grad = g.createLinearGradient(0, h - 8, 0, h);
+  grad.addColorStop(0, 'rgba(24,16,38,0.9)');
+  grad.addColorStop(1, 'rgba(24,16,38,0)');
+  g.fillStyle = grad;
+  g.fillRect(4, h - 8, w - 8, 8);
+  // the whole cloud is thin: see the sky through it
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  const o = out.getContext('2d');
+  o.globalAlpha = 0.6;
+  o.drawImage(c, 0, 0);
+  return out;
+}
+
 // ---------------------------------------------------------------- the castle on its crag
 const STONE = '#0e0a16';
 const STONE_LIT = '#2c2440';
@@ -163,16 +208,24 @@ function paintCastle() {
     // stone courses
     for (let y = top + 6; y < base; y += 7) for (let xx = x + ((y / 7) % 2 ? 2 : 5); xx < x + w - 3; xx += 6) rect(xx, y, 2, 1, '#151020');
     if (roofH) {
-      // a cone roof, with an overhang and a lit right slope
+      // a gothic roof: flared at the eaves, curving to a needle point, tiles in courses, moonlit right side
+      const cx = x + w / 2;
       for (let i = 0; i < roofH; i++) {
-        const half = Math.round(((w + 4) / 2) * (1 - i / roofH));
-        const cx = x + w / 2;
-        rect(Math.round(cx - half), top - 1 - i, half * 2, 1, ROOF);
-        rect(Math.round(cx + half - 2), top - 1 - i, 2, 1, ROOF_LIT);
+        const t = i / roofH;
+        const half = Math.max(0.5, ((w + 4) / 2) * Math.pow(1 - t, 1.45));
+        const x0 = Math.round(cx - half);
+        const x1 = Math.round(cx + half);
+        rect(x0, top - 1 - i, Math.max(1, x1 - x0), 1, i % 4 === 3 ? '#0a0610' : ROOF);
+        if (x1 - x0 > 2) rect(x1 - Math.max(1, Math.round(half * 0.45)), top - 1 - i, Math.max(1, Math.round(half * 0.45)), 1, ROOF_LIT);
       }
-      rect(Math.round(x + w / 2), top - roofH - 6, 1, 6, ROOF_LIT); // the finial
+      rect(Math.round(cx) - 1, top - 1, 2, 1, ROOF_LIT); // the eave's lip catches the light
+      rect(Math.round(cx), top - roofH - 7, 1, 7, ROOF_LIT); // the finial
+      rect(Math.round(cx) - 1, top - roofH - 4, 3, 1, ROOF_LIT); // ...with a little cross-bar
       if (opts.flag) {
-        rect(Math.round(x + w / 2) + 1, top - roofH - 6, 5, 3, '#5a1018');
+        // a long banner, flying to the right
+        rect(Math.round(cx) + 1, top - roofH - 7, 7, 2, '#7a1622');
+        rect(Math.round(cx) + 1, top - roofH - 5, 5, 1, '#5a1018');
+        rect(Math.round(cx) + 8, top - roofH - 6, 2, 1, '#5a1018');
       }
     } else {
       // battlements
@@ -199,22 +252,25 @@ function paintCastle() {
     for (let xx = x0; xx < x1; xx += 4) rect(xx, top - 3, 2, 3);
     for (let y = top + 5; y < base; y += 6) for (let xx = x0 + ((y / 6) % 2 ? 1 : 4); xx < x1; xx += 7) rect(xx, y, 2, 1, '#151020');
   };
-  wall(232, 420, 206, 246);
-  wall(276, 372, 168, 210);
-  // the great keep and its towers, back to front
-  tower(244, 196, 12, 240, 16, { lit: 0.3 });
-  tower(262, 154, 20, 236, 26, { lit: 0.5 });
-  tower(286, 136, 30, 232, 0, { lit: 0.55 }); // the keep, flat-topped with battlements
-  tower(306, 106, 18, 140, 30, { flag: true, lit: 0.8 }); // the tall spire on the keep
-  tower(320, 124, 14, 140, 18, { lit: 0.6 });
-  tower(338, 148, 22, 232, 28, { lit: 0.45 });
-  tower(366, 176, 16, 236, 20, { lit: 0.4 });
-  tower(392, 192, 10, 236, 14, { lit: 0.3 });
-  tower(404, 206, 14, 246, 0, { lit: 0.35 });
-  // the gate: a dark arch with a sliver of firelight
-  rect(300, 214, 14, 20, '#050308');
-  rect(301, 212, 12, 2, '#050308');
-  windows.push({ x: 305, y: 228, ph: 1, sp: 1.5, gate: true });
+  wall(230, 412, 206, 246); // the outer curtain wall
+  wall(262, 380, 176, 212); // the inner ward
+  // the great keep and its towers, back to front: one tall spire in the middle, the rest stepping
+  // down to either side in matching pairs
+  tower(232, 200, 10, 246, 0, { lit: 0.3 }); // corner turrets on the outer wall
+  tower(400, 200, 10, 246, 0, { lit: 0.3 });
+  tower(244, 178, 14, 240, 20, { lit: 0.35 }); // the outer towers
+  tower(384, 178, 14, 240, 20, { lit: 0.35 });
+  tower(266, 146, 20, 236, 28, { lit: 0.5 }); // the flanking towers
+  tower(354, 146, 20, 236, 28, { lit: 0.5 });
+  tower(294, 124, 52, 234, 0, { lit: 0.55 }); // the great keep, battlemented
+  tower(290, 112, 8, 128, 12, { lit: 0.7 }); // turrets on the keep's corners
+  tower(342, 112, 8, 128, 12, { lit: 0.7 });
+  tower(311, 114, 18, 126, 25, { flag: true, lit: 0.85 }); // the spire, crowning it all
+  // the gate: a dark arch with a sliver of firelight, under the keep
+  rect(313, 214, 14, 20, '#050308');
+  rect(314, 212, 12, 2, '#050308');
+  rect(316, 211, 8, 1, '#050308');
+  windows.push({ x: 319, y: 228, ph: 1, sp: 1.5, gate: true });
   // a narrow bridge down the crag to the left
   for (let x = 196; x < 232; x++) {
     const y = 246 + Math.round((232 - x) * 0.35);
@@ -348,20 +404,17 @@ export class TitleBackdrop {
       ctx.fillStyle = `rgba(230,220,255,${(a * (0.4 + s.b * 0.6)).toFixed(2)})`;
       ctx.fillRect(s.x, s.y, 1, 1);
     }
-    // thin clouds drifting across the moon
+    // soft clouds drifting slowly across the moon (painted once, see paintCloud)
+    if (!this.clouds) this.clouds = [paintCloud(150, 1), paintCloud(110, 2), paintCloud(180, 3)];
     for (let k = 0; k < 3; k++) {
-      const cx = ((time * (4 + k * 2) + k * 230) % (W + 260)) - 130;
-      const cy = 52 + k * 22;
-      for (let i = 0; i < 6; i++) {
-        const w = 70 - i * 9 + k * 10;
-        ctx.fillStyle = i === 0 ? 'rgba(60,44,78,0.35)' : 'rgba(22,14,34,0.55)';
-        ctx.fillRect(Math.round(cx - w / 2 + i * 6), cy + i, w, 2);
-      }
+      const cl = this.clouds[k];
+      const cx = ((time * (3 + k * 1.5) + k * 260) % (W + cl.width + 40)) - cl.width - 20;
+      ctx.drawImage(cl, Math.round(cx), 40 + k * 26);
     }
     // distant lightning: the sky flashes, a bolt cracks behind the mountains
     this.nextBolt -= dt;
     if (this.nextBolt <= 0) {
-      this.flash = 0.35;
+      if (!VISUAL.calm) this.flash = 0.35; // (no lightning with Reduce Flashing)
       this.boltX = 40 + Math.random() * 160;
       this.nextBolt = 10 + Math.random() * 14;
     }

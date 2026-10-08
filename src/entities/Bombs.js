@@ -1,5 +1,5 @@
 import { Pool } from '../core/Pool.js';
-import { Sprite, LAYER } from '../render/Sprite.js';
+import { Sprite, LAYER, VISUAL } from '../render/Sprite.js';
 import { BOMB } from '../data/items.js';
 import { fxRng } from '../core/Rng.js';
 import { PERKS } from '../items/Perks.js';
@@ -74,7 +74,7 @@ export class Bombs {
     for (let i = this.flashes.length - 1; i >= 0; i--) {
       const f = this.flashes[i];
       f.t -= dt;
-      f.light.brightness = FLASH_LIGHT.brightness * Math.max(0, f.t / 0.35);
+      f.light.brightness = FLASH_LIGHT.brightness * Math.max(0, f.t / 0.35) * (VISUAL.calm ? 0.4 : 1); // (dimmer with Reduce Flashing)
       if (f.t <= 0) {
         this.game.enemies.returnLight(f.light);
         this.flashes.splice(i, 1);
