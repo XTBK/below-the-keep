@@ -8,7 +8,7 @@ The full design lives in [GAME_DESIGN.md](GAME_DESIGN.md).
 > For three hundred years the Keep of Hollowmere stood over its valley. Then a new king dug too deep, and found a
 > crown that whispers. Now the Keep is sinking into the dark it woke - and the only way out is down.
 
-6 heroes · 28 weapons · 125 relics · 66 enemies · 50 bosses · 3 secret realms · the Deep · a story told in pixel cutscenes · a Daily Descent leaderboard.
+6 heroes · 28 weapons · 125 relics · 70 enemies · 50 bosses · 3 secret realms · the Deep · a story told in pixel cutscenes · a Daily Descent leaderboard.
 
 ## Run it
 
