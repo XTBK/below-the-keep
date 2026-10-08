@@ -314,6 +314,33 @@ export class Effects {
     for (let i = 0; i < 4; i++) this.lit.emit(PRESETS.splinter, x, y, h, fxRng.float(-60, 60), fxRng.float(-40, 40), fxRng.float(40, 110));
   }
 
+  /**
+   * How much room is left for optional sparkle: 1 when the screen is calm, down to 0.12 when the air
+   * is thick with it. Your own hits, trails and blasts are thinned by it, so a big build never buries
+   * the enemy shots and telegraphs you need to read (those never go through it).
+   */
+  get clarity() {
+    const n = this.glow.activeCount + this.lit.activeCount * 0.5;
+    return n < 200 ? 1 : Math.max(0.12, 1 - (n - 200) / 360);
+  }
+
+  /** A burst a fraction of the time (for optional effects): true with probability clarity. */
+  spare() {
+    return fxRng.chance(this.clarity);
+  }
+
+  /** Your shot explodes: a small, quick pop of embers (much lighter than a powder keg). */
+  shotBurst(x, y) {
+    const k = this.clarity;
+    const n = Math.max(2, Math.round(9 * k));
+    for (let i = 0; i < n; i++) {
+      const a = fxRng.float(0, Math.PI * 2);
+      const sp = fxRng.float(30, 90);
+      this.glow.emit(PRESETS.ember, x, y, 2, Math.cos(a) * sp, Math.sin(a) * sp * 0.7, fxRng.float(15, 50));
+    }
+    if (fxRng.chance(k)) this.glow.emit(PRESETS.spark, x, y, 4, fxRng.float(-100, 100), fxRng.float(-70, 70), fxRng.float(10, 50));
+  }
+
   /** Generic burst of `preset` particles flying out from (x, y, h). */
   burst(preset, x, y, h, count, speed, up = 80) {
     for (let i = 0; i < count; i++) {
@@ -326,10 +353,12 @@ export class Effects {
   /** A stone hits a creature. `kind`: 'blood' | 'goo' | 'ash' | 'iron' */
   enemyHit(x, y, h, dirX, dirY, kind) {
     const preset = kind === 'goo' ? PRESETS.goo : kind === 'ash' ? PRESETS.ash : kind === 'iron' ? PRESETS.stoneChip : PRESETS.blood;
-    for (let i = 0; i < 5; i++) {
+    const k = this.clarity;
+    const n = Math.max(1, Math.round(5 * k));
+    for (let i = 0; i < n; i++) {
       this.lit.emit(preset, x, y, h, dirX * fxRng.float(20, 80) + fxRng.float(-30, 30), dirY * fxRng.float(20, 80) + fxRng.float(-30, 30), fxRng.float(20, 80));
     }
-    if (kind === 'iron' || fxRng.chance(0.3)) this.glow.emit(PRESETS.spark, x, y, h, fxRng.float(-80, 80), fxRng.float(-80, 80), fxRng.float(0, 50));
+    if ((kind === 'iron' || fxRng.chance(0.3)) && fxRng.chance(k)) this.glow.emit(PRESETS.spark, x, y, h, fxRng.float(-80, 80), fxRng.float(-80, 80), fxRng.float(0, 50));
   }
 
   /** Puff of dust where an enemy appears. */

@@ -28,6 +28,11 @@ export class DamageNumbers {
         }
       }
     }
+    if (!crit) {
+      let live = 0;
+      for (const m of this.list) if (m.t > 0) live++;
+      if (live >= 5) return;
+    }
     const n = this.list[this.next];
     this.next = (this.next + 1) % this.list.length;
     n.key = key;

@@ -803,3 +803,12 @@ setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.
   armoury relic), embers x4 of a champion's, a banner, and the record is cleared. `stats.echoesLaid` counts them.
 - Rare by design: on the floor where you fell, the Echo appears with `ECHO_DEF.chance` (0.2, rolled from the run seed),
   and a record older than `lingerRuns` (5) runs fades. `game.echoChance` overrides the chance for tests.
+
+### Clarity with a big build
+
+- `Effects.clarity` (1 when calm, down to 0.12 when glow+lit particles pile up) thins your own cosmetic effects: hit
+  chips/sparks (`enemyHit`), shot trails (also thinned by shots in the air), and exploding shots, which now use a small
+  `shotBurst` instead of the 24-spark `fireBurst`. Enemy shots and telegraphs never go through it.
+- Your shots dim from 10 in the air (to 42%) and shrink a little past 16; lightning arcs fade when more than 3 are live;
+  only crits add a new damage number once 5 are showing. Stress test (11 spray relics, late fire rate): peak glow
+  particles 1,010 to 300-400.

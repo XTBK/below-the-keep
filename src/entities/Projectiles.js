@@ -21,6 +21,7 @@ import { pointInBox } from '../world/Collision.js';
 // Only the look and the impact effects differ; every modifier works the same either way.
 
 const _m = new THREE.Matrix4();
+const _s = new THREE.Vector3();
 const _c = new THREE.Color();
 const TIER_RADIUS = [PROJECTILE.hitRadius, PROJECTILE.hitRadius + MODS.size.hitRadius, PROJECTILE.hitRadius + MODS.size.hitRadius * 2];
 const MAX_HITS = 8;
@@ -448,8 +449,9 @@ export class Projectiles {
       if (prop.broken || !prop.hit) continue;
       if ((prop.x - x) ** 2 + (prop.ground - y) ** 2 < radius * radius) prop.hit(dmg);
     }
-    this.game.effects.fireBurst(x, y);
-    this.game.effects.burst(this.game.effects.presets.woodDust, x, y, 4, 6, 60, 30);
+    const fx = this.game.effects;
+    fx.shotBurst(x, y);
+    if (fx.spare()) fx.burst(fx.presets.woodDust, x, y, 4, 3, 60, 30);
     this.game.audio.play('pop');
   }
 
@@ -511,6 +513,9 @@ export class Projectiles {
     if (p.trailAcc < 1) return;
     p.trailAcc = 0;
     const fx = this.game.effects;
+    // with a crowd of shots up, most of them leave no trail at all
+    const crowd = this.pool.count > 10 ? 10 / this.pool.count : 1;
+    if (!fxRng.chance(fx.clarity * crowd)) return;
     if (this.wand && fxRng.chance(0.1)) fx.glow.emit(fx.presets.holy, p.x, p.y, p.h, fxRng.float(-8, 8), fxRng.float(-8, 8), fxRng.float(-4, 8)); // a trail of motes
     if (p.burn > 0 && fxRng.chance(0.35)) fx.glow.emit(fx.presets.ember, p.x, p.y, p.h, fxRng.float(-10, 10), fxRng.float(-10, 10), fxRng.float(5, 20));
     if (p.chain > 0 && fxRng.chance(0.2)) fx.glow.emit(fx.presets.spark, p.x, p.y, p.h, fxRng.float(-40, 40), fxRng.float(-40, 40), fxRng.float(-10, 30));
@@ -530,7 +535,8 @@ export class Projectiles {
   sync() {
     const pool = this.pool;
     const counts = [0, 0, 0];
-    const dim = pool.count > 14 ? Math.max(0.55, 1 - (pool.count - 14) * 0.02) : 1;
+    const dim = pool.count > 10 ? Math.max(0.42, 1 - (pool.count - 10) * 0.025) : 1;
+    const small = pool.count > 16 ? Math.max(0.75, 1 - (pool.count - 16) * 0.012) : 1;
     for (let i = 0; i < pool.count; i++) {
       const p = pool.active[i];
       const mesh = this.meshes[p.tier];
@@ -540,6 +546,7 @@ export class Projectiles {
         _m.makeRotationZ(Math.atan2(p.vy, p.vx));
         _m.setPosition(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
       } else _m.makeTranslation(Math.round(p.x), Math.round(p.y + p.h), depthFor(p.y));
+      if (small < 1) _m.scale(_s.set(small, small, 1));
       mesh.setMatrixAt(k, _m);
       // your own shots glow less when the air is thick with them, so enemy shots stay easy to see
       const k2 = (this.wand ? 1.05 : 0.95) * dim;
@@ -560,6 +567,9 @@ export class Projectiles {
 
   /** Lightning arcs between chained enemies: jagged glowing lines. */
   drawOverlay(o) {
+    let live = 0;
+    for (const a of this.arcs) if (a.ttl > 0) live++;
+    const arcFade = live > 3 ? Math.max(0.35, 3 / live) : 1;
     for (const a of this.arcs) {
       if (a.ttl <= 0) continue;
       const steps = 6;
@@ -570,7 +580,7 @@ export class Projectiles {
         const jitter = i === steps ? 0 : Math.sin(a.seed + i * 12.9) * 6;
         const nx = a.x0 + (a.x1 - a.x0) * t - ((a.y1 - a.y0) / 60) * jitter;
         const ny = a.y0 + (a.y1 - a.y0) * t + ((a.x1 - a.x0) / 60) * jitter;
-        o.line(px, py, nx, ny, ARC_COLOR, Math.min(1, a.ttl * 8), 3);
+        o.line(px, py, nx, ny, ARC_COLOR, Math.min(1, a.ttl * 8) * arcFade, 3);
         px = nx;
         py = ny;
       }
