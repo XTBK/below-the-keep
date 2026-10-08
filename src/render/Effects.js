@@ -16,7 +16,7 @@ const ATMOSPHERES = {
   embers: { keep: 30, preset: 'ash', rate: 6, glowPreset: 'risingEmber' },
   // the Deep
   sap: { keep: 30, preset: 'dust', rate: 3, glowPreset: 'sapMote' }, // amber motes drifting up from the roots
-  snow: { keep: 60, preset: 'snowflake', rate: 7 }, // frost falling in the dark
+  snow: { keep: 70, preset: 'snowflake' }, // frost falling in the dark
   drowned: { keep: 60, preset: 'fog', rate: 2, glowPreset: 'tideMote' }, // still water-mist and pale glints
   crystal: { keep: 30, preset: 'dust', rate: 3, glowPreset: 'crystalGlint' }, // violet glints in the air
   heart: { keep: 40, preset: 'dust', rate: 3, glowPreset: 'bloodMote' }, // slow crimson motes, like a pulse

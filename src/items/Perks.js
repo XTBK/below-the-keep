@@ -1,3 +1,4 @@
+import { RELICS } from '../data/items.js';
 import { fxRng } from '../core/Rng.js';
 import { CURIO_FX } from '../data/curios.js';
 
@@ -22,12 +23,17 @@ export const PERKS = {
   berserk: 1.6, // damage multiplier at one heart or less
   bigBombs: 1.35,
   keySaverChance: 1 / 3,
+  roomHealChance: 0.25, // the Physician's Kit: per room cleared
+  killHasteTime: 1.2, // the Hunting Horn: seconds of haste per kill
 };
 
 export function onEnemyKilled(game, e) {
   const p = game.player;
   const k = p.perks;
-  if (!k || e.isBoss) return;
+  if (!k) return;
+  // the Hunting Horn: a kill sends you running on
+  if (k.killHaste) p.buffs.haste = Math.max(p.buffs.haste, PERKS.killHasteTime * k.killHaste);
+  if (e.isBoss) return;
   if (k.leech && fxRng.chance(PERKS.leechChance * k.leech) && p.halfHearts < p.maxHalfHearts) {
     p.heal(1);
     game.effects.burst(game.effects.presets.blood, p.x, p.y, 16, 6, 40, 60);
@@ -68,6 +74,11 @@ export function onPlayerHurt(game) {
 
 export function onRoomCleared(game) {
   const p = game.player;
+  // the Physician's Kit: a room cleared, a wound dressed (now and then)
+  if (p.perks.roomHeal && p.halfHearts < p.maxHalfHearts && fxRng.chance(PERKS.roomHealChance * p.perks.roomHeal)) {
+    p.heal(1);
+    game.audio.play('heart', 0.5);
+  }
   if (p.perks.battery && fxRng.chance(PERKS.batteryChance)) p.chargeActive(1);
 }
 
@@ -91,7 +102,8 @@ export function revealFloor(game, secrets) {
 export function trySecondWind(game) {
   const p = game.player;
   if (!p.perks.secondWind) return false;
-  const i = p.relics.indexOf('phoenix_feather');
+  // it burns away (the Phoenix Feather, the Last Candle - whichever gave it)
+  const i = p.relics.findIndex((id) => RELICS[id] && RELICS[id].perks && RELICS[id].perks.secondWind);
   if (i >= 0) p.relics.splice(i, 1); // it burns away
   p.dead = false;
   p.halfHearts = Math.min(p.maxHalfHearts, 4);

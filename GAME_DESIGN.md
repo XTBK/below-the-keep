@@ -761,3 +761,20 @@ setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.
 - **The end**: the Hollow's death -> `ending = 'deep'`, the `endDeep` scene, its own victory screen,
   +50 embers (`EMBERS.deepVictory`), `stats.deepVictories`.
 - Measured (`diffprobe_deep.mjs`): Deep bosses cost a strong build ~6-10 hearts, rising to the Hollow.
+
+### Expansion 10b — walls of their own, 125 relics, shaped rooms, enemies fought
+
+- **Frozen Deep / Amethyst Caverns tilesets** (`FROZEN`, `AMETHYST` in `tilesets.js`) now have their own `floor`,
+  `face`, `decorA`, `decorB`: ice blocks with icicles, a figure frozen in the wall, frost crystals, glossy ice floors
+  with snow drifts; rough rock with glowing crystal veins, geodes, crystal clusters, a lumpy cave floor with shards.
+- **25 more relics** (`data/relics5.js`, icons `itemsArt5.js`): 6 situational, 10 solid, 6 strong, 3 run-carrying (the
+  same spread as before). Two new perks in `items/Perks.js`: `roomHeal` (Physician's Kit: 25% per cleared room to heal
+  half a heart) and `killHaste` (Hunting Horn: 1.2 s of haste per kill). `trySecondWind` now burns whichever relic
+  gave it (the Phoenix Feather or the Last Candle) - without that the Candle would revive forever.
+- **Enemies fought** on the title: `Save.data.unlocks.enemiesFought` (each creature type the first time one is killed,
+  not on the Daily), shown as `ENEMIES FOUGHT n/70`.
+- **Rooms shaped by their walls**: tile `o` = solid stone (left out of the room's floor mask, so the wall autotiler
+  draws real walls round it and `_buildWallSolids` makes it block). Nine layouts in `SHAPED_LAYOUTS`: the Round
+  Chamber, the Octagon, the Cross, the Diamond, the Pillared Ring, Twin Pillars, the Wedge, the Spire, the Hourglass
+  (the last three only fit rooms with doors top and bottom; `connects()` sees to that). Candles light their corners.
+- Fixed: the Frozen Deep's snow atmosphere asked for a missing glow preset every frame.

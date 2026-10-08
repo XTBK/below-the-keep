@@ -1,3 +1,4 @@
+import { ENEMIES } from '../data/enemies.js';
 import { Renderer } from '../render/Renderer.js';
 import { Lighting } from '../render/Lighting.js';
 import { makeParticleSystems } from '../render/Particles.js';
@@ -491,6 +492,11 @@ export class Game {
   /** Hooks for relic perks. */
   onEnemyKilled(e) {
     onEnemyKilled(this, e);
+    // the title screen counts every kind of creature you have fought and beaten
+    if (!e.isBoss && ENEMIES[e.type] && !this.daily) {
+      const met = (Save.data.unlocks.enemiesFought = Save.data.unlocks.enemiesFought || []);
+      if (!met.includes(e.type)) met.push(e.type);
+    }
     if (this.player) this.player.onKill(e);
   }
 

@@ -57,7 +57,7 @@ export function getLayout(name) {
 }
 
 // tiles you cannot walk through (barrels can be smashed, so they don't count)
-const BLOCKING = new Set(['r', 'p', 'B', 'A', 'M', 'S', 'G', 'Y', 'H', 'L', 'Z', 'W', 'X', 'T', 'D', 'N']);
+const BLOCKING = new Set(['o', 'r', 'p', 'B', 'A', 'M', 'S', 'G', 'Y', 'H', 'L', 'Z', 'W', 'X', 'T', 'D', 'N']);
 
 // door approach tiles inside a 13x7 layout, per side
 export const DOOR_TILES = {

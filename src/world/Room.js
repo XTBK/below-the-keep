@@ -157,6 +157,8 @@ export class Room {
     this.mask = new Uint8Array(gw * gh);
     this.tiles = new Array(gw * gh).fill('.');
     const setFloor = (c, r, ch = '.') => {
+      // 'o' is solid stone: not floor at all - the walls are drawn round it (and it blocks like a wall)
+      if (ch === 'o') return;
       this.mask[this.slot(c, r)] = 1;
       this.tiles[this.slot(c, r)] = ch;
     };

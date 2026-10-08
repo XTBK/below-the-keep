@@ -1,4 +1,5 @@
 import { RELICS_4 } from './relics4.js';
+import { RELICS_5 } from './relics5.js';
 // Relics, pickups, drop tables and shop prices.
 //
 // A RELIC can have:
@@ -664,6 +665,7 @@ export const RELICS = {
 
 // Order of the relic icon sheet (src/render/art/itemsArt.js draws them in this order).
 Object.assign(RELICS, RELICS_4); // the fourth chest: one hundred in all
+Object.assign(RELICS, RELICS_5); // the fifth chest: one hundred and twenty-five
 export const RELIC_IDS = Object.keys(RELICS);
 
 // How each projectile modifier behaves (per stack of the modifier).

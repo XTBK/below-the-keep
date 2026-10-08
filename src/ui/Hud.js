@@ -1,3 +1,4 @@
+import { ENEMIES } from '../data/enemies.js';
 import { VISUAL } from '../render/Sprite.js';
 import { drawText } from './PixelFont.js';
 import { Painter } from '../render/Painter.js';
@@ -671,7 +672,10 @@ export class Hud {
     }
 
     const st = Save.data.stats;
-    if (onTitle) drawText(ctx, `RUNS ${st.runsStarted}    VICTORIES ${st.victories}    BOSSES SLAIN ${st.bossesBeaten}    RELICS FOUND ${RELIC_IDS.filter((r) => Save.data.unlocks.itemsSeen.includes(r)).length}/${RELIC_IDS.length}`, W / 2, H - 24, FAINT, { align: 'center' });
+    if (onTitle) {
+      const fought = (Save.data.unlocks.enemiesFought || []).filter((t) => ENEMIES[t]).length;
+      drawText(ctx, `RUNS ${st.runsStarted}   VICTORIES ${st.victories}   BOSSES SLAIN ${st.bossesBeaten}   RELICS FOUND ${RELIC_IDS.filter((r) => Save.data.unlocks.itemsSeen.includes(r)).length}/${RELIC_IDS.length}   ENEMIES FOUGHT ${fought}/${Object.keys(ENEMIES).length}`, W / 2, H - 24, FAINT, { align: 'center' });
+    }
     // browsers keep quiet until the first key press or tap
     const audio = state.audio;
     if (!audio.ctx || audio.ctx.state !== 'running') {

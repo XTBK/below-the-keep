@@ -3,10 +3,49 @@
 // Same 13 x 7 grids as the chapter layouts. Two tiles matter most here:
 //   p  pit: a chasm. Rooms are carved into crosses, rings, bridges and ledges with them.
 //   w  shallow water: walkable, but it drags at your feet (and at anything else that walks).
+//   o  solid stone: the room's walls carried inward, so the room itself is round, a diamond, a triangle...
+//      (a shape is only used where its doorways are open, so a triangle turns up in rooms with
+//      doors top and bottom, never at the sides)
 // Shaped rooms use plain 'e' spawns, so each chapter fills them with its own creatures.
 
 export const SHAPED_LAYOUTS = {
   easy: [
+    {
+      name: 'The Round Chamber',
+      grid: [
+        'oooo.....oooo',
+        'ooc.......coo',
+        'o...e...e...o',
+        '.............',
+        'o...e...e...o',
+        'ooc.......coo',
+        'oooo.....oooo',
+      ],
+    },
+    {
+      name: 'The Octagon',
+      grid: [
+        'ooo.......ooo',
+        'ooc.......coo',
+        '.....e.e.....',
+        '.............',
+        '.....e.e.....',
+        'ooc.......coo',
+        'ooo.......ooo',
+      ],
+    },
+    {
+      name: 'The Cross',
+      grid: [
+        'oooo.....oooo',
+        'oooo..e..oooo',
+        'c...........c',
+        '.....e.e.....',
+        '.............',
+        'oooo..e..oooo',
+        'oooo.....oooo',
+      ],
+    },
     {
       name: 'Rope Bridges',
       grid: [
@@ -45,6 +84,42 @@ export const SHAPED_LAYOUTS = {
     },
   ],
   medium: [
+    {
+      name: 'The Diamond',
+      grid: [
+        'oooooo.oooooo',
+        'ooooc...coooo',
+        'oo...e.e...oo',
+        '.............',
+        'oo...e.e...oo',
+        'ooooc...coooo',
+        'oooooo.oooooo',
+      ],
+    },
+    {
+      name: 'The Pillared Ring',
+      grid: [
+        '.............',
+        'c.e.......e.c',
+        '....ooooo....',
+        '....ooooo....',
+        '....ooooo....',
+        '..e.......e..',
+        '.............',
+      ],
+    },
+    {
+      name: 'Twin Pillars',
+      grid: [
+        '.............',
+        '..oo.....oo..',
+        '..oo..e..oo..',
+        '.............',
+        '..oo..e..oo..',
+        '..oo.....oo..',
+        '.............',
+      ],
+    },
     {
       name: 'Round Crypt',
       grid: [
@@ -95,6 +170,42 @@ export const SHAPED_LAYOUTS = {
     },
   ],
   hard: [
+    {
+      name: 'The Wedge',
+      grid: [
+        '.............',
+        'o...e...e...o',
+        'oo.........oo',
+        'oooc..e..cooo',
+        'oooo.....oooo',
+        'ooooo...ooooo',
+        'oooooo.oooooo',
+      ],
+    },
+    {
+      name: 'The Spire',
+      grid: [
+        'oooooo.oooooo',
+        'ooooo...ooooo',
+        'oooo.....oooo',
+        'oooc..e..cooo',
+        'oo.........oo',
+        'o...e...e...o',
+        '.............',
+      ],
+    },
+    {
+      name: 'The Hourglass',
+      grid: [
+        '.............',
+        'oo...e.e...oo',
+        'ooooc...coooo',
+        'ooooo...ooooo',
+        'oooo.....oooo',
+        'oo...e.e...oo',
+        '.............',
+      ],
+    },
     {
       name: 'Narrow Crossing',
       grid: [

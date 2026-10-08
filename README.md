@@ -8,7 +8,7 @@ The full design lives in [GAME_DESIGN.md](GAME_DESIGN.md).
 > For three hundred years the Keep of Hollowmere stood over its valley. Then a new king dug too deep, and found a
 > crown that whispers. Now the Keep is sinking into the dark it woke - and the only way out is down.
 
-6 heroes · 28 weapons · 100 relics · 66 enemies · 50 bosses · 3 secret realms · the Deep · a story told in pixel cutscenes · a Daily Descent leaderboard.
+6 heroes · 28 weapons · 125 relics · 66 enemies · 50 bosses · 3 secret realms · the Deep · a story told in pixel cutscenes · a Daily Descent leaderboard.
 
 ## Run it
 
@@ -156,7 +156,9 @@ Old Stair is always there; the other two are drawn from:
 
 ## Rooms and arenas
 
-Rooms aren't all open boxes any more. Shaped rooms are carved with **chasms** (crosses, rings, ledges, islands,
+Rooms aren't all open boxes any more. Some rooms are **shaped by their own walls**: round chambers, diamonds,
+octagons, crosses, triangles (the Wedge and the Spire), an hourglass, a ring round a solid block, twin pillars.
+Others are carved with **chasms** (crosses, rings, ledges, islands,
 rope bridges with planks) and **shallow water** that slows anyone walking through it (dodge-rolling skims over it).
 Each boss fights in an **arena that suits it**: pillared halls, round pits, flooded chambers, chasm rims, rings of
 fire and candlelit altars (`src/data/rooms/shapedLayouts.js`).

@@ -892,9 +892,166 @@ function rng4(x, y) {
 // the secret realms reuse a chapter's tiles in their own palette
 // the Deep: each borrows a chapter's way of building (tiles, walls, pits) in its own colours
 const ROOTDEEP = { ...HOLLOW, key: 'rootdeep', seed: 800, pal: CHAPTERS.rootdeep };
-const FROZEN = { ...CATA, key: 'frozen', seed: 900, pal: CHAPTERS.frozen, accent: CHAPTERS.frozen.moss };
+// the Frozen Deep: walls of great translucent ice blocks with icicles at their tops; floors of glossy ice
+const FROZEN = {
+  ...CATA,
+  key: 'frozen',
+  seed: 900,
+  pal: CHAPTERS.frozen,
+  accent: CHAPTERS.frozen.moss,
+  floorWeights: [6, 6, 6, 6, 1.4, 1.0, 1.4, 1.2, 1.0, 0.8],
+  floor(p, rng, v) {
+    const P = this.pal;
+    const ICE = P.bone;
+    slabFloor(p, rng, P, v, [2, 3]);
+    // a sheen of ice over the stone: pale glossy streaks
+    for (let i = 0; i < 4; i++) {
+      const x = rng.int(2, 24);
+      const y = rng.int(3, 28);
+      p.line(x, y, x + rng.int(3, 6), y - rng.int(1, 3), ICE[2], 2.4);
+    }
+    if (v === 6) {
+      // a drift of snow against one corner
+      p.ellipse(rng.int(8, 24), rng.int(18, 26), rng.float(6, 9), rng.float(3, 4), [P.moss[2], P.moss[3], '#ffffff'], 2.6);
+    }
+    if (v === 7) for (let i = 0; i < 10; i++) p.px(rng.int(2, 29), rng.int(2, 29), '#ffffff', 2.5); // hoarfrost
+    if (v === 9) {
+      // a frozen puddle, with something dark under the ice
+      p.ellipse(16, 16, 10, 7, [ICE[0], ICE[1], ICE[2]], 1.2);
+      p.ellipse(15, 17, 3, 2, ['#0a1420', '#16263a'], 1.1);
+      p.line(10, 13, 16, 11, '#ffffff', 1.4);
+    }
+  },
+  face(p, rng, x, y, w, h) {
+    // great blocks of ice, blue at the heart and white at the edges, icicles hanging from the cap
+    const P = this.pal;
+    const ICE = P.bone;
+    p.rect(x, y, w, h, P.stone[1], 0);
+    let yy = y + 1;
+    while (yy < y + h - 3) {
+      const bh = rng.int(9, 14);
+      let xx = x - rng.int(0, 6);
+      while (xx < x + w) {
+        const bw = rng.int(10, 16);
+        const x0 = Math.max(x, xx);
+        const x1 = Math.min(x + w, xx + bw - 1);
+        if (x1 - x0 > 2) {
+          p.bevelRect(x0, yy, x1 - x0, Math.min(bh - 1, y + h - yy - 1), [P.stone[2], P.stone[3], ICE[0], ICE[1]], 2.4, 1);
+          // the clear heart of the block, and a white glint
+          p.rect(x0 + 2, yy + 2, Math.max(1, x1 - x0 - 5), Math.max(1, bh - 6), P.stone[3], 2.2);
+          p.line(x0 + 2, yy + 2, x0 + 5, yy + 2, ICE[3], 2.8);
+        }
+        xx += bw;
+      }
+      yy += bh;
+    }
+    // icicles from the cap
+    for (let ix = x + 1; ix < x + w - 1; ix += rng.int(2, 4)) {
+      const len = rng.int(2, 8);
+      for (let k = 0; k < len; k++) p.px(ix, y + k, k < len - 1 ? ICE[2] : ICE[3], 3.2 - k * 0.1);
+    }
+    for (let i = 0; i < 24; i++) p.tint(x + rng.int(0, w - 1), y + h - rng.int(1, 10), '#ffffff', 0.25); // frost creeping up from below
+  },
+  decorA(p) {
+    // someone frozen into the wall, a dark shape behind the ice
+    const P = this.pal;
+    p.rect(8, 22, 16, 22, P.bone[1], 0.6);
+    p.ellipse(16, 27, 3, 3, ['#0a1420', '#16263a'], 0.8);
+    p.rect(13, 30, 7, 10, '#16263a', 0.8);
+    p.line(12, 31, 9, 38, '#16263a', 0.8);
+    p.line(20, 31, 23, 36, '#16263a', 0.8);
+    p.line(9, 23, 14, 23, '#ffffff', 1.4);
+    p.tint(16, 30, '#c8e0f2', 0.4);
+  },
+  decorB(p) {
+    // a cluster of frost crystals growing from the foot of the wall
+    const P = this.pal;
+    for (const [x, h, w] of [[9, 12, 2], [13, 18, 3], [17, 14, 2], [21, 9, 2]]) {
+      for (let k = 0; k < h; k++) p.hline(x - Math.round(w * (1 - k / h)), x + Math.round(w * (1 - k / h)), 42 - k, P.bone[k > h * 0.6 ? 3 : 2], 1 + k * 0.05);
+      p.lit(x, 42 - h, '#ffffff', 2, 0.8);
+    }
+  },
+};
 const SUNKEN = { ...HALLS, key: 'sunken', seed: 1000, pal: CHAPTERS.sunken };
-const AMETHYST = { ...CATA, key: 'amethyst', seed: 1100, pal: CHAPTERS.amethyst, accent: CHAPTERS.amethyst.moss };
+// the Amethyst Caverns: rough cave rock shot through with glowing crystal veins; geodes and crystal clusters
+const AMETHYST = {
+  ...CATA,
+  key: 'amethyst',
+  seed: 1100,
+  pal: CHAPTERS.amethyst,
+  accent: CHAPTERS.amethyst.moss,
+  floorWeights: [6, 6, 6, 6, 1.4, 1.0, 1.6, 1.4, 1.0, 0.8],
+  floor(p, rng, v) {
+    const P = this.pal;
+    const C = P.bone;
+    // rough cave floor: lumpy stone, not laid slabs
+    p.rect(0, 0, T, T, P.stone[1], 0);
+    for (let i = 0; i < 9; i++) p.ellipse(rng.int(2, 29), rng.int(2, 29), rng.float(3, 7), rng.float(2.5, 5), P.stone.slice(rng.int(1, 2), 6), 1.4);
+    for (let i = 0; i < 16; i++) p.px(rng.int(0, 31), rng.int(0, 31), P.stone[0], 0.2);
+    if (v === 4 || v === 5) crack(p, rng, P, rng.int(6, 12), rng.int(5, 10), 16, C);
+    if (v === 6 || v === 9) {
+      // shards of crystal scattered on the floor
+      for (let i = 0; i < (v === 9 ? 5 : 3); i++) {
+        const x = rng.int(4, 26);
+        const y = rng.int(6, 26);
+        p.line(x, y, x + rng.int(-2, 2), y - rng.int(3, 6), C[2], 2.2);
+        p.lit(x, y - 2, C[3], 2.4, 0.6);
+      }
+    }
+    if (v === 7) for (let i = 0; i < 6; i++) p.lit(rng.int(3, 28), rng.int(3, 28), C[rng.int(2, 3)], 1.8, 0.5); // a scatter of tiny glints
+  },
+  face(p, rng, x, y, w, h) {
+    // rough rock, lumped and shadowed, with seams of crystal glowing through it
+    const P = this.pal;
+    const C = P.bone;
+    p.rect(x, y, w, h, P.stone[1], 0);
+    for (let i = 0; i < Math.floor((w * h) / 55); i++) p.ellipse(x + rng.int(2, w - 3), y + rng.int(2, h - 3), rng.float(3, 6), rng.float(2.5, 4.5), P.stone.slice(rng.int(1, 3), 6), 1.8);
+    // a crystal vein or two, running at a slant
+    for (let v = 0; v < rng.int(1, 2); v++) {
+      let vx = x + rng.int(0, w - 1);
+      let vy = y + rng.int(2, 8);
+      for (let k = 0; k < h - 8; k++) {
+        p.lit(vx, vy, C[k % 5 === 0 ? 3 : 2], 2.6, 0.7);
+        vy++;
+        if (rng.chance(0.5)) vx += rng.pick([-1, 1]);
+        if (vx < x || vx >= x + w || vy >= y + h) break;
+      }
+    }
+    // now and then a crystal juts out of the rock
+    if (rng.chance(0.6)) {
+      const cx = x + rng.int(4, w - 5);
+      const cy = y + rng.int(10, h - 6);
+      for (let k = 0; k < 6; k++) p.hline(cx - Math.round(2 * (1 - k / 6)), cx + Math.round(2 * (1 - k / 6)), cy - k, C[k > 3 ? 3 : 2], 3 + k * 0.1);
+    }
+  },
+  decorA(p) {
+    // a geode: a dark hollow lined with glowing crystal points
+    const P = this.pal;
+    const C = P.bone;
+    p.ellipse(16, 32, 10, 8, ['#0a0410', '#14081e'], -2, false);
+    for (let a = 0; a < 12; a++) {
+      const t = (a / 12) * Math.PI * 2;
+      const x0 = 16 + Math.cos(t) * 9;
+      const y0 = 32 + Math.sin(t) * 7;
+      p.line(x0, y0, 16 + Math.cos(t) * 5, 32 + Math.sin(t) * 4, C[a % 2 ? 2 : 3], 0.4);
+    }
+    p.glow(16, 32, C[2], 0.8);
+  },
+  decorB(p) {
+    // a great crystal cluster growing out of the foot of the wall
+    const P = this.pal;
+    const C = P.bone;
+    for (const [x, h, w, lean] of [[8, 10, 2, -1], [13, 20, 3, 0], [19, 15, 3, 1], [24, 8, 2, 1]]) {
+      for (let k = 0; k < h; k++) {
+        const half = Math.round(w * (1 - k / h));
+        const xx = x + Math.round((lean * k) / 4);
+        p.hline(xx - half, xx + half, 42 - k, C[k > h * 0.7 ? 3 : k > h * 0.3 ? 2 : 1], 1 + k * 0.06);
+      }
+      p.lit(x + Math.round((lean * h) / 4), 42 - h, C[3], 2, 1);
+    }
+    p.glow(16, 34, C[2], 0.7);
+  },
+};
 const HEART = { ...HOLLOW, key: 'heart', seed: 1200, pal: CHAPTERS.heart };
 const GATEHOUSE = { ...CELLS, key: 'gatehouse', seed: 700, pal: CHAPTERS.gatehouse, accent: CHAPTERS.gatehouse.moss };
 const CISTERN = { ...CELLS, key: 'cistern', seed: 400, pal: CHAPTERS.cistern, accent: CHAPTERS.cistern.moss };

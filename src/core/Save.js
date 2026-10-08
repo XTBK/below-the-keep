@@ -23,6 +23,7 @@ function defaults() {
       itemsSeen: [],
       pages: [], // journal pages read (indices into PAGES)
       bossesSeen: [],
+      enemiesFought: [], // every kind of creature beaten (counted on the title screen)
     },
     settings: {},
     oaths: [], // the oaths sworn for the next run

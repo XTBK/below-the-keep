@@ -28,7 +28,7 @@ const CURIO_LIST = [
 ];
 
 export const COLLECTION_TABS = [
-  { name: 'RELICS', cols: 20, count: () => RELIC_IDS.length },
+  { name: 'RELICS', cols: 25, count: () => RELIC_IDS.length },
   { name: 'CURIOS', cols: 10, count: () => CURIO_LIST.length },
   { name: 'JOURNAL', cols: 1, count: () => PAGES.length },
   { name: 'CHARACTERS AND DEEDS', cols: 4, count: () => CHARACTER_IDS.length },
