@@ -56,6 +56,8 @@ export const BOSS_TIERS = {
   // 4 Legendary
   champion: 4, ashwing: 4, burnedqueen: 4,
   // the third roster
+  // the secret bosses: all Deadly
+  leviathan: 3, mirrorqueen: 3, firstking: 3, organist: 3, facelesssaint: 3,
   turnkey: 1, bellringer: 1, widow: 2, hangedman: 2, fenhag: 2, wickerman: 3, inquisitor: 3, dreadknight: 4, abyssaleye: 4,
 };
 

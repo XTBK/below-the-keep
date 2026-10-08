@@ -8,7 +8,7 @@ The full design lives in [GAME_DESIGN.md](GAME_DESIGN.md).
 > For three hundred years the Keep of Hollowmere stood over its valley. Then a new king dug too deep, and found a
 > crown that whispers. Now the Keep is sinking into the dark it woke - and the only way out is down.
 
-6 heroes · 100 relics · 50 enemies · 40 bosses · a story told in little pixel cutscenes · a Daily Descent leaderboard.
+6 heroes · 19 weapons · 100 relics · 56 enemies · 45 bosses · 3 secret realms · a story told in pixel cutscenes · a Daily Descent leaderboard.
 
 ## Run it
 
@@ -56,6 +56,37 @@ Each has their own weapon and their own dodge:
 
 The three were balanced with a bot that plays each hero through the same fights on every chapter: they
 take about the same damage for their health (within ~10%); the Iron Knight kills fastest but takes the most.
+
+## Weapons
+
+Wren, Rowan and Sir Aldwin can find new weapons on pedestals (in treasure rooms now and then, from Deadly and
+Legendary bosses, and always at the bottom of a secret realm). Taking one puts yours down in its place, so you can
+always change your mind. Every weapon is a trade, not a strict upgrade (`src/data/weapons.js`):
+
+| Wren's wands | Rowan's bows and crossbows | Sir Aldwin's blades |
+|---|---|---|
+| **Ember Wand** - bolts set foes burning | **Yew Longbow** - lighter arrows, loosed far faster | **Bearded Greataxe** - slow, huge, a wide sweep |
+| **Tide Wand** - heavy globes that bowl foes over | **Siege Arbalest** - enormous bolts, a long winch | **Longsword** - the longest reach |
+| **Rime Wand** - freezes, and pierces | **Repeating Crossbow** - three bolts at once | **Twin Daggers** - fast, close, relentless |
+| **Storm Wand** - lightning that jumps foe to foe | **Huntsman's Bow** - quick, and finds weak spots (more crits) | **War Hammer** - stuns, and the floor shockwaves |
+| **Adder Wand** - weaving, poisonous bolts | **Dragonbreath Crossbow** - burning, bursting bolts | **Morning Star Flail** - hits all around him |
+| | | **Emberbrand** - a sword that sets foes alight |
+
+Each shows in the hero's hands (a wand tip glows in its element's colour) and in the HUD beside the active relic.
+
+## Secret realms
+
+Somewhere in a floor's secret rooms there may be a **Sealed Stair** (ringed with violet runes). Below it lies a
+secret realm - a short floor of creatures found nowhere else, and one of **five secret bosses** at the bottom:
+
+- **The Drowned Cistern** (under floors 2-3): Drowned Pilgrims spit slowing water; Cistern Eels swim unseen and burst up.
+- **The Starless Chapel** (floors 4-5): Hollow Nuns blink close and cast seeking curses; Censer Acolytes trail poison smoke.
+- **The First King's Forge** (floors 6-7): Bellows Imps breathe cinders; Anvil Knights charge and hammer out rings of iron.
+- Secret bosses (one at random each time, never twice a run): the Cistern Leviathan, the Mirror Queen, the First King's
+  Shade, the Bone Organist and the Faceless Saint.
+
+Beat the boss for a **weapon and a rare relic** (both yours), then its trapdoor drops you onto the next floor. Each
+realm has its own colours, music and story scene.
 
 ## The story
 

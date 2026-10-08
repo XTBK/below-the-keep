@@ -4,7 +4,11 @@
 
 import { Painter } from '../Painter.js';
 import { SHARED as S } from '../../data/palettes.js';
-import { wizardFrame } from './wizardArt.js';
+import { wizardFrame, setWandTip } from './wizardArt.js';
+import { WEAPON_LOOKS } from './weaponLooks.js';
+
+// weapon looks that mean he carries something other than a sling
+const NO_SLING = new Set(['crossbow', 'sword', ...Object.keys(WEAPON_LOOKS)]);
 
 export const WREN_DIRS = ['down', 'up', 'right', 'left'];
 export const WREN_FRAMES = 8;
@@ -264,6 +268,7 @@ const BONE = ['#5a5040', '#8a7e64', '#b8ab8a', '#ddd2b4'];
 const PELT = ['#1e1e22', '#3a3a40', '#5e5e66', '#8a8a92', '#b0b0b8'];
 
 const ACCESSORIES = {
+  ...WEAPON_LOOKS,
   horns(p, dir, b) {
     // curled ram horns at the sides of the head
     const sides = dir === 'right' ? [-1] : [-1, 1];
@@ -506,7 +511,8 @@ export function wrenFrame(col, row, looks = [], recolor = null) {
   const pose = POSES[col];
   const dir = WREN_DIRS[row];
   const drawDir = dir === 'left' ? 'right' : dir;
-  noSling = looks.includes('crossbow') || looks.includes('sword');
+  noSling = looks.some((l) => NO_SLING.has(l));
+  setWandTip(looks);
   // the 'wizard' outfit is a whole different body (robe, hat, beard, wand); other looks are drawn on top
   const p = looks.includes('wizard') ? wizardFrame(pose, drawDir) : drawDir === 'right' ? drawSide(pose) : drawFront(pose, drawDir === 'up');
   if (recolor) recolorPainter(p, recolor);

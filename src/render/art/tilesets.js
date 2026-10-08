@@ -889,7 +889,15 @@ function rng4(x, y) {
   return ((x * 7 + y * 13) % 5) < 2;
 }
 
+// the secret realms reuse a chapter's tiles in their own palette
+const CISTERN = { ...CELLS, key: 'cistern', seed: 400, pal: CHAPTERS.cistern, accent: CHAPTERS.cistern.moss };
+const CHAPEL = { ...CATA, key: 'chapel', seed: 500, pal: CHAPTERS.chapel, accent: CHAPTERS.chapel.moss };
+const FORGE = { ...HALLS, key: 'forge', seed: 600, pal: CHAPTERS.forge, accent: CHAPTERS.forge.ash };
+
 export const TILESETS = {
+  cistern: makeTileset(CISTERN),
+  chapel: makeTileset(CHAPEL),
+  forge: makeTileset(FORGE),
   cells: makeTileset(CELLS),
   catacombs: makeTileset(CATA),
   hollow: makeTileset(HOLLOW),

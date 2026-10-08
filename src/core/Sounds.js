@@ -16,6 +16,39 @@ function arpeggio(s, out, t, notes, step, gain, dur = 1.4, bright = 0.45) {
 }
 
 export const SOUNDS = {
+  // --- found weapons ---
+  castFire: [0.35, (s, o, t, p) => {
+    s.noise(o, t, { type: 'lowpass', f: [3200 * p, 500], q: 0.8, gain: 0.3, dur: 0.18 }); // a whoomph of flame
+    s.sweep(o, t, 'sawtooth', 600 * p, 180 * p, 0.14, 0.06, 1800);
+    s.drum(o, t, 140 * p, 60, 0.1, 0.25, 0.3);
+  }],
+  castWater: [0.45, (s, o, t, p) => {
+    s.sweep(o, t, 'sine', 300 * p, 900 * p, 0.08, 0.14); // a bloop
+    s.sweep(o, t + 0.06, 'sine', 700 * p, 260 * p, 0.12, 0.08);
+    s.noise(o, t + 0.04, { type: 'bandpass', f: [1200, 400], q: 2, gain: 0.12, dur: 0.12 });
+  }],
+  castFrost: [0.5, (s, o, t, p) => {
+    s.bell(o, t, 2637 * p, 0.4, 0.06); // ice chimes
+    s.bell(o, t + 0.03, 3520 * p, 0.3, 0.04);
+    s.noise(o, t, { type: 'highpass', f: [6000, 4000], gain: 0.1, dur: 0.12 });
+  }],
+  castStorm: [0.35, (s, o, t, p) => {
+    for (let i = 0; i < 6; i++) s.noise(o, t + i * 0.012, { type: 'highpass', f: [4000 + i * 600, 3000], gain: 0.16, dur: 0.012 }); // a crackle
+    s.sweep(o, t, 'square', 1800 * p, 200 * p, 0.1, 0.05, 3000);
+  }],
+  bow: [0.25, (s, o, t, p) => {
+    s.pluck(o, t, 140 * p, 0.3, 0.45, 0.9, 0.985); // the string thrums
+    s.noise(o, t + 0.01, { type: 'bandpass', f: [2600, 900], q: 1.6, gain: 0.2, dur: 0.12 }); // the arrow hisses away
+  }],
+  axe: [0.3, (s, o, t, p) => {
+    s.noise(o, t, { type: 'bandpass', f: [200 * p, 1400 * p], q: 1.4, gain: 0.8, attack: 0.07, dur: 0.18 }); // a heavy whoosh
+    s.drum(o, t + 0.06, 70 * p, 40, 0.15, 0.25, 0);
+  }],
+  hammer: [0.35, (s, o, t, p) => {
+    s.noise(o, t, { type: 'bandpass', f: [180 * p, 900 * p], q: 1.2, gain: 0.7, attack: 0.08, dur: 0.18 });
+    s.drum(o, t + 0.1, 90 * p, 34, 0.3, 0.6, 0.6); // the floor booms
+    s.metal(o, t + 0.1, 420 * p, 0.6, 0.16);
+  }],
   // --- menus ---
   menuMove: [0.2, (s, o, t, p) => {
     s.drum(o, t, 900 * p, 600, 0.03, 0.12, 0.3); // a dry wooden tick

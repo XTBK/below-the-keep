@@ -99,6 +99,43 @@ export const CHAPTERS = {
     ambient: { color: 0xa86050, level: 0.4 },
     grade: { saturation: 0.95, contrast: 1.06, shadowTint: [1.0, 0.86, 0.88], highlightTint: [1.12, 0.98, 0.82], lift: 0.02 },
   },
+
+  // ---- the secret realms (each borrows a chapter's shapes, in its own colours) ----
+  // the Drowned Cistern: sunken stone, green water, weed where the straw was
+  cistern: {
+    name: 'The Drowned Cistern',
+    stone: ['#0c1416', '#142024', '#1e2e32', '#2a3e42', '#3a5256', '#4e6a6c', '#688886'],
+    mortar: ['#060c0e', '#0c1416'],
+    moss: ['#10261e', '#1a3a2c', '#28543c', '#3a724e'],
+    straw: ['#14261e', '#1e3a2a', '#2a5236', '#3a6c44', '#56905a'],
+    water: ['#08202a', '#0e3442', '#1a5266', '#3a8aa2'],
+    ambient: { color: 0x4a8aa0, level: 0.42 },
+    grade: { saturation: 0.95, contrast: 1.05, shadowTint: [0.8, 0.98, 1.15], highlightTint: [0.98, 1.06, 1.02], lift: 0.02 },
+  },
+  // the Starless Chapel: violet dark, reliquaries of tarnished gold
+  chapel: {
+    name: 'The Starless Chapel',
+    stone: ['#0e0a14', '#18121e', '#22182a', '#2e2038', '#3c2a48', '#4e385c', '#664a74'],
+    mortar: ['#08060c', '#0e0a14'],
+    bone: ['#5a4a2a', '#8a7038', '#b8964a', '#e0c070'],
+    moss: ['#1a0e2a', '#2a1640', '#401e5a', '#5a2a7a'],
+    ambient: { color: 0x8a6ab0, level: 0.4 },
+    grade: { saturation: 0.9, contrast: 1.06, shadowTint: [0.95, 0.85, 1.15], highlightTint: [1.1, 1.0, 0.9], lift: 0.02 },
+  },
+  // the First King's Forge: soot-black iron, molten gold, banners of beaten copper
+  forge: {
+    name: "The First King's Forge",
+    stone: ['#0e0c0a', '#1a1612', '#26201a', '#342a22', '#46382c', '#5c4838', '#765c46'],
+    mortar: ['#060504', '#0c0a08'],
+    marbleA: ['#2a2018', '#382a20', '#48362a', '#5a4434', '#705642'],
+    marbleB: ['#1c1c1e', '#28282c', '#36363c', '#46464e', '#5a5a62'],
+    gold: ['#5a3a10', '#9a6a1a', '#d89a2a', '#ffd060'],
+    crimson: ['#3a1a08', '#6a3010', '#9a4a18', '#c86a28'],
+    lava: ['#8a2a08', '#e06a1a', '#ffaa3a', '#fff0b0'],
+    ash: ['#1a1816', '#2a2724', '#3c3834', '#55504a'],
+    ambient: { color: 0xc07850, level: 0.42 },
+    grade: { saturation: 1.0, contrast: 1.06, shadowTint: [1.0, 0.88, 0.8], highlightTint: [1.12, 1.0, 0.8], lift: 0.02 },
+  },
 };
 
 // Colour grades for the special floors (they borrow a chapter's tileset).

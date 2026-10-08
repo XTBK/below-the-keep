@@ -1,3 +1,4 @@
+import * as B3 from './bestiary3.js';
 import { BeamFX } from '../render/BeamFX.js';
 import * as THREE from 'three';
 import { PlagueRat } from './PlagueRat.js';
@@ -122,6 +123,19 @@ const CLASSES = {
   gargoylelord: patternBossClass('gargoylelord', { anchorY: 6, shadow: 3, blood: 'iron' }),
   ashwing: patternBossClass('ashwing', { anchorY: 4, shadow: 3, blood: 'ash' }),
   burnedqueen: patternBossClass('burnedqueen', { anchorY: 6, shadow: 2, blood: 'ash' }),
+  // the secret bestiary
+  drowned: B3.DrownedPilgrim,
+  eel: B3.CisternEel,
+  nun: B3.HollowNun,
+  acolyte: B3.CenserAcolyte,
+  bellows: B3.BellowsImp,
+  anvilknight: B3.AnvilKnight,
+  // the secret bosses
+  leviathan: patternBossClass('leviathan', { anchorY: 4, shadow: 3, blood: 'goo' }),
+  mirrorqueen: patternBossClass('mirrorqueen', { anchorY: 4, shadow: 2, blood: 'ash' }),
+  firstking: patternBossClass('firstking', { anchorY: 4, shadow: 2, blood: 'ash' }),
+  organist: patternBossClass('organist', { anchorY: 6, shadow: 3, blood: 'iron' }),
+  facelesssaint: patternBossClass('facelesssaint', { anchorY: 4, shadow: 2, blood: 'ash' }),
   // the third roster
   turnkey: patternBossClass('turnkey', { anchorY: 2, shadow: 3, blood: 'blood' }),
   bellringer: patternBossClass('bellringer', { anchorY: 2, shadow: 3, blood: 'blood' }),

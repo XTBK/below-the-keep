@@ -27,6 +27,7 @@ import { OMENS, OMEN_IDS, OMEN_CHANCE, OMEN_FX } from '../data/omens.js';
 import { Familiars } from '../items/Familiars.js';
 import { DamageNumbers } from '../ui/DamageNumbers.js';
 import { quality, BAD_LUCK_LIMIT } from '../data/quality.js';
+import { WEAPON_DEFS, WEAPON_IDS, WEAPON_CHANCE } from '../data/weapons.js';
 import { OATHS, heatOf, HEAT_RELIC_BIAS } from '../data/oaths.js';
 import { Menus } from '../ui/Menus.js';
 import { Cutscene } from '../ui/Cutscenes.js';
@@ -44,7 +45,7 @@ import { shufflePotions, useConsumable, randomCurio, nextPage, curioInfo } from 
 import { SEALS } from '../data/curios.js';
 import { CHARACTERS, CHARACTER_IDS } from '../data/characters.js';
 import { COLLECTION_TABS } from '../ui/Collection.js';
-import { CHAPTER_INFO, chapterForFloor, floorInChapter, floorSize, LAST_NORMAL_FLOOR, THRONE_FLOOR } from '../data/chapters.js';
+import { CHAPTER_INFO, chapterForFloor, floorInChapter, floorSize, LAST_NORMAL_FLOOR, THRONE_FLOOR, REALMS, realmForFloor } from '../data/chapters.js';
 
 // The Game owns every system and runs the main loop:
 //   input -> update the current STATE -> sync visuals -> render
@@ -180,6 +181,10 @@ export class Game {
     this.darkDeal = false; // took a deal at a Shrine of the Old God (then no Chapel will open)
     this.sealsGiven = new Set(); // Seal Fragments already handed out this run
     this.vaultVisited = false;
+    this.realm = null; // the secret realm we're in, if any (data/chapters.js REALMS)
+    this.realmsVisited = new Set();
+    this.secretBossesUsed = new Set();
+    this.realmEntrance = null; // { roomId, realm } on a floor with a Sealed Stair
     this.bossesUsed = new Set(); // bosses already met this run (no repeats)
     this.ending = 'king';
     this.slowTime = 0;
@@ -231,11 +236,11 @@ export class Game {
     for (const k in this.particles) this.particles[k].clear();
     // each floor gets its own generators, derived from the run seed
     // which chapter: its tiles, light, colours, air, creatures and bosses
-    this._setChapter(this.inVault ? 'vault' : chapterForFloor(this.floorNumber));
-    const tag = this.inVault ? 'vault' : this.floorNumber;
+    this._setChapter(this.realm || (this.inVault ? 'vault' : chapterForFloor(this.floorNumber)));
+    const tag = this.realm ? `realm_${this.realm}` : this.inVault ? 'vault' : this.floorNumber;
     const floorRng = this.rng.fork(`floor${tag}`);
     this.dropRng = this.rng.fork(`drops${tag}`);
-    setLayoutChapter(this.chapterKey, this._rollFeatures(this.rng.fork(`features${tag}`)));
+    setLayoutChapter(this.chapterInfo.layouts || this.chapterKey, this._rollFeatures(this.rng.fork(`features${tag}`)));
     this.omen = this._rollOmen(this.rng.fork(`omen${tag}`));
     if (this.omen === 'darkness') this.lighting.setAmbient({ color: this.chapterInfo.ambient.color, level: this.chapterInfo.ambient.level * OMEN_FX.darknessAmbient });
     const size = floorSize(this.chapterKey, this.floorNumber) + (this.omen === 'maze' ? OMEN_FX.mazeExtraSize : 0);
@@ -243,6 +248,8 @@ export class Game {
     if (this.player) this.player.martyrStacks = 0;
     this.warBanner = null;
     if (this.inVault) this.vaultVisited = true;
+    if (this.realm) this.realmsVisited.add(this.realm);
+    this.realmEntrance = this._rollRealmEntrance(this.rng.fork(`realm${tag}`));
     this._prepareAltar();
     this.floorBoss = this._drawBoss(this.rng.fork(`boss${tag}`));
     this.tookDamageThisFloor = false;
@@ -280,7 +287,22 @@ export class Game {
     return Math.min(4, bossTier(type) + (this.oath('ruin') ? 1 : 0));
   }
 
+  /** A Sealed Stair to a secret realm, hidden in one of this floor's secret rooms (or not). */
+  _rollRealmEntrance(rng) {
+    if (this.realm || this.inVault) return null;
+    const realm = realmForFloor(this.floorNumber);
+    if (!realm || this.realmsVisited.has(realm)) return null;
+    const secretRooms = this.floor.rooms.filter((r) => r.type === 'secret' || r.type === 'supersecret');
+    // rare: the hardest-to-find secret room often has one, an ordinary secret room now and then
+    const sup = secretRooms.find((r) => r.type === 'supersecret');
+    if (sup && rng.chance(0.4)) return { roomId: sup.id, realm };
+    const sec = secretRooms.find((r) => r.type === 'secret');
+    if (sec && rng.chance(0.15)) return { roomId: sec.id, realm };
+    return null;
+  }
+
   _rollOmen(rng) {
+    if (this.realm) return null;
     if (this.floorNumber < 2 || this.chapterKey === 'throne' || this.chapterKey === 'vault') return null;
     if (!rng.chance(this.oath('moon') ? 1 : OMEN_CHANCE)) return null;
     return OMEN_IDS[Math.floor(rng.next() * OMEN_IDS.length)];
@@ -292,7 +314,7 @@ export class Game {
 
   /** Which secret feature rooms this floor gets (puzzle, library, well, rug). */
   _rollFeatures(rng) {
-    if (this.chapterKey === 'throne' || this.chapterKey === 'vault') return [];
+    if (this.chapterKey === 'throne' || this.chapterKey === 'vault' || this.realm) return [];
     const out = [];
     for (const [name, f] of Object.entries(FEATURES)) {
       if (f.minFloor && this.floorNumber < f.minFloor) continue;
@@ -356,7 +378,7 @@ export class Game {
 
   /** Is this blow a critical hit? (luck helps) */
   rollCrit() {
-    return Math.random() < COMBAT.critChance + 0.02 * Math.max(0, this.player.stats.luck);
+    return Math.random() < COMBAT.critChance + 0.02 * Math.max(0, this.player.stats.luck) + (this.player.perks.critBonus || 0);
   }
 
   /** The feel of a landed blow: a tiny freeze, a number, and for a crit a gold flash. */
@@ -408,7 +430,7 @@ export class Game {
 
   _setChapter(key) {
     const from = this.chapterKey;
-    if (this.state === 'play' && from && from !== key && ['catacombs', 'hollow', 'halls', 'throne', 'vault'].includes(key)) {
+    if (this.state === 'play' && from && from !== key && ['catacombs', 'hollow', 'halls', 'throne', 'vault', 'cistern', 'chapel', 'forge'].includes(key)) {
       this.playCutscene(key, () => (this.floorTitleT = 2.4));
     }
     this.chapterKey = key;
@@ -427,6 +449,15 @@ export class Game {
 
   _drawBoss(rng) {
     if (this.chapterKey === 'throne' || this.chapterKey === 'vault') return this.chapterInfo.bosses[0];
+    if (this.realm) {
+      // one of the five secret bosses, never twice in a run
+      const ids = this.chapterInfo.bosses;
+      let pool = ids.filter((b) => !this.secretBossesUsed.has(b));
+      if (!pool.length) pool = ids;
+      const b = pool[Math.floor(rng.next() * pool.length)];
+      this.secretBossesUsed.add(b);
+      return b;
+    }
     // early floors only draw from the gentler bosses (EARLY_BOSS_LIMIT); later, anything goes
     const limit = EARLY_BOSS_LIMIT[this.floorNumber] || 99;
     // ...and harder ranks only turn up deeper down
@@ -455,14 +486,14 @@ export class Game {
   /** "The Catacombs II", "The Throne of the Mad King"... */
   get floorName() {
     const ROMAN = ['I', 'II', 'III'];
-    if (this.chapterKey === 'throne' || this.chapterKey === 'vault') return this.chapterInfo.name;
+    if (this.chapterKey === 'throne' || this.chapterKey === 'vault' || this.realm) return this.chapterInfo.name;
     return `${this.chapterInfo.name} ${ROMAN[floorInChapter(this.floorNumber) - 1]}`;
   }
 
   /** Step onto a trapdoor: fade out, build the next floor, fade in. */
-  descend(toVault = false) {
+  descend(toVault = false, toRealm = null) {
     if (this.descending || this.state !== 'play') return;
-    this.descending = { t: 0, done: false, toVault };
+    this.descending = { t: 0, done: false, toVault, toRealm };
     this.audio.play('descend');
   }
 
@@ -474,7 +505,9 @@ export class Game {
       d.done = true;
       if (d.toVault) this.inVault = true;
       else if (this.inVault) this.inVault = false; // the vault's trapdoor leads on to the next floor
-      if (!d.toVault) this.floorNumber = Math.min(THRONE_FLOOR, this.floorNumber + 1);
+      if (d.toRealm) this.realm = d.toRealm; // down the Sealed Stair (the floor number stays)
+      else if (this.realm) this.realm = null; // a realm's trapdoor leads on to the next floor
+      if (!d.toVault && !d.toRealm) this.floorNumber = Math.min(THRONE_FLOOR, this.floorNumber + 1);
       this.startFloor();
       this.floorTitleT = 2.4;
     }
@@ -517,6 +550,25 @@ export class Game {
     if (!weights) return null;
     const id = weightedKey(rng, weights);
     this.offered.add(id);
+    return id;
+  }
+
+  /**
+   * A weapon for the hero's class that isn't in hand and hasn't been offered this run.
+   * opts.minQuality, opts.bias like pickRelic. null if the hero has no weapon family (sling heroes).
+   */
+  pickWeapon(rng, opts = {}) {
+    const cls = this.player ? this.player.character.weapon : null;
+    if (!cls || cls === 'sling') return null;
+    const ids = WEAPON_IDS.filter((id) => {
+      const w = WEAPON_DEFS[id];
+      return w.class === cls && !w.starter && id !== this.player.weaponId && !this.offered.has('w:' + id) && w.quality >= (opts.minQuality || 0);
+    });
+    if (!ids.length) return null;
+    const weights = {};
+    for (const id of ids) weights[id] = Math.pow(1 + (opts.bias || 0), WEAPON_DEFS[id].quality - 1);
+    const id = weightedKey(rng, weights);
+    this.offered.add('w:' + id);
     return id;
   }
 

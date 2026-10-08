@@ -686,3 +686,36 @@ export class Anvil {
 const ANVIL_SPENT = { name: "Blacksmith's Anvil", flavour: 'The coals are dead. It has done its work.' };
 const ANVIL_EMPTY = { name: "Blacksmith's Anvil", flavour: 'Bring a relic, and the anvil will make it something new.' };
 const ANVIL_RING = new THREE.Color(2.4, 1.4, 0.4);
+
+// --- the Sealed Stair (hidden in a secret room): the way down to a secret realm ---
+
+const REALM_INFO = {
+  cistern: { name: 'A Sealed Stair', flavour: 'Water drips up from below. Something down there is breathing.' },
+  chapel: { name: 'A Sealed Stair', flavour: 'Somewhere below, a choir is singing with no voices.' },
+  forge: { name: 'A Sealed Stair', flavour: 'Heat rolls up the steps, and the ring of a hammer.' },
+};
+
+export class SealedStair {
+  constructor(room, realm) {
+    this.room = room;
+    this.game = room.game;
+    this.realm = realm;
+    const c = room.slotCenter(7, 4);
+    this.x = c.x;
+    this.y = c.y - 10;
+    this.sprite = room._staticSprite('sealed_stair', this.x, this.y - 18, 0, null);
+    this.armed = false;
+    this.t = 0;
+  }
+
+  update(dt) {
+    const g = this.game;
+    const pl = g.player;
+    this.t += dt;
+    this.sprite.setFrame(Math.floor(this.t * 3) % 2, 0);
+    const d = Math.hypot(pl.x - this.x, pl.y - this.y);
+    if (d < 50) g.hud.setHover(REALM_INFO[this.realm], 0);
+    if (d > 30) this.armed = true;
+    if (this.armed && d < 12 && !pl.dead && g.state === 'play') g.descend(false, this.realm);
+  }
+}

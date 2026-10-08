@@ -330,6 +330,31 @@ export const ENEMIES = {
     name: 'Ember', hp: 3, speed: 90, radius: 4, hitRadius: 7, contactDamage: 1, mass: 0.3,
     lifeTime: 6,
   },
+  // ---- the secret bestiary (only in the secret realms) ----
+  drowned: {
+    name: 'Drowned Pilgrim', hp: 20, speed: 30, radius: 8, hitRadius: 10, contactDamage: 1, mass: 1.6, tier: 'medium',
+    spitRange: 120, windup: 0.6, count: 3, spread: 0.7, speed: 115, life: 1.1, cooldown: [1.8, 2.6],
+  },
+  eel: {
+    name: 'Cistern Eel', hp: 18, speed: 70, radius: 8, hitRadius: 11, contactDamage: 1, mass: 1.2, tier: 'hard',
+    underTime: 1.2, riseTime: 0.6, teeth: 8, toothSpeed: 100, lungeSpeed: 220, upTime: 1.4,
+  },
+  nun: {
+    name: 'Hollow Nun', hp: 18, speed: 40, radius: 7, hitRadius: 9, contactDamage: 1, mass: 0.8, flying: true, tier: 'hard',
+    preferredRange: [80, 150], blinkDist: 70, castTime: 0.7, orbSpeed: 80, homing: 1.2, cooldown: [2.4, 3.2],
+  },
+  acolyte: {
+    name: 'Censer Acolyte', hp: 22, speed: 34, radius: 8, hitRadius: 10, contactDamage: 1, mass: 1.4, tier: 'medium',
+    smokeEvery: 1.6, smokeRadius: 16, smokeTime: 3, spinRange: 70, windup: 0.7, ring: 10, orbSpeed: 95, cooldown: [2.2, 3.0],
+  },
+  bellows: {
+    name: 'Bellows Imp', hp: 16, speed: 60, radius: 7, hitRadius: 9, contactDamage: 1, mass: 0.8, tier: 'medium',
+    preferredRange: [50, 110], coneRange: 80, windup: 0.55, count: 6, spread: 0.8, speed: 150, cooldown: [1.8, 2.6],
+  },
+  anvilknight: {
+    name: 'Anvil Knight', hp: 44, speed: 26, radius: 11, hitRadius: 13, contactDamage: 1, mass: 6, tier: 'hard',
+    chargeRange: 160, aimTime: 0.7, chargeSpeed: 260, chargeTime: 0.45, slamWind: 0.45, ring: 14, ringSpeed: 100, cooldown: [2.4, 3.2],
+  },
   bannerman: {
     name: 'Banner Bearer', hp: 22, speed: 30, radius: 8, hitRadius: 10, contactDamage: 1, mass: 2, tier: 'medium',
     auraRadius: 110, plantTime: 0.8, buffSpeed: 1.35, buffArmour: 0.6, preferredRange: [120, 200],
@@ -352,9 +377,29 @@ export const LAYOUT_DIGITS = {
   hollow: { 1: 'witch', 2: 'thornling', 3: 'direwolf', 4: 'bloater', 5: 'wisp', 6: 'scarecrow', 7: 'sapling', 8: 'cutpurse', 9: 'puffcap', 0: 'toad', j: 'treant', k: 'pixie', v: 'boar' },
   halls: { 1: 'blackknight', 2: 'flailbrute', 3: 'gargoyle', 4: 'magus', 5: 'livingarmour', 6: 'drake', 7: 'executioner', 8: 'mimic', 9: 'hellhound', 0: 'ballista', j: 'jester', k: 'moltengolem', v: 'bannerman' },
 };
+// the secret realms borrow a chapter's room layouts; their digits call up the realm's own creatures
+LAYOUT_DIGITS.cistern = { ...LAYOUT_DIGITS.cells, 1: 'drowned', 2: 'drowned', 3: 'eel', 5: 'drowned', 9: 'eel', 0: 'eel', j: 'slime', k: 'drowned' };
+LAYOUT_DIGITS.chapel = { ...LAYOUT_DIGITS.catacombs, 1: 'acolyte', 3: 'nun', 4: 'acolyte', 5: 'nun', 9: 'nun', 0: 'acolyte', k: 'nun' };
+LAYOUT_DIGITS.forge = { ...LAYOUT_DIGITS.halls, 1: 'anvilknight', 2: 'bellows', 3: 'bellows', 5: 'anvilknight', 9: 'bellows', j: 'bellows', v: 'anvilknight' };
 
 // Weighted picks for 'e' spawn points, by the layout's difficulty pool.
 export const SPAWN_POOLS = {
+  // the secret realms: their own creatures, with a few from the chapters above
+  cistern: {
+    easy: { drowned: 4, slime: 2, rat: 1, skull: 2 },
+    medium: { drowned: 4, eel: 3, slime: 2, spider: 2, skull: 1 },
+    hard: { drowned: 3, eel: 4, spider: 2, worm: 2, mummy: 1 },
+  },
+  chapel: {
+    easy: { nun: 3, acolyte: 3, skeleton: 2, bat: 2 },
+    medium: { nun: 3, acolyte: 3, wraith: 2, spectre: 1, banshee: 1 },
+    hard: { nun: 4, acolyte: 3, wraith: 2, banshee: 2, necromancer: 1 },
+  },
+  forge: {
+    easy: { bellows: 4, anvilknight: 1, livingarmour: 2, imp: 2 },
+    medium: { bellows: 4, anvilknight: 2, livingarmour: 2, drake: 2 },
+    hard: { bellows: 3, anvilknight: 3, moltengolem: 2, drake: 2, hellhound: 1 },
+  },
   cells: {
     easy: { rat: 4, ghoul: 3, imp: 1, hound: 2, slime: 2 },
     medium: { rat: 3, ghoul: 3, imp: 2, crossbowman: 2, gaoler: 1, hound: 2, slime: 2, monk: 1, torturer: 1 },

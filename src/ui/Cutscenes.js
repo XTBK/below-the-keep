@@ -317,6 +317,86 @@ const SCENES = {
     }
   },
 
+  // the Drowned Cistern: arches standing in black water, something long moving under it
+  cistern(g, t) {
+    band(g, 0, PH, ['#040a0c', '#06121a', '#081a24', '#0a1e2a', '#061016']);
+    for (let i = 0; i < 6; i++) {
+      const x = 10 + i * 86;
+      rect(g, x, 20, 16, 140, '#0e1c20');
+      rect(g, x, 20, 2, 140, '#1e3438');
+      g.strokeStyle = '#0e1c20';
+      g.lineWidth = 8;
+      g.beginPath();
+      g.arc(x + 51, 40, 35, Math.PI, 0);
+      g.stroke();
+    }
+    // the water, with ripples and a long shape gliding beneath it
+    band(g, 150, PH, ['#0e3442', '#0a2a36', '#08202a', '#061820']);
+    for (let i = 0; i < 18; i++) rect(g, ((i * 41 + t * 14) % (PW + 40)) - 20, 158 + (i % 5) * 11, 14, 1, '#3a8aa2');
+    const sx = ((t * 40) % (PW + 160)) - 80;
+    for (let k = 0; k < 10; k++) rect(g, sx - k * 9, 176 + Math.sin(t * 3 + k * 0.6) * 4, 10, 4, 'rgba(10,30,36,0.9)');
+    rect(g, sx + 8, 172 + Math.sin(t * 3) * 4, 2, 2, '#e0ff60');
+    // drips
+    for (let i = 0; i < 6; i++) {
+      const y = (t * 80 + i * 40) % 150;
+      rect(g, 40 + i * 77, 20 + y, 1, 3, '#7ac0d0');
+    }
+  },
+
+  // the Starless Chapel: pews in violet dark, a gilded altar, a robed figure with no face
+  chapel(g, t) {
+    band(g, 0, PH, ['#06040a', '#0c0812', '#120c1a', '#0c0812']);
+    // a great dark window with no stars in it
+    rect(g, 210, 14, 60, 90, '#1a1226');
+    rect(g, 214, 18, 52, 82, '#020104');
+    rect(g, 238, 18, 4, 82, '#1a1226');
+    rect(g, 214, 56, 52, 4, '#1a1226');
+    // pews
+    for (let r = 0; r < 4; r++) for (const side of [-1, 1]) rect(g, 240 + side * (40 + 70) - 35 + side * r * 6, 130 + r * 18, 70, 6, '#1e1428');
+    // the altar, gilded, and a nun standing before it
+    rect(g, 200, 120, 80, 26, '#3a2a18');
+    rect(g, 200, 120, 80, 3, '#e0c070');
+    glowAt(g, 240, 112, 60, '192,112,255', 0.25 + 0.1 * Math.sin(t * 2));
+    rect(g, 234, 80, 12, 34, '#0c0a12');
+    rect(g, 233, 76, 14, 10, '#dcd6e6');
+    rect(g, 236, 79, 8, 6, '#000000');
+    rect(g, 237, 81, 1, 1, '#c070ff');
+    rect(g, 242, 81, 1, 1, '#c070ff');
+    for (const x of [190, 290]) {
+      flame(g, x, 116, t);
+      glowAt(g, x, 114, 30, '200,140,255', 0.25);
+    }
+  },
+
+  // the First King's Forge: a furnace mouth, a giant anvil, sparks
+  forge(g, t) {
+    band(g, 0, PH, ['#0c0806', '#140c08', '#1e100a', '#140a06']);
+    // the furnace: a great arch of brick full of fire
+    rect(g, 150, 30, 180, 130, '#2a1810');
+    g.fillStyle = '#ff9a30';
+    g.beginPath();
+    g.arc(240, 120, 60, Math.PI, 0);
+    g.lineTo(300, 160);
+    g.lineTo(180, 160);
+    g.fill();
+    glowAt(g, 240, 120, 140, '255,140,40', 0.45 + 0.1 * Math.sin(t * 9));
+    for (let i = 0; i < 12; i++) {
+      const x = 190 + i * 9;
+      const h = 20 + Math.sin(t * 8 + i) * 10;
+      rect(g, x, 160 - h, 6, h, i % 2 ? '#ffe080' : '#ff9a30');
+    }
+    // the anvil in front, and sparks leaping off it
+    rect(g, 200, 176, 80, 14, '#2e2e34');
+    rect(g, 190, 170, 100, 8, '#46464e');
+    rect(g, 178, 170, 14, 4, '#46464e');
+    rect(g, 230, 190, 20, 26, '#2e2e34');
+    for (let i = 0; i < 20; i++) {
+      const a = i * 0.7 + t * 3;
+      const r = (t * 60 + i * 13) % 70;
+      rect(g, 240 + Math.cos(a) * r, 168 - Math.abs(Math.sin(a)) * r, 1, 1, '#ffd060');
+    }
+  },
+
   // the Forgotten Vault: gold in the dust, a sealed door
   vault(g, t) {
     band(g, 0, PH, ['#0a0806', '#14100a', '#1c160c', '#120e08']);
@@ -360,6 +440,9 @@ export const CUTSCENES = {
   hollow: () => [{ scene: 'hollow', text: "Deeper still grows the queen's lost garden: a forest that has never seen the sun. It is hungry." }],
   halls: () => [{ scene: 'halls', text: "The old halls burn and never burn out. Here the crown's whisper is almost a voice." }],
   throne: () => [{ scene: 'throneDoor', text: 'The throne of the Mad King. He is waiting - and so is the thing that wears him.' }],
+  cistern: () => [{ scene: 'cistern', text: 'Under the cells, a cistern no one remembers digging. The water is black, and it is not still.' }],
+  chapel: () => [{ scene: 'chapel', text: 'A chapel built for a god that never answered. Something else did.' }],
+  forge: () => [{ scene: 'forge', text: "Here the First King forged the Keep's iron, and his own crown. The fire was never put out." }],
   vault: () => [{ scene: 'vault', text: 'A vault no king remembers, sealed with bone, flame and thorn. Someone hid something here.' }],
 };
 

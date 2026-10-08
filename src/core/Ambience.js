@@ -76,6 +76,31 @@ export const MOMENTS = {
     melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.08 },
     drums: '................', bellEvery: 2, bellGain: 0.09,
   },
+  // the secret realms
+  // the Drowned Cistern: slow drips of harp over a low choir, a bell for a melody
+  cistern: {
+    bpm: 62, root: 38, mode: 'dorian', progression: [0, 3, 5, 4], barsPerChord: 2,
+    pad: 'choir', padGain: 0.045, bass: 'R.......R.......', bassInst: 'pluck', bassGain: 0.14,
+    arp: '0...2...1...2.1.', arpInst: 'harp', arpGain: 0.065, arpOct: 2,
+    melody: { inst: 'bell', rhythm: 'slow', octave: 2, gain: 0.07 },
+    drums: '........b.......', drumGain: 0.1, bellEvery: 8, bellGain: 0.07,
+  },
+  // the Starless Chapel: a heavy choir like an organ, a horn in the dark
+  chapel: {
+    bpm: 52, root: 36, mode: 'phrygian', progression: [0, 1, 5, 0], barsPerChord: 2,
+    pad: 'choir', padGain: 0.07, bass: 'R...............', bassInst: 'horn', bassGain: 0.05,
+    arp: '..0.....2.......', arpInst: 'harp', arpGain: 0.05, arpOct: 2,
+    melody: { inst: 'horn', rhythm: 'slow', octave: 1, gain: 0.06 },
+    drums: 'B...............', drumGain: 0.12, bellEvery: 4, bellGain: 0.1,
+  },
+  // the First King's Forge: anvils ringing in time, war horns
+  forge: {
+    bpm: 108, root: 38, mode: 'harmonic', progression: [0, 4, 5, 4], barsPerChord: 1,
+    pad: 'drone', bass: 'R.RR..R.R.RR..F.', bassInst: 'pluck', bassGain: 0.16,
+    arp: '0.1.2.1.0.1.2.1.', arpInst: 'lute', arpGain: 0.045, arpOct: 1,
+    melody: { inst: 'horn', rhythm: 'walk', octave: 1, gain: 0.07 },
+    drums: 'B.t.t.B.B.t.t.tt', drumGain: 0.16,
+  },
   // the throne: a dark coronation - choir, horns, the bell of the keep
   throne: {
     bpm: 66, root: 38, mode: 'harmonic', progression: [0, 5, 3, 4], barsPerChord: 2,

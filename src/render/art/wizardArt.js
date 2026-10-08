@@ -11,13 +11,28 @@ const HAT = ['#1a1a20', '#2c2c34', '#40404a', '#585862', '#72727c'];
 const BEARD = ['#8a8a84', '#b4b4ac', '#d8d8d0', '#f2f2ea'];
 const WAND = ['#2a1a10', '#4a3020', '#6e4a30', '#8e6440'];
 const ROPE = ['#5a4a30', '#8a7650', '#b09c70'];
-const GLOW = '#c8e8ff';
+// the wand's tip glows in the colour of the wand in hand (data/weapons.js looks: wand_fire...)
+const TIPS = {
+  plain: ['#c8e8ff', '#8ac8ff'],
+  wand_fire: ['#ffb040', '#ff6a20'],
+  wand_tide: ['#60b0ff', '#2a60e0'],
+  wand_frost: ['#e8ffff', '#a0e8ff'],
+  wand_storm: ['#fff080', '#a0c0ff'],
+  wand_venom: ['#a0ff60', '#40c030'],
+};
+let GLOW = TIPS.plain[0];
+let HALO = TIPS.plain[1];
+export function setWandTip(looks) {
+  const k = Object.keys(TIPS).find((t) => looks.includes(t)) || 'plain';
+  GLOW = TIPS[k][0];
+  HALO = TIPS[k][1];
+}
 const BOOT = S.leather.slice(0, 3);
 
 function wandTip(p, x, y, h, bright = 1) {
   p.lit(x, y, GLOW, h + 0.4, 1.4 * bright);
   p.lit(x, y - 1, '#ffffff', h + 0.5, 1.2 * bright);
-  if (bright > 1) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -2], [0, 1]]) p.lit(x + dx, y + dy, '#8ac8ff', h + 0.3, 0.9);
+  if (bright > 1) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -2], [0, 1]]) p.lit(x + dx, y + dy, HALO, h + 0.3, 0.9);
 }
 
 /** The hat: wide brim, a tall cone whose tip flops to one side. */

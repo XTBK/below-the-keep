@@ -12,10 +12,11 @@ import { fxRng, Rng, hashString } from '../core/Rng.js';
 import { drawText } from '../ui/PixelFont.js';
 import { TILESETS } from '../render/art/tilesets.js';
 import { NavGrid } from './NavGrid.js';
-import { CandlePuzzle, Bookcases, WishingWell, Rug, SwordInStone, TrialChamber, DiceTable, Beggar, Anvil } from './Secrets.js';
+import { CandlePuzzle, Bookcases, WishingWell, Rug, SwordInStone, TrialChamber, DiceTable, Beggar, Anvil, SealedStair } from './Secrets.js';
 import { ENEMIES, CHAMPION, LAYOUT_DIGITS, SPAWN_POOLS } from '../data/enemies.js';
 import { championChance, TIER_INFO, bossTier } from '../data/difficulty.js';
 import { CHOICE_CHANCE } from '../data/quality.js';
+import { WEAPON_CHANCE } from '../data/weapons.js';
 
 const GEM_ROCK_CHANCE = 0.06; // a rock with gems in it (bomb it!)
 const GEM_ROCK_LOOT = { penny: 4, purse: 2, ironHeart: 2, bomb: 1, key: 1, chest: 1 };
@@ -458,6 +459,14 @@ export class Room {
           if (!this.data.pedestals[key]) {
             const hearts = this.data.type === 'shrine' ? 2 : 0;
             const slot = { kind: 'relic', id: this.game.pickRelic(this.data.type, this.rng), price: 0, hearts, gone: false };
+            // now and then a treasure room holds a weapon instead
+            if (this.data.type === 'armoury' && this.rng.chance(WEAPON_CHANCE.armoury)) {
+              const wid = this.game.pickWeapon(this.rng);
+              if (wid) {
+                slot.kind = 'weapon';
+                slot.id = wid;
+              }
+            }
             this.data.pedestals[key] = slot;
             if (this.rng.chance(CHOICE_CHANCE[this.data.type] || 0)) {
               const other = { kind: 'relic', id: this.game.pickRelic(this.data.type, this.rng), price: 0, hearts, gone: false };
@@ -538,6 +547,9 @@ export class Room {
 
     if (puzzleStands.length && tablet) this.features.push(new CandlePuzzle(this, puzzleStands, tablet));
     if (this.data.type === 'trial') this.features.push(new TrialChamber(this));
+    // a Sealed Stair down to a secret realm
+    const re = this.game.realmEntrance;
+    if (re && re.roomId === this.data.id) this.features.push(new SealedStair(this, re.realm));
     if (bookSpots.length) this.features.push(new Bookcases(this, bookSpots));
     // rewards that rose up after a secret was solved
     for (const e of this.data.extraStands || []) this._rewardPedestal(e.x, e.ground, e.slot);
@@ -742,10 +754,25 @@ export class Room {
     const top = this.slotCenter(7, 3);
     // the tougher the boss, the better the spoils (and a Deadly or Legendary one offers a choice)
     const reward = this.data.type === 'boss' ? TIER_INFO[this.game.bossTierOf(this.game.bossForFloor())].reward : {};
+    if (!this.data.pedestal && this.game.realm && this.data.type === 'boss') {
+      // a secret boss's spoils: a weapon AND a rare relic, both yours (no choosing)
+      const slot = { kind: 'relic', id: this.game.pickRelic('boss', this.rng, { minQuality: 3, bias: 1 }), price: 0, gone: false };
+      const wid = this.game.pickWeapon(this.rng, { minQuality: 2, bias: 1 });
+      slot.pair = wid ? { kind: 'weapon', id: wid, price: 0, gone: false } : { kind: 'relic', id: this.game.pickRelic('boss', this.rng, { minQuality: 3, bias: 1 }), price: 0, gone: false };
+      this.data.pedestal = slot;
+    }
     if (!this.data.pedestal) {
       const slot = { kind: 'relic', id: this.game.pickRelic('boss', this.rng, reward), price: 0, gone: false };
       if (reward.choice) {
         const other = { kind: 'relic', id: this.game.pickRelic('boss', this.rng, reward), price: 0, gone: false };
+        // a deadly boss's second pedestal may hold a weapon
+        if (this.rng.chance(WEAPON_CHANCE.bossChoice)) {
+          const wid = this.game.pickWeapon(this.rng, { minQuality: 2, bias: 1 });
+          if (wid) {
+            other.kind = 'weapon';
+            other.id = wid;
+          }
+        }
         if (other.id) {
           slot.choiceOf = [other];
           other.choiceOf = [slot];

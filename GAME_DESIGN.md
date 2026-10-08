@@ -21,7 +21,8 @@
 | E2 | Its own soul: songs per place, new title, Ranger + Iron Knight, parchment map, weighty combat, dodge roll | Done |
 | E3 | Hero skills (blink / steady aim + reload roll / shield charge), bot-tested balance, punchier attack sounds | Done |
 | E4 | Smooth hits, relic quality + anvil + choices, oaths, Daily Descent, 40 bosses with ranks, redrawn bosses, real menus, castle title | Done |
-| E5 | No stutter, readable fights (attack budget, glowing shots, brighter Hollow and Halls), story cutscenes, new obstacles, 100 relics, real beams and fire, balance pass, itch.io + link preview | **Done — awaiting OK** |
+| E5 | No stutter, readable fights (attack budget, glowing shots, brighter Hollow and Halls), story cutscenes, new obstacles, 100 relics, real beams and fire, balance pass, itch.io + link preview | Done |
+| E6 | Found weapons (18 + 3 starters) and three secret realms with 6 secret enemies and 5 secret bosses | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -549,7 +550,7 @@ rattle, pounding, grunt) and shield bash (booming clang).
 - **The title**: a castle on a crag under a huge moon, mountains, layered pine forest, drifting mist, bats, flickering windows,
   distant lightning (`ui/TitleBackdrop.js`); the hero stands on a cliff to the right; the menu on the left.
 
-### Expansion 5 — a soul of its own (awaiting OK)
+### Expansion 5 — a soul of its own — done
 
 - **The stutter, found and fixed.** Every new sprite cloned its sheet's texture and set `needsUpdate`, which in three.js
   re-uploads the whole sheet image to the GPU - so every spawn (flies, rats, embers, summoned minions, bosses) and every
@@ -586,3 +587,28 @@ rattle, pounding, grunt) and shield bash (booming clang).
   well-known item was renamed (Hare-Bone Charm).
 - **Sharing**: a 1200x630 link-preview image and Open Graph / Twitter tags; an itch.io package in `itch/` (relative-path
   build, cover, page text, upload steps); the leaderboard API answers other sites (CORS) so the itch copy shares the board.
+
+### Expansion 6 — weapons and secret realms (awaiting OK)
+
+- **Weapons** (`data/weapons.js`): a weapon slot per hero. A weapon is applied like a relic (stats, statsMult, mods,
+  perks, a shot tint) plus a look on the hero (`render/art/weaponLooks.js`: wand tips by element; longbow, arbalest,
+  repeater, hunting bow, fire crossbow; greataxe, longsword, twin daggers, war hammer, flail, Emberbrand) and, for blades,
+  its own swing (`melee`: reach, arc, damage, cooldown, knockback, lunge, plus stun and shockwave). Icons in
+  `weaponIcons.js`. Pedestal kind 'weapon' (`ItemStand`): taking one leaves yours behind. Found: 14% of treasure
+  pedestals, 40% of a Deadly/Legendary boss's second pedestal, and always at a secret boss. `Game.pickWeapon` only
+  offers the hero's own class. Sling heroes have no weapon family. New `critBonus` perk (Huntsman's Bow).
+  Balance: measured on a dummy for 4 s against each class's starter and tuned so raw damage sits within the starter's
+  band; the specials (fire, frost, chain, pierce, area, stun, crowd hits) are what you pick them for.
+- **Secret realms** (`REALMS` in `data/chapters.js`): the Drowned Cistern (floors 2-3), the Starless Chapel (4-5), the
+  First King's Forge (6-7). A Sealed Stair (`SealedStair` in `world/Secrets.js`) sits in a floor's super-secret room
+  (40%) or secret room (15%), once per realm per run. Down it, a short floor (`floorSize` 2) in the realm's palette
+  (chapter tiles recoloured: `CISTERN`/`CHAPEL`/`FORGE` in tilesets.js), with the realm's spawn pools and layout
+  digits, its own song (Ambience), and a story scene. The floor number doesn't change; the realm's trapdoor leads on
+  to the next floor.
+- **Secret bestiary** (`enemies/bestiary3.js`, art `enemiesArt5.js`): Drowned Pilgrim (water fan, slowing puddles),
+  Cistern Eel (submerged, rises with a ring of teeth and a lunge), Hollow Nun (blinks beside you, a cross of homing
+  curses), Censer Acolyte (poison smoke trail, a ring when close), Bellows Imp (hops, cinder cone), Anvil Knight (charge,
+  then a ring of iron with gaps).
+- **Secret bosses** (`data/bosses4.js`, art `bossesArt8.js`, ranked Deadly): the Cistern Leviathan, the Mirror Queen,
+  the First King's Shade, the Bone Organist, the Faceless Saint - drawn at random, never twice in a run. Their spoils:
+  a weapon for your class and a rare-or-better relic, both kept.

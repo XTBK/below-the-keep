@@ -15,6 +15,7 @@ import { TIER_INFO, bossTier } from '../data/difficulty.js';
 import { CHARACTERS } from '../data/characters.js';
 import { TitleBackdrop } from './TitleBackdrop.js';
 import { daily } from '../core/Daily.js';
+import { WEAPON_IDS } from '../data/weapons.js';
 import { drawPanel, wrap as wrapText } from './Menus.js';
 
 // Draws the HUD and menus onto a 640x360 canvas. It is only redrawn when something changes
@@ -295,6 +296,16 @@ export class Hud {
       const ic = this._curioIcon(CURIO_FRAME.seal(i));
       ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, 52 + i * 9, 111, 16, 16);
     });
+
+    // the weapon in hand, beside the active relic
+    if (p.weaponId) {
+      ctx.fillStyle = 'rgba(11,10,13,0.75)';
+      ctx.fillRect(44, 8, 18, 18);
+      ctx.strokeStyle = '#5a4a30';
+      ctx.strokeRect(44.5, 8.5, 17, 17);
+      const ws = getSheet('weapons');
+      ctx.drawImage(ws.colorCanvas, WEAPON_IDS.indexOf(p.weaponId) * 16, 0, 16, 16, 45, 9, 16, 16);
+    }
 
     // relics carried, small, under the slots
     const ids = p.relics;

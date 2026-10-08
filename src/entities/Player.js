@@ -12,6 +12,7 @@ import { CHARACTERS } from '../data/characters.js';
 import { DIFFICULTY } from '../data/difficulty.js';
 import { quality } from '../data/quality.js';
 import { WEAPONS, ROLL, COMBAT, SKILLS } from '../data/config.js';
+import { WEAPON_DEFS, starterWeapon } from '../data/weapons.js';
 import * as THREE from 'three';
 
 const SLASH = new THREE.Color(2.2, 2.1, 1.8);
@@ -58,6 +59,7 @@ export class Player {
     this.badLuck = 0; // weak relics in a row (see data/quality.js)
     this.active = null; // { id, charge, max }
     const ch = (this.character = CHARACTERS[game.characterId] || CHARACTERS.wren);
+    this.weaponId = starterWeapon(ch.weapon); // the weapon in hand (data/weapons.js); null for sling heroes
     // the Oath of Glass: just two hearts
     const hearts = game.oath('glass') ? Math.min(ch.halfHearts, 4) : ch.halfHearts;
     this.halfHearts = hearts;
@@ -136,6 +138,8 @@ export class Player {
     if (this.active) items.push(this.active.id); // actives can still change his look
     if (this.trinket) items.push(TRINKETS[this.trinket]);
     items.push(this.character); // the character's own strengths and weaknesses
+    const wd = this.weapon;
+    if (wd) items.push({ stats: wd.stats, statsMult: wd.statsMult, mods: wd.mods, perks: wd.perks, look: wd.tint ? { stone: wd.tint } : null });
     items.push(this.potionBonus);
     const lo = computeLoadout(items);
     this.stats = lo.stats;
@@ -156,7 +160,10 @@ export class Player {
     for (const id of this.relics) if (RELICS[id].familiar) fam.push(RELICS[id].familiar);
     if (this.transforms.has('menagerie')) fam.push(SETS.menagerie.bonusFamiliar);
     this.familiarList = fam;
-    const looks = this.character.looks.concat(lo.looks);
+    // the weapon shows in his hands: it adds a look, or replaces the starting one
+    let looks = this.character.looks.concat(lo.looks);
+    if (wd && wd.look && wd.look.replace) looks = looks.map((l) => (l === wd.look.replace[0] ? wd.look.replace[1] : l));
+    if (wd && wd.look && wd.look.add) looks = looks.concat([wd.look.add]);
     const key = looks.join(',');
     if (key !== this._looks) {
       this._looks = key;
@@ -214,6 +221,26 @@ export class Player {
     if (!seen.includes(id)) seen.push(id);
     this.game.hud.markDirty();
     return dropped;
+  }
+
+  /** The weapon in hand (data/weapons.js), or null. */
+  get weapon() {
+    return this.weaponId ? WEAPON_DEFS[this.weaponId] : null;
+  }
+
+  /** The swing of the melee weapon in hand. */
+  get melee() {
+    const wd = this.weapon;
+    return wd && wd.melee ? { ...WEAPONS.sword, ...wd.melee } : WEAPONS.sword;
+  }
+
+  /** Take up a weapon; returns the one put down (left on the pedestal). */
+  equipWeapon(id) {
+    const old = this.weaponId;
+    this.weaponId = id;
+    this.recompute();
+    this.game.hud.markDirty();
+    return old;
   }
 
   /** Take a passive relic away again (the Blacksmith's Anvil melts it down). */
@@ -505,7 +532,7 @@ export class Player {
   /** The Iron Knight's swing: a mighty arc that also bats enemy shots out of the air. */
   swing(dx, dy) {
     const g = this.game;
-    const w = WEAPONS.sword;
+    const w = this.melee;
     const angle = Math.atan2(dy, dx);
     this.slashAngle = angle;
     this.slashT = 0.16;
@@ -535,6 +562,7 @@ export class Player {
       if (shot.frost) e.chill(2.5 * shot.frost);
       if (shot.gild && Math.random() < 0.18 * shot.gild) e.gild(1.6);
       if (shot.fear && Math.random() < 0.25 * shot.fear) e.scare(2.2);
+      if (w.stun) e.stun(w.stun); // the war hammer rings their heads
       g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), crit);
       g.effects.enemyHit(e.x, e.y, 12, ex / (d || 1), ey / (d || 1), e.look.blood);
       hits++;
@@ -565,7 +593,25 @@ export class Player {
     for (const prop of g.room.props) {
       if (!prop.broken && prop.hit && Math.hypot(prop.x - this.x, prop.ground + 6 - this.y) < w.reach + 10) prop.hit(this.stats.damage * w.damage);
     }
-    g.audio.play('sword');
+    // the war hammer's blow shakes the floor: a shockwave around the point of impact
+    if (w.shockwave) {
+      const sx = this.x + Math.cos(angle) * w.reach * 0.7;
+      const sy = this.y + Math.sin(angle) * w.reach * 0.7;
+      g.enemies.forEachAlive(g.room, (e) => {
+        if (!e.hittable) return;
+        const d = Math.hypot(e.x - sx, e.y - sy);
+        if (d > w.shockwave.radius + e.def.hitRadius) return;
+        const dmg = this.stats.damage * w.shockwave.damage * this.damageScale;
+        const before = e.hp;
+        e.hit(dmg, (e.x - sx) / (d || 1), (e.y - sy) / (d || 1));
+        g.combatFeedback(e, Math.min(dmg, Math.max(0, before)), false);
+      });
+      g.effects.landDust(sx, sy, 10);
+      this.shockT = 0.25;
+      this.shockAt = { x: sx, y: sy, r: w.shockwave.radius };
+      g.feel.shake(0.2);
+    }
+    g.audio.play((this.weapon && this.weapon.sound) || 'sword');
     if (hits) {
       g.audio.play('slash');
       g.feel.shake(0.18);
@@ -582,8 +628,13 @@ export class Player {
       const a = 0.6 + 0.4 * Math.sin(time * 12);
       for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]]) o.dot(this.x + dx, this.y + 38 + dy, 3, SLASH, a * (Math.abs(dx) + Math.abs(dy) > 1 ? 0.5 : 1));
     }
+    if (this.shockT > 0 && this.shockAt) {
+      this.shockT -= 1 / 60;
+      const k = 1 - this.shockT / 0.25;
+      o.ring(this.shockAt.x, this.shockAt.y + 6, this.shockAt.r * (0.4 + 0.6 * k), SLASH, 1 - k, 3);
+    }
     if (this.slashT <= 0) return;
-    const w = WEAPONS.sword;
+    const w = this.melee;
     const k = this.slashT / 0.16;
     for (const r of [w.reach * 0.6, w.reach * 0.85, w.reach]) o.arc(this.x, this.y + 10, r, this.slashAngle - w.arc, this.slashAngle + w.arc, SLASH, k * (r === w.reach ? 1 : 0.5), 3, 0.8);
   }
@@ -594,7 +645,7 @@ export class Player {
     if (weapon === 'sword') {
       this.swing(dx, dy);
       const st0 = this.stats;
-      this.fireCooldown = st0.fireDelay * WEAPONS.sword.cooldown * (this.buffs.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (this.buffs.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
+      this.fireCooldown = st0.fireDelay * this.melee.cooldown * (this.buffs.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (this.buffs.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
       this.throwTimer = PLAYER.throwAnimTime * 1.3;
       return;
     }
@@ -634,7 +685,7 @@ export class Player {
     const b = this.buffs;
     this.fireCooldown = st.fireDelay * (b.haste > 0 ? CURIO_FX.haste.fireDelay : 1) * (b.drum > 0 ? ACTIVE.warDrum.fireDelay : 1) * (this.rallied ? ACTIVE.banner.fireDelay : 1);
     this.throwTimer = PLAYER.throwAnimTime;
-    this.game.audio.play({ wand: 'wand', crossbow: 'xbow' }[this.character.weapon] || 'sling');
+    this.game.audio.play((this.weapon && this.weapon.sound) || { wand: 'wand', crossbow: 'xbow' }[this.character.weapon] || 'sling');
     Save.data.stats.stonesThrown++;
   }
 

@@ -9,6 +9,10 @@ import { FLOOR } from '../data/config.js';
 // and makes sure the chosen layout never blocks the way between that cell's doors.
 
 const BY_CHAPTER = { cells: CELLS_LAYOUTS, ...LAYOUTS_BY_CHAPTER };
+// the secret realms borrow a chapter's room shapes
+BY_CHAPTER.cistern = BY_CHAPTER.cells;
+BY_CHAPTER.chapel = BY_CHAPTER.catacombs;
+BY_CHAPTER.forge = BY_CHAPTER.halls;
 const BY_NAME = new Map();
 for (const set of new Set(Object.values(BY_CHAPTER))) {
   for (const pool of ['easy', 'medium', 'hard']) {

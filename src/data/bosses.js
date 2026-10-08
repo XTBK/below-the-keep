@@ -71,6 +71,7 @@ export const BOSSES = {
 // ---------------------------------------------------------------------------------------------
 import { PATTERN_BOSSES_2 } from './bosses2.js';
 import { PATTERN_BOSSES_3 } from './bosses3.js';
+import { PATTERN_BOSSES_4 } from './bosses4.js';
 
 export const PATTERN_BOSSES = {
   gravedigger: {
@@ -258,12 +259,13 @@ export const PATTERN_BOSSES = {
   },
 };
 
-Object.assign(PATTERN_BOSSES, PATTERN_BOSSES_2, PATTERN_BOSSES_3);
+Object.assign(PATTERN_BOSSES, PATTERN_BOSSES_2, PATTERN_BOSSES_3, PATTERN_BOSSES_4);
 
 // Every boss that can guard an ordinary floor. Each floor draws one AT RANDOM (seeded, no repeats in a
 // run) and scales it to the floor's depth (data/difficulty.js). The Mad King always waits on the
 // throne floor, the Forgotten Keeper in the Vault, the Hollow Crown behind the sealed door.
-export const BOSS_ROSTER = ['ratmother', 'warden', ...Object.keys(PATTERN_BOSSES).filter((k) => !['madking', 'crownwraith', 'keeper'].includes(k))];
+// (the secret bosses only wait in the secret realms)
+export const BOSS_ROSTER = ['ratmother', 'warden', ...Object.keys(PATTERN_BOSSES).filter((k) => !['madking', 'crownwraith', 'keeper'].includes(k) && !PATTERN_BOSSES[k].secret)];
 
 /** The floor a boss is tuned for. */
 export function bossHome(type) {

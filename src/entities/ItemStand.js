@@ -1,3 +1,4 @@
+import { WEAPON_DEFS, WEAPON_IDS } from '../data/weapons.js';
 import * as THREE from 'three';
 import { Sprite, depthFor, DEPTH_BIAS } from '../render/Sprite.js';
 import { RELICS, RELIC_IDS, PICKUPS } from '../data/items.js';
@@ -17,7 +18,7 @@ const PRICE_COLOR = new THREE.Color(1.3, 1.3, 1.45);
 const PRICE_DIM = new THREE.Color(0.7, 0.3, 0.3);
 const HEART_COLOR = new THREE.Color(1.6, 0.25, 0.3);
 
-const SHEET = { relic: 'relics', pickup: 'pickups', curio: 'curios' };
+const SHEET = { relic: 'relics', pickup: 'pickups', curio: 'curios', weapon: 'weapons' };
 const BLIND_INFO = { name: '???', flavour: 'The Omen of the Blind hides what this is.' };
 // a 5 x 4 pixel heart
 const HEART_PX = [[0, 0], [1, 0], [3, 0], [4, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2], [3, 2], [2, 3]];
@@ -54,6 +55,7 @@ export class ItemStand {
       this.item.setFrame(34, 0);
     } else if (s.kind === 'relic') this.item.setFrame(RELIC_IDS.indexOf(s.id), 0);
     else if (s.kind === 'curio') this.item.setFrame(curioFrame(this.game, s.item), 0);
+    else if (s.kind === 'weapon') this.item.setFrame(WEAPON_IDS.indexOf(s.id), 0);
     else this.item.setFrame(PICKUPS[s.id].frame, 0);
   }
 
@@ -83,6 +85,7 @@ export class ItemStand {
     const s = this.slot;
     if (s.kind === 'relic') return this.blind ? BLIND_INFO : RELICS[s.id];
     if (s.kind === 'curio') return curioInfo(this.game, s.item);
+    if (s.kind === 'weapon') return { name: WEAPON_DEFS[s.id].name, flavour: WEAPON_DEFS[s.id].flavour + ' (A WEAPON: IT TAKES THE PLACE OF YOURS)' };
     return null;
   }
 
@@ -143,6 +146,18 @@ export class ItemStand {
         s.price = 0;
         s.hearts = 0;
       } else s.gone = true;
+    } else if (s.kind === 'weapon') {
+      const old = pl.equipWeapon(s.id);
+      g.hud.banner(WEAPON_DEFS[s.id]);
+      g.audio.play('relic');
+      g.audio.play((WEAPON_DEFS[s.id].sound) || 'sword', 0.8);
+      g.effects.relicBurst(this.x, this.y + 18);
+      if (old) {
+        s.id = old; // your old weapon waits on the pedestal, in case you want it back
+        s.price = 0;
+        s.hearts = 0;
+      } else s.gone = true;
+      if (s.choiceOf) for (const other of s.choiceOf) other.gone = true;
     } else if (s.kind === 'relic') {
       const swapped = pl.addRelic(s.id);
       g.hud.banner(RELICS[s.id]); // (taking it reveals it, even under the Omen of the Blind)

@@ -3,6 +3,7 @@
 // atmosphere particles, torch light, enemy pools and bosses here.
 
 import { CHAPTERS, SPECIAL_GRADES } from './palettes.js';
+import { SECRET_BOSS_IDS } from './bosses4.js';
 
 export const CHAPTER_ORDER = ['cells', 'catacombs', 'hollow', 'halls'];
 export const FLOORS_PER_CHAPTER = 2;
@@ -74,9 +75,38 @@ export const CHAPTER_INFO = {
   },
 };
 
+// The secret realms: found down a Sealed Stair hidden in a secret room. Each is a short floor of
+// its own creatures in borrowed room shapes, with one of five secret bosses at the bottom - and a
+// weapon for whoever beats it. Its trapdoor leads on to the next ordinary floor.
+export const REALMS = {
+  cistern: {
+    enemies: 'cistern', layouts: 'cistern', name: 'The Drowned Cistern', tileset: 'cistern', secret: true,
+    grade: CHAPTERS.cistern.grade, ambient: CHAPTERS.cistern.ambient, atmosphere: 'fog',
+    torch: { color: 0x60d0e0, flame: 'flame_witch' }, bosses: SECRET_BOSS_IDS,
+  },
+  chapel: {
+    enemies: 'chapel', layouts: 'chapel', name: 'The Starless Chapel', tileset: 'chapel', secret: true,
+    grade: CHAPTERS.chapel.grade, ambient: CHAPTERS.chapel.ambient, atmosphere: 'dust',
+    torch: { color: 0xb070ff, flame: 'flame_witch' }, bosses: SECRET_BOSS_IDS,
+  },
+  forge: {
+    enemies: 'forge', layouts: 'forge', name: "The First King's Forge", tileset: 'forge', secret: true,
+    grade: CHAPTERS.forge.grade, ambient: CHAPTERS.forge.ambient, atmosphere: 'embers',
+    torch: { color: 0xff9040, flame: 'flame' }, bosses: SECRET_BOSS_IDS,
+  },
+};
+Object.assign(CHAPTER_INFO, REALMS);
+
+/** Which secret realm lies under a floor (by depth). */
+export function realmForFloor(n) {
+  if (n < 2 || n > 7) return null;
+  return n <= 3 ? 'cistern' : n <= 5 ? 'chapel' : 'forge';
+}
+
 /** How big a floor is generated (the throne and the vault are short). */
 export function floorSize(key, n) {
   if (key === 'throne') return 2;
+  if (REALMS[key]) return 2;
   if (key === 'vault') return 1;
   return n;
 }

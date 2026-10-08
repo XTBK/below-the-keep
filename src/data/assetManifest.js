@@ -1,3 +1,7 @@
+import * as B8 from '../render/art/bossesArt8.js'; // the secret bosses
+import * as E5 from '../render/art/enemiesArt5.js'; // the secret bestiary
+import { weaponIcon } from '../render/art/weaponIcons.js';
+import { WEAPON_IDS } from './weapons.js';
 // Every sprite sheet in the game, by name.
 //
 // To REPLACE generated art with your own:
@@ -78,6 +82,7 @@ export const ASSETS = {
 
   // --- Items (relic icons follow the order of RELIC_IDS in src/data/items.js) ---
   relics: { frameW: 16, frameH: 16, cols: RELIC_IDS.length, rows: 1, generate: (c) => relicIcon(c) },
+  weapons: { frameW: 16, frameH: 16, cols: WEAPON_IDS.length, rows: 1, generate: (c) => weaponIcon(c) }, // found weapons
   // curios: 0-9 trinkets, 10-19 scrolls, 20-29 potion colours, 30-32 Seal Fragments, 33 journal page
   curios: { frameW: 16, frameH: 16, cols: CURIO_FRAMES, rows: 1, generate: (c) => curioFrame(c) },
   // pickups: 0 penny, 1 purse, 2 heart, 3 half heart, 4 bomb, 5 key
@@ -209,6 +214,15 @@ const E3_SHEETS = {
   ember: [14, 14, 11, E3.emberFrame, E3.EMBER_ANIMS],
   bannerman: [32, 44, 11, E3.bannermanFrame, E3.BANNERMAN_ANIMS],
 };
+// the secret bestiary
+Object.assign(E3_SHEETS, {
+  drowned: [30, 34, 11, E5.drownedFrame, E5.stdAnims(5)],
+  eel: [36, 28, 11, E5.eelFrame, E5.stdAnims(6)],
+  nun: [26, 36, 11, E5.nunFrame, E5.stdAnims(5)],
+  acolyte: [28, 34, 11, E5.acolyteFrame, E5.stdAnims(6)],
+  bellows: [26, 26, 11, E5.bellowsFrame, E5.stdAnims(9)],
+  anvilknight: [36, 40, 11, E5.anvilknightFrame, E5.stdAnims(4)],
+});
 for (const [key, [w, h, cols, generate, anims]] of Object.entries(E3_SHEETS)) {
   ASSETS[key] = { frameW: w, frameH: h, cols, rows: 2, generate, anims, selfLight: 0x8a / 255 };
 }
@@ -236,6 +250,14 @@ const B3_SHEETS = {
   ashwing: [96, 80, B6.ashwingFrame],
   burnedqueen: [64, 72, B6.burnedqueenFrame],
 };
+// the secret bosses
+Object.assign(B3_SHEETS, {
+  leviathan: [96, 80, B8.leviathanFrame],
+  mirrorqueen: [56, 72, B8.mirrorqueenFrame],
+  firstking: [64, 72, B8.firstkingFrame],
+  organist: [80, 72, B8.organistFrame],
+  facelesssaint: [64, 80, B8.facelesssaintFrame],
+});
 // the third roster
 Object.assign(B3_SHEETS, {
   turnkey: [64, 64, B7.turnkeyFrame],
@@ -259,6 +281,7 @@ Object.assign(ASSETS, {
   dice_table: { frameW: 40, frameH: 32, cols: 2, rows: 1, generate: (c) => I3.diceTableFrame(c) },
   beggar: { frameW: 24, frameH: 32, cols: 2, rows: 1, generate: (c) => I3.beggarFrame(c) },
   war_banner: { frameW: 20, frameH: 40, cols: 2, rows: 1, generate: (c) => I3.warBannerFrame(c) },
+  sealed_stair: { frameW: 48, frameH: 40, cols: 2, rows: 1, generate: (c) => I3.sealedStairFrame(c) }, // the way down to a secret realm
   anvil: { frameW: 36, frameH: 30, cols: 3, rows: 1, generate: (c) => I3.anvilFrame(c) }, // the Blacksmith's Anvil: cold, glowing, spent
 });
 

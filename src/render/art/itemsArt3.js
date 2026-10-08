@@ -378,3 +378,27 @@ export function anvilFrame(k) {
   p.outline(S.outline);
   return p;
 }
+
+/** A sealed stair down to a secret realm: worn steps into the dark, ringed with glowing runes. */
+export function sealedStairFrame(k) {
+  const p = new Painter(48, 40);
+  // the rim: slabs of old stone around a dark mouth
+  p.ellipse(24, 22, 22, 15, IRON.slice(1, 5), 2);
+  p.ellipse(24, 23, 17, 11, ['#040306', '#08060c', '#0e0a14'], 1, false);
+  // steps going down into it
+  for (let s = 0; s < 5; s++) {
+    const w = 15 - s * 2.6;
+    const y = 15 + s * 3;
+    p.rect(Math.round(24 - w), y, Math.round(w * 2), 2, ['#3a3640', '#2c2832', '#201d26', '#16141a', '#0e0c12'][s], 1.6 - s * 0.3);
+  }
+  // runes around the rim, pulsing (two frames)
+  for (let a = 0; a < 12; a++) {
+    const t = (a / 12) * Math.PI * 2;
+    const x = 24 + Math.cos(t) * 20;
+    const y = 22 + Math.sin(t) * 13.5;
+    const on = (a + k) % 2 === 0;
+    p.lit(x, y, on ? '#c070ff' : '#7040b0', 2.4, on ? 1.6 : 0.9);
+  }
+  p.outline(S.outline);
+  return p;
+}
