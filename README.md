@@ -228,8 +228,10 @@ Any key moves on, Esc skips; they can be switched off in Settings (`src/ui/Cutsc
 
 ### Putting it on itch.io
 
-Everything is in `itch/`: the browser build (`below-the-keep-web.zip`), the cover image, and `ITCH_PAGE.md` with the
-page text, tags and the five-minute upload steps. Rebuild the zip with `npm run build:itch` (it uses relative paths,
+Everything is in `itch/`: the browser build (`below-the-keep-web.zip`), the cover (630 x 500), a header banner
+(960 x 300), a 23-second trailer GIF (plus a lighter backup), eight 1280 x 720 screenshots in upload order, and
+`ITCH_PAGE.md` with the page text, tags, theme colours and the upload steps. The trailer and screenshots are recorded
+straight from the game (staged scenes, a bot at the controls, damage numbers off, a light brightness lift). Rebuild the zip with `npm run build:itch` (it uses relative paths,
 which itch needs) and zip the contents of `dist-itch/`. The itch copy uses the website's Daily Descent board.
 
 ### Turning on the Daily Descent leaderboard

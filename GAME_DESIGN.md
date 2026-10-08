@@ -778,3 +778,12 @@ setting (`VISUAL.calm`); the title castle redrawn symmetrical with soft clouds.
   Chamber, the Octagon, the Cross, the Diamond, the Pillared Ring, Twin Pillars, the Wedge, the Spire, the Hourglass
   (the last three only fit rooms with doors top and bottom; `connects()` sees to that). Candles light their corners.
 - Fixed: the Frozen Deep's snow atmosphere asked for a missing glow preset every frame.
+
+### itch.io page kit
+
+- `itch/`: cover, header banner, trailer GIF (480 x 360, 20 fps, 4.5 MB) and a 360-wide backup (2.2 MB), eight
+  screenshots, and `ITCH_PAGE.md` (fields, description, theme colours, upload steps). `public/og-image.png` redrawn
+  with the new castle, the moon and all six heroes.
+- Recorded from the live game: the real loop is paused and stepped by hand (60 ticks a second), each scene seeded so it
+  plays out the same every time, the run bot playing. Encoded in the page with one palette per shot and only the
+  pixels that visibly changed per frame, which is what keeps 23 seconds under 5 MB.
