@@ -66,7 +66,7 @@ export const ENCOUNTERS = {
   },
 
   shrine: {
-    name: "The Crown's Echo",
+    name: "The Crown's Whisper",
     look: ['idol', 0, 0],
     text: "A shrine of black iron, warm to the touch. The Crown's voice is very close: 'TAKE WHAT YOU NEED. WE CAN SETTLE LATER.'",
     options: [

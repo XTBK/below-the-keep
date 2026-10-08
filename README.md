@@ -146,7 +146,7 @@ Now and then a floor has **a quiet room** with no fight in it - just someone (or
 never the same twice in a run:
 
 - **A Dying Knight**: give him a heart of your health for pennies and a key, or take his sword (a weapon) and his curse.
-- **The Crown's Echo**: take its rare relic (and the next floor is cursed), smash it with a bomb, or walk away.
+- **The Crown's Whisper**: take its rare relic (and the next floor is cursed), smash it with a bomb, or walk away.
 - **A Locked Cell**: spend a key on the stranger inside. Usually grateful. Not always.
 - **Beatrix's Candle**: blow it out (a key and embers - and in Stalked mode she loses your trail), or let it heal you.
 - **A Mapmaker's Satchel**: Wynn's maps (the floor revealed) or her coins.

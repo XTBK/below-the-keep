@@ -201,7 +201,7 @@ export class Game {
     this.loreGiven = false;
     this.beatrixAnnounced = false;
     this.encountersSeen = new Set();
-    this.omenOwed = false; // the Crown's Echo: its gift curses the next floor
+    this.omenOwed = false; // the Crown's Whisper: its gift curses the next floor
     this.embersBanked = 0;
     this.prisonerFreed = null;
     this.inVault = false; // on the hidden floor under the rug
