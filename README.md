@@ -1,6 +1,8 @@
 # Below the Keep
 
 A top-down roguelike dungeon shooter in a dark medieval world. Built with Three.js + Vite.
+
+**▶ Play it in your browser: https://below-the-keep.vercel.app** (keyboard, gamepad, or touch on a phone held sideways)
 The full design lives in [GAME_DESIGN.md](GAME_DESIGN.md).
 
 ## Run it
