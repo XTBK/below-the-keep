@@ -7,6 +7,7 @@ import { PRISONERS, PRISONER_IDS, rescued, rescue, forgeable } from '../data/pri
 import { NPC_ORDER } from '../render/art/gatehouseArt.js';
 import { WEAPON_DEFS, WEAPON_IDS, starterWeapon } from '../data/weapons.js';
 import { Save } from '../core/Save.js';
+import { bank } from '../data/embers.js';
 
 export const GATEHOUSE_LAYOUT = {
   name: 'The Gatehouse',
@@ -15,7 +16,7 @@ export const GATEHOUSE_LAYOUT = {
     '.............',
     '.............',
     '.............',
-    '.............',
+    '...B.........',
     'b...........b',
     'bb.........bb',
   ],
@@ -155,9 +156,36 @@ class TheWayDown {
   }
 }
 
+/** The Hearth: where embers are spent (opens the Hearth menu). */
+class Hearth {
+  constructor(room) {
+    this.game = room.game;
+    const c = room.slotCenter(4, 5);
+    this.x = c.x;
+    this.y = c.y;
+    this.armed = true;
+  }
+
+  update() {
+    const g = this.game;
+    const pl = g.player;
+    const d = Math.hypot(pl.x - this.x, pl.y - this.y);
+    if (d < 50) g.hud.setHover({ name: 'The Hearth', flavour: `Embers brought home: ${bank()}. Touch the fire to spend them.` }, 0);
+    if (touchable(this, d, 30, 52) && g.state === 'play' && !g.paused) {
+      g.paused = true;
+      g.menus.reset(null);
+      g.menus.open('hearth');
+      g.touch.setPaused(true);
+      g.hud.markDirty();
+      g.audio.play('menuChoose');
+    }
+  }
+}
+
 /** Fill the Gatehouse room with its people and its stairs. */
 export function furnishGatehouse(room) {
   const out = PRISONER_IDS.map((id) => new GatehouseSpot(room, id));
+  out.push(new Hearth(room));
   out.push(new TheWayDown(room));
   if (rescued('archivist')) out.push(new ShortcutStair(room));
   return out;

@@ -1,3 +1,4 @@
+import { rank } from '../data/embers.js';
 import { rescued } from '../data/prisoners.js';
 import { ROUTES } from '../data/routes.js';
 import { PLAYER, FEEL } from '../data/config.js';
@@ -65,9 +66,11 @@ export class Player {
     // Hollis the Smith re-forges the weapon you chose at the Gatehouse
     const forged = !game.daily && rescued('smith') && Save.data.forged && Save.data.forged[ch.weapon];
     if (forged && WEAPON_DEFS[forged] && WEAPON_DEFS[forged].class === ch.weapon) this.weaponId = forged;
-    this.prayer = !game.daily && rescued('priest'); // Sister Ottilie's prayer: rise once
+    const meta = !game.daily; // the Gatehouse's help (never on the Daily Descent)
+    this.prayer = meta && rescued('priest') ? (rank('prayer') >= 2 ? 2 : 1) : 0; // Sister Ottilie's prayer: rise again
+    this.embers = 0; // embers gathered this run (banked at the Gatehouse when it ends)
     // the Oath of Glass: just two hearts
-    const hearts = game.oath('glass') ? Math.min(ch.halfHearts, 4) : ch.halfHearts;
+    const hearts = game.oath('glass') ? Math.min(ch.halfHearts, 4) : ch.halfHearts + (meta ? rank('heart') * 2 : 0); // the Kindled Heart
     this.halfHearts = hearts;
     this.baseMaxHalfHearts = hearts;
     this.pennies = ch.pickups.pennies;
@@ -78,6 +81,9 @@ export class Player {
       this.bombs++;
       this.keys++;
       this.pennies += 5;
+      // Fuller Stores
+      if (rank('stores') >= 1) this.pennies += 5;
+      if (rank('stores') >= 2) this.bombs++;
     }
     this.trinket = ch.trinket || null; // trinket id
     this.consumable = ch.consumable ? { ...ch.consumable } : null; // { type: 'scroll' | 'potion', id }
@@ -103,6 +109,7 @@ export class Player {
     this.buffs = { haste: 0, drum: 0, chalice: 0, rage: 0, warding: 0, confusion: 0 };
     // what potions did to him, for good (counted like one more relic)
     this.potionBonus = { stats: { damage: 0, luck: 0 }, statsMult: { moveSpeed: 1 }, mods: { size: 0 } };
+    if (!game.daily) this.potionBonus.stats.damage += 0.25 * rank('steel'); // Tempered Steel
 
     const scene = game.renderer.scene;
     this.shadow = new Sprite(scene, 'shadows', { shadow: true });
@@ -183,6 +190,7 @@ export class Player {
       this._looks = key;
       const sheet = buildWrenSheet(looks, this.character.recolor);
       this.sprite.swapSheet(sheet.color, sheet.normal);
+      this.portraitCanvas = sheet.color; // the HUD cuts the hero's face from this
     }
   }
 
@@ -342,8 +350,8 @@ export class Player {
     g.tookDamageThisFloor = true;
     if (this.halfHearts === 0 && this.prayer) {
       // Sister Ottilie's prayer is answered
-      this.prayer = false;
-      this.halfHearts = Math.min(this.maxHalfHearts, 4);
+      this.prayer--;
+      this.halfHearts = Math.min(this.maxHalfHearts, rank('prayer') >= 1 ? 6 : 4);
       this.invuln = 2.5;
       g.audio.play('holy');
       g.effects.holySplash(this.x, this.y, 60);

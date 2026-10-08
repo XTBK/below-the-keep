@@ -25,7 +25,9 @@ import { BOSS_FX, BOSS_ROSTER, bossHome } from '../data/bosses.js';
 import { arenaFor } from '../data/rooms/shapedLayouts.js';
 import { ROUTES, rollRoutes } from '../data/routes.js';
 import { gatehouseFloor } from '../world/Gatehouse.js';
+import { Beatrix } from '../world/Beatrix.js';
 import { PRISONERS, PRISONER_IDS, rescued } from '../data/prisoners.js';
+import { EMBERS, rank } from '../data/embers.js';
 import { enemyScale, bossScale, EARLY_BOSS_LIMIT, TIER_INFO, bossTier } from '../data/difficulty.js';
 import { OMENS, OMEN_IDS, OMEN_CHANCE, OMEN_FX } from '../data/omens.js';
 import { Familiars } from '../items/Familiars.js';
@@ -178,6 +180,9 @@ export class Game {
     this.rng = rngFromSeed(seed);
     this.floorNumber = this.daily ? 1 : 0; // 0: the Gatehouse, home (the Daily Descent starts in the Keep)
     this.prisonerHere = null; // { roomId, id }: a prisoner in chains on this floor
+    this.loreGiven = false;
+    this.beatrixAnnounced = false;
+    this.embersBanked = 0;
     this.prisonerFreed = null;
     this.inVault = false; // on the hidden floor under the rug
     this.runTime = 0;
@@ -209,6 +214,7 @@ export class Game {
     Save.data.settings.character = this.characterId;
     // the Daily Descent: everyone plays the same hero today (your own pick is kept for next time)
     this.daily = opts.daily ? { date: daily.date } : null;
+    this.mode = !this.daily && opts.mode === 'stalked' ? 'stalked' : 'descent'; // Stalked: Beatrix hunts you
     this.heroBeforeDaily = this.daily ? this.characterId : null;
     if (this.daily) this.characterId = daily.hero;
     this.menus.reset(null);
@@ -260,7 +266,14 @@ export class Game {
     this.realmEntrance = this._rollRealmEntrance(this.rng.fork(`realm${tag}`));
     this.prisonerHere = this._rollPrisoner(this.rng.fork(`prisoner${tag}`));
     // Wynn the Cartographer's maps: the boss, armoury and merchant are known from the start
-    if (!this.daily && rescued('cartographer')) for (const r of this.floor.rooms) if (['boss', 'armoury', 'merchant'].includes(r.type)) r.seen = true;
+    if (!this.daily && rescued('cartographer')) {
+      const eye = rank('eye'); // Keen Eye: secret rooms too, then everything
+      for (const r of this.floor.rooms) {
+        if (['boss', 'armoury', 'merchant'].includes(r.type)) r.seen = true;
+        if (eye >= 1 && (r.type === 'secret' || r.type === 'supersecret')) r.seen = true;
+        if (eye >= 2) r.seen = true;
+      }
+    }
     this._prepareAltar();
     this.floorBoss = this._drawBoss(this.rng.fork(`boss${tag}`));
     // the boss fights in an arena that suits it
@@ -288,10 +301,18 @@ export class Game {
     this.onEnteredRoom();
     onFloorStart(this);
     this._arriveByRoute();
+    this._summonBeatrix();
+    // Old Knowledge II: every run starts with a relic
+    if (!this.daily && !this.loreGiven && rank('lore') >= 2 && !this.realm && !this.inVault) {
+      this.loreGiven = true;
+      const id = this.pickRelic('armoury', this.rng.fork('lore'));
+      const sc = this.room.slotCenter(5, 3);
+      if (id) this.room.addRewardPedestal(sc.x, sc.y, { kind: 'relic', id, price: 0, gone: false });
+    }
     if (this.shortcutGift) {
-      // down Ambrose's stair: a relic for the road
+      // down Ambrose's stair: a relic for the road (a rare one, with Old Knowledge)
       this.shortcutGift = false;
-      const id = this.pickRelic('armoury', this.rng.fork('shortcut'), { minQuality: 2 });
+      const id = this.pickRelic('armoury', this.rng.fork('shortcut'), { minQuality: rank('lore') >= 1 ? 3 : 2 });
       const sc = this.room.slotCenter(7, 3);
       if (id) this.room.addRewardPedestal(sc.x, sc.y, { kind: 'relic', id, price: 0, gone: false });
     }
@@ -529,6 +550,7 @@ export class Game {
     this.prisonerHere = null;
     this.floorBoss = null;
     this.floor = gatehouseFloor();
+    this._summonBeatrix(); // (she never comes to the Gatehouse)
     this.room = this._makeRoom(this.floor.rooms[0]);
     const c = this.room.slotCenter(7, 4);
     if (!this.player) {
@@ -541,6 +563,14 @@ export class Game {
     this._snapCamera();
     this.onEnteredRoom();
     this.familiars.warp();
+  }
+
+  /** The Stalked mode: Beatrix comes to every floor of the Keep. */
+  _summonBeatrix() {
+    if (this.beatrix) this.beatrix.dispose();
+    this.beatrix = null;
+    this.dread = 0;
+    if (this.mode === 'stalked' && this.chapterKey !== 'gatehouse' && this.floorNumber > 0) this.beatrix = new Beatrix(this);
   }
 
   /** Now and then, a prisoner still in chains (one you haven't freed yet). */
@@ -752,6 +782,7 @@ export class Game {
   /** Mark rooms as visited / seen for the minimap and decide whether this room locks. */
   onEnteredRoom() {
     const data = this.room.data;
+    if (this.beatrix && this.player) this.beatrix.onRoomChange(this.player.x, this.player.y);
     if (this.player) this.player.shieldReady = true; // the Saint's Shroud is ready again
     this.familiars.warp();
     data.visited = true;
@@ -876,6 +907,11 @@ export class Game {
       }
       if (room.data.type === 'boss') {
         Save.data.stats.bossesBeaten++;
+        // embers: more the deeper you are and the tougher the boss; a clean floor earns extra
+        const tier = this.bossTierOf(this.bossForFloor());
+        let earned = EMBERS.boss + this.floorNumber * EMBERS.perFloor + tier * EMBERS.perTier + (this.realm ? EMBERS.realm : 0);
+        if (!this.tookDamageThisFloor) earned += EMBERS.flawless;
+        this.earnEmbers(earned, !this.tookDamageThisFloor ? 'FLAWLESS' : null);
         Save.write();
         if (this.chapterKey === 'throne') this._throneCleared(); // the Mad King falls
         else {
@@ -913,14 +949,35 @@ export class Game {
     }
   }
 
-  /** A run ended (won or lost): the Daily Descent posts its score. */
+  /** A run ended (won or lost): the Daily Descent posts its score; embers go home. */
   runEnded(won) {
     if (this.daily) submitDaily(this, won);
+    this.embersBanked = 0;
+    if (!this.daily && this.player && this.player.embers > 0) {
+      this.embersBanked = this.player.embers;
+      Save.data.embers = (Save.data.embers || 0) + this.player.embers;
+      this.player.embers = 0;
+    }
+  }
+
+  /** Embers found (scaled by heat and by Beatrix's hunt). */
+  earnEmbers(n, why = null) {
+    if (this.daily || !this.player || n <= 0) return;
+    const k = (1 + (this.heat || 0) * EMBERS.heatBonus) * (this.mode === 'stalked' ? EMBERS.stalked : 1);
+    const got = Math.max(1, Math.round(n * k));
+    this.player.embers += got;
+    this.hud.emberFlash(got, why);
+  }
+
+  /** The embers you'd bring home right now (shown at the Gatehouse and at the end). */
+  get embersShown() {
+    return !this.daily;
   }
 
   /** The run is won. */
   win() {
     if (this.state !== 'play') return;
+    this.earnEmbers(EMBERS.victory);
     this.state = 'victory';
     Save.data.stats.victories++;
     // the best heat beaten, per hero
@@ -1021,6 +1078,7 @@ export class Game {
     this.pickups.sync();
     this.bombs.sync();
     this.enemies.sync(this.time);
+    if (this.beatrix) this.beatrix.sync();
     for (const k in this.particles) this.particles[k].sync();
     this.hud.tick(rawDt, this);
     this.hud.draw(this);
@@ -1075,6 +1133,7 @@ export class Game {
     this.pickups.update(dt);
     this.bombs.update(dt);
     this.room.update(dt);
+    if (this.beatrix && this.state === 'play') this.beatrix.update(dt);
     if (this.state === 'play') {
       if (this.player.dead && trySecondWind(this)) {
         // the Phoenix Feather burns, and Wren gets back up
@@ -1155,7 +1214,7 @@ export class Game {
       return true;
     }
     if ((this.state === 'dead' && this.deathTimer > 1.6) || this.state === 'victory') {
-      this.startRun(randomSeedString());
+      this.startRun(randomSeedString(), { mode: this.mode });
       return true;
     }
     return false;
@@ -1247,7 +1306,7 @@ export class Game {
 
     if (this.state === 'dead' || this.state === 'victory') {
       const ready = this.state === 'victory' || this.deathTimer > 1.6;
-      if (ready && (input.pressed('newRun') || input.pressed('confirm'))) this.startRun(randomSeedString());
+      if (ready && (input.pressed('newRun') || input.pressed('confirm'))) this.startRun(randomSeedString(), { mode: this.mode });
       if (ready && input.pressed('pause')) this._toTitle();
       return;
     }
@@ -1301,12 +1360,12 @@ export class Game {
   }
 
   /** Title screen: begin a run with the chosen character (if they're unlocked). */
-  _beginFromTitle() {
+  _beginFromTitle(opts = {}) {
     if (!Save.data.unlocks.characters.includes(this.characterId)) {
       this.audio.play('deny');
       return;
     }
-    this.startRun(this.pendingSeed || randomSeedString());
+    this.startRun(this.pendingSeed || randomSeedString(), opts);
   }
 
   _cycleCharacter(d) {
@@ -1346,8 +1405,8 @@ export class Game {
   }
 
   // --- what the menus call ---
-  beginFromTitle() {
-    this._beginFromTitle();
+  beginFromTitle(opts = {}) {
+    this._beginFromTitle(opts);
   }
 
   openSeedEntry() {
@@ -1371,7 +1430,7 @@ export class Game {
   }
 
   restartRun() {
-    this.startRun(randomSeedString());
+    this.startRun(randomSeedString(), { mode: this.mode });
   }
 
   toTitle() {

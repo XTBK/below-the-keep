@@ -1,3 +1,4 @@
+import { EMBERS } from '../data/embers.js';
 import { ENEMIES, CHAMPION, ENEMY_FX } from '../data/enemies.js';
 import { COMBAT } from '../data/config.js';
 import { Sprite, Animator, LAYER } from '../render/Sprite.js';
@@ -359,7 +360,10 @@ export class Enemy {
     }
     if (this.gildTime > 0) this.game.pickups.spawn(this.room, 'penny', this.x, this.y);
     // champions always drop something good
-    if (this.champion) this.game.dropFrom(CHAMPION_DROPS, this.x, this.y, 2);
+    if (this.champion) {
+      this.game.dropFrom(CHAMPION_DROPS, this.x, this.y, 2);
+      this.game.earnEmbers(EMBERS.champion);
+    }
   }
 
   release() {

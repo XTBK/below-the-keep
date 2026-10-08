@@ -23,7 +23,8 @@
 | E4 | Smooth hits, relic quality + anvil + choices, oaths, Daily Descent, 40 bosses with ranks, redrawn bosses, real menus, castle title | Done |
 | E5 | No stutter, readable fights (attack budget, glowing shots, brighter Hollow and Halls), story cutscenes, new obstacles, 100 relics, real beams and fire, balance pass, itch.io + link preview | Done |
 | E6 | Found weapons (18 + 3 starters) and three secret realms with 6 secret enemies and 5 secret bosses | Done |
-| E7 | Its own shape: the Gatehouse and five prisoners to free, the fork in the road, shaped rooms, water, boss arenas | **Done — awaiting OK** |
+| E7 | Its own shape: the Gatehouse and five prisoners to free, the fork in the road, shaped rooms, water, boss arenas | Done |
+| E8 | Its own face: the ledger HUD, embers and the Hearth, the Stalked mode (Beatrix the Wandering); snappier dodges | **Done — awaiting OK** |
 
 After each phase: runs with no console errors, explain how to test, STOP and wait for OK.
 
@@ -614,7 +615,7 @@ rattle, pounding, grunt) and shield bash (booming clang).
   the First King's Shade, the Bone Organist, the Faceless Saint - drawn at random, never twice in a run. Their spoils:
   a weapon for your class and a rare-or-better relic, both kept.
 
-### Expansion 7 — its own shape (awaiting OK)
+### Expansion 7 — its own shape — done
 
 Three systems so a run feels like this game's own, not a borrowed loop.
 
@@ -637,3 +638,28 @@ Three systems so a run feels like this game's own, not a borrowed loop.
   rolling and for walking enemies; rendered as a pool with a rim, flat normals). Walkways between two pits get rope
   bridge planks. Six boss arenas chosen by `arenaFor(boss, chapter)` (some bosses have a fixed home, otherwise a
   stable pick from the chapter's list) and written into the boss room after the boss is drawn.
+
+### Expansion 8 — its own face (awaiting OK)
+
+- **The ledger HUD** (`ui/Hud.js` `_drawPlayHud`): the 80 px margins either side of the 480 px room become stone
+  panels with an iron edge (`sidePanel`). Left, top to bottom: a portrait in an iron medallion (the hero's own sheet,
+  `Player.portraitCanvas`) beside the weapon plaque; VIGOR (`vigorSegment`: one segment per heart, halves fill
+  half, iron in steel, Omen of the Unknown in grey, the Saint's Shroud as a gold segment); the supplies ledger
+  (pennies, bombs, keys, embers with a +N flash); the active relic plaque with charge pips, trinket and Q slots;
+  the Seal Fragments. Right: minimap, floor name and omen wrapped to the panel, STALKED, relics (newest kept in
+  view). Banners and the Beatrix vignette stay inside the room area.
+- **Embers** (`data/embers.js`): per boss `3 + floor + 2 x skulls` (+6 in a realm), +4 for a floor without damage,
+  +1 per champion, +25 for a win; x(1 + 0.1 x heat), x1.5 when Stalked; none on the Daily Descent. `Game.earnEmbers`,
+  banked into `Save.data.embers` by `runEnded` (shown on the death and victory screens). Spent at the Hearth (a
+  brazier in the Gatehouse; the `hearth` menu screen) on `UPGRADES` (ranks in `Save.data.upgrades`); each needs its
+  teacher freed. Applied in `Player` (hearts, damage, stores, prayer) and `Game.startFloor` (maps, relics).
+  Full mastery costs about 1,000 embers: a death on floor 4 brings home ~35, a win ~180.
+- **Stalked** (`world/Beatrix.js`, art `render/art/beatrixArt.js`, sounds heartbeat / whisper / sting / creak /
+  beatrixHum): `Game.mode = 'stalked'` from the title. States: dormant (22 s, less deeper) -> roaming (one room
+  closer every 8 s, less deeper; never into a living boss's room) -> arriving (a creak, 1.8 s) -> hunting (drifts
+  through everything at 34 + 3.5/floor px/s; blinks behind you if you keep 150 px away for 7 s; touch = 2 hearts,
+  then gone 14 s) -> gone. Follows through doors 2.8 s behind; a bomb banishes her 22 s. `dread` (0..1 by
+  distance) drives the heartbeat rate, whispers, ambient light (-40%) and the HUD vignette. Unlit sprite that
+  flickers in as she arrives.
+- **Dodge feel**: the roll and the shield charge burst out and ease off, steer a little, buffer an early press
+  (0.2 s); the roll tumbles with a hop; cooldowns 0.42 s (roll) and 0.68 s (charge).

@@ -108,6 +108,82 @@ function framedBox(ctx, x, y, w, h) {
   ctx.fillRect(x + 1, y + 1, w - 2, 1);
 }
 
+/** A side panel: dark stone, an iron edge toward the room, rivets down it. */
+function sidePanel(ctx, x, w, edge) {
+  ctx.fillStyle = 'rgba(9,8,11,0.9)';
+  ctx.fillRect(x, 0, w, RENDER.height);
+  ctx.fillStyle = 'rgba(255,255,255,0.022)';
+  for (let yy = 8; yy < RENDER.height; yy += 12) ctx.fillRect(x + 2, yy, w - 4, 1);
+  const ex = edge === 'right' ? x + w - 3 : x;
+  ctx.fillStyle = '#24242c';
+  ctx.fillRect(ex, 0, 3, RENDER.height);
+  ctx.fillStyle = '#4a4a56';
+  ctx.fillRect(edge === 'right' ? ex : ex + 2, 0, 1, RENDER.height);
+  for (let yy = 20; yy < RENDER.height; yy += 44) {
+    ctx.fillStyle = '#6a6a76';
+    ctx.fillRect(ex + 1, yy, 1, 1);
+  }
+}
+
+/** A small framed plaque for an icon. */
+function plaque(ctx, x, y, w, h, rim) {
+  ctx.fillStyle = '#0b0a0d';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = rim;
+  ctx.fillRect(x + 1, y + 1, w - 2, 1);
+  ctx.fillRect(x + 1, y + h - 2, w - 2, 1);
+  ctx.fillRect(x + 1, y + 1, 1, h - 2);
+  ctx.fillRect(x + w - 2, y + 1, 1, h - 2);
+  ctx.fillStyle = '#16151b';
+  ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+}
+
+/** One segment of the vigor bar (a heart's worth). */
+function vigorSegment(ctx, x, y, kind, time) {
+  const w = 10;
+  const h = 8;
+  ctx.fillStyle = '#0b0a0d';
+  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  const fill = (fx, fw, top, mid, bot) => {
+    ctx.fillStyle = mid;
+    ctx.fillRect(fx, y, fw, h);
+    ctx.fillStyle = top;
+    ctx.fillRect(fx, y, fw, 2);
+    ctx.fillStyle = bot;
+    ctx.fillRect(fx, y + h - 2, fw, 2);
+  };
+  ctx.fillStyle = '#2a1418';
+  ctx.fillRect(x, y, w, h);
+  if (kind === 'full') fill(x, w, '#ee6a6a', '#c02634', '#7a1420');
+  else if (kind === 'half') fill(x, 5, '#ee6a6a', '#c02634', '#7a1420');
+  else if (kind === 'iron') fill(x, w, '#d8dce6', '#8a8e9a', '#4a4e5a');
+  else if (kind === 'halfIron') {
+    ctx.fillStyle = '#16151b';
+    ctx.fillRect(x, y, w, h);
+    fill(x, 5, '#d8dce6', '#8a8e9a', '#4a4e5a');
+  } else if (kind === 'unknown') {
+    fill(x, w, '#5a5470', '#3a3448', '#26222f');
+    ctx.fillStyle = '#c8c0ff';
+    ctx.fillRect(x + 4, y + 2, 2, 2);
+    ctx.fillRect(x + 4, y + 5, 2, 1);
+  } else if (kind === 'shroud') {
+    const a = 0.7 + 0.3 * Math.sin(time * 4);
+    ctx.globalAlpha = a;
+    fill(x, w, '#fff0b0', '#e8c46c', '#9a7020');
+    ctx.globalAlpha = 1;
+  }
+}
+
+function emberIcon() {
+  return iconCanvas(12, 12, (p) => {
+    p.ellipse(6, 7, 4, 3.6, ['#5a1a08', '#a03a10', '#e06a20', '#ffb048'], 1);
+    p.px(6, 6, '#fff0a0');
+    p.px(5, 7, '#ffd060');
+    p.px(7, 3, '#ff9a30');
+    p.px(5, 2, '#e06a20');
+  });
+}
+
 const GOLD = '#e8c46c';
 const INK = '#e8e0d0';
 const DIM = '#8a8478';
@@ -132,6 +208,7 @@ export class Hud {
       penny: penny(),
       keg: keg(),
       key: key(),
+      ember: emberIcon(),
     };
     this.dirty = true;
     this.debugText = null;
@@ -158,9 +235,23 @@ export class Hud {
     this.dirty = true;
   }
 
+  /** Embers found: a little +N beside the count. */
+  emberFlash(n, why = null) {
+    this.emberN = this.emberT > 0 ? this.emberN + n : n;
+    this.emberWhy = why;
+    this.emberT = 2.2;
+    this.dirty = true;
+  }
+
   /** Once per frame, after the world has updated. */
   tick(dt, game) {
     this.time += dt;
+    if (this.emberT > 0) {
+      this.emberT -= dt;
+      this.dirty = true;
+    }
+    if (this.dreadFlash > 0) this.dreadFlash -= dt;
+    if (game.dread > 0.01 || this.dreadFlash > 0) this.dirty = true;
     this._dt = dt;
     const next = this._hoverNext;
     this._hoverNext = null;
@@ -225,108 +316,148 @@ export class Hud {
     const left = (W - (ROOM.wallSide * 2 + ROOM.cols * ROOM.tile)) / 2; // room's left edge on screen
     const p = state.player;
 
-    // active relic + charge bar
-    framedBox(ctx, 8, 6, 28, 28);
-    if (p.active) {
-      const ic = this._relicIcon(p.active.id);
-      ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, 14, 12, 16, 16);
-      const segs = p.active.max;
-      const segH = Math.floor(26 / segs);
-      for (let i = 0; i < segs; i++) {
-        const y = 33 - (i + 1) * segH;
-        ctx.fillStyle = '#0b0a0d';
-        ctx.fillRect(38, y, 6, segH);
-        ctx.fillStyle = i < p.active.charge ? (p.active.charge >= segs ? '#f0d880' : '#b8963c') : '#25262d';
-        ctx.fillRect(39, y + 1, 4, segH - 2);
+    // The Keep's ledger: two stone-and-iron side panels that frame the room. Left: who you are
+    // (portrait, weapon, vigor, supplies, what's in your hands). Right: where you are (map, floor,
+    // omen) and what you carry (relics).
+    const SIDE = Math.round(left);
+    // Beatrix near: the edges of the world go dark (and flash red when she's suddenly there)
+    if (state.dread > 0.01 || this.dreadFlash > 0) {
+      const cx = W / 2;
+      const cy = H / 2 + 10;
+      const g = ctx.createRadialGradient(cx, cy, 90 - state.dread * 40, cx, cy, 300);
+      g.addColorStop(0, 'rgba(6,0,3,0)');
+      g.addColorStop(1, `rgba(6,0,3,${(0.82 * state.dread).toFixed(3)})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(SIDE, 0, W - SIDE * 2, H);
+      if (this.dreadFlash > 0) {
+        ctx.fillStyle = `rgba(120,0,10,${(this.dreadFlash * 0.5).toFixed(3)})`;
+        ctx.fillRect(SIDE, 0, W - SIDE * 2, H);
       }
     }
-    if (!state.input.touchMode) drawText(ctx, 'SPACE', 22, 36, FAINT, { align: 'center', shadow: null });
+    sidePanel(ctx, 0, SIDE, 'right');
+    sidePanel(ctx, W - SIDE, SIDE, 'left');
 
-    // hearts (6 per row)
-    const full = Math.floor(p.halfHearts / 2);
-    const half = p.halfHearts % 2;
+    // --- the hero: a portrait in an iron medallion, the weapon at their side
+    this._drawPortrait(ctx, p, 24, 25);
+    plaque(ctx, 46, 11, 26, 26, p.weaponId ? '#8a6a3a' : '#3a3640');
+    if (p.weaponId) {
+      const ws = getSheet('weapons');
+      ctx.drawImage(ws.colorCanvas, WEAPON_IDS.indexOf(p.weaponId) * 16, 0, 16, 16, 51, 16, 16, 16);
+    } else drawText(ctx, 'SLING', 59, 21, FAINT, { align: 'center', shadow: null });
+
+    // --- vigor: one blood segment per heart (halves fill half), iron ones after
+    let y = 48;
+    drawText(ctx, 'VIGOR', 8, y, FAINT, { shadow: null });
+    y += 10;
     const containers = Math.ceil(p.maxHalfHearts / 2);
     const unknown = state.omen === 'unknown';
-    for (let i = 0; i < containers; i++) {
-      const kind = unknown ? 5 : i < full ? 0 : i === full && half ? 1 : 2;
-      ctx.drawImage(this.icons.hearts[kind], left + 2 + (i % 6) * 12, 6 + Math.floor(i / 6) * 11);
-    }
-    // iron hearts follow the red ones
     const iron = p.ironHalfHearts;
-    for (let k = 0; k < Math.ceil(iron / 2); k++) {
-      const i = containers + k;
-      const kind = unknown ? 5 : k * 2 + 1 === iron ? 4 : 3;
-      ctx.drawImage(this.icons.hearts[kind], left + 2 + (i % 6) * 12, 6 + Math.floor(i / 6) * 11);
-    }
-    // Saint's Shroud ready: a little gold mark after the hearts
-    if (p.perks.shield && p.shieldReady) {
-      const i = containers + Math.ceil(iron / 2);
-      ctx.fillStyle = '#f0d880';
-      ctx.fillRect(left + 6 + (i % 6) * 12, 10 + Math.floor(i / 6) * 11, 3, 5);
-      ctx.fillRect(left + 5 + (i % 6) * 12, 11 + Math.floor(i / 6) * 11, 5, 1);
-    }
+    const segs = [];
+    for (let i = 0; i < containers; i++) segs.push(unknown ? 'unknown' : p.halfHearts >= i * 2 + 2 ? 'full' : p.halfHearts === i * 2 + 1 ? 'half' : 'empty');
+    for (let k = 0; k < Math.ceil(iron / 2); k++) segs.push(unknown ? 'unknown' : k * 2 + 1 === iron ? 'halfIron' : 'iron');
+    if (p.perks.shield && p.shieldReady) segs.push('shroud');
+    segs.forEach((kind, i) => vigorSegment(ctx, 8 + (i % 6) * 11, y + Math.floor(i / 6) * 10, kind, this.time));
+    y += Math.ceil(segs.length / 6) * 10 + 8;
 
-    // consumables, down the left margin
-    const rows = [
-      [this.icons.penny, p.pennies],
-      [this.icons.keg, p.bombs],
-      [this.icons.key, p.keys],
+    // --- supplies: a short ledger
+    const ledger = [
+      [this.icons.penny, p.pennies, '#e0dccf'],
+      [this.icons.keg, p.bombs, '#e0dccf'],
+      [this.icons.key, p.keys, '#e0dccf'],
     ];
-    rows.forEach(([icon, n], i) => {
-      ctx.drawImage(icon, 10, 60 + i * 16);
-      drawText(ctx, String(n).padStart(2, '0'), 26, 62 + i * 16, '#d8d0c0');
+    if (state.embersShown) ledger.push([this.icons.ember, p.embers || 0, '#f0a848']);
+    ledger.forEach(([icon, n, color], i) => {
+      const ly = y + i * 14;
+      ctx.drawImage(icon, 9, ly - 2);
+      drawText(ctx, String(n).padStart(2, '0'), 26, ly + 1, color);
+      if (icon === this.icons.ember && this.emberT > 0) {
+        // embers just found: +N rises beside the count
+        ctx.globalAlpha = Math.min(1, this.emberT);
+        drawText(ctx, `+${this.emberN}`, 46, ly + 1 - Math.round((2.2 - this.emberT) * 4), '#ffd070');
+        if (this.emberWhy) drawText(ctx, this.emberWhy, 26, ly + 11 - Math.round((2.2 - this.emberT) * 4), '#e8c46c', { shadow: null });
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(8, ly + 11, 62, 1);
     });
+    y += ledger.length * 14 + 8;
 
-    // trinket, the Q slot (scroll / potion) and the Seal Fragments
+    // --- in hand: the active relic (with its charge), the trinket and the Q slot
+    plaque(ctx, 7, y, 26, 26, p.active && p.active.charge >= p.active.max ? '#c8a050' : '#4a4652');
+    if (p.active) {
+      const ic = this._relicIcon(p.active.id);
+      ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, 12, y + 5, 16, 16);
+      const n = p.active.max;
+      const segH = Math.max(2, Math.floor(26 / n));
+      for (let i = 0; i < n; i++) {
+        const sy = y + 26 - (i + 1) * segH;
+        ctx.fillStyle = '#0b0a0d';
+        ctx.fillRect(34, sy, 5, segH);
+        ctx.fillStyle = i < p.active.charge ? (p.active.charge >= n ? '#f0d880' : '#b8963c') : '#25262d';
+        ctx.fillRect(35, sy + 1, 3, segH - 2);
+      }
+    }
     const slot = (x, frame, label) => {
-      ctx.fillStyle = 'rgba(11,10,13,0.75)';
-      ctx.fillRect(x, 110, 18, 18);
-      ctx.strokeStyle = '#3a3640';
-      ctx.strokeRect(x + 0.5, 110.5, 17, 17);
+      plaque(ctx, x, y + 4, 18, 18, '#3e3a46');
       if (frame >= 0) {
         const ic = this._curioIcon(frame);
-        ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, x + 1, 111, 16, 16);
+        ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, x + 1, y + 5, 16, 16);
       }
-      if (label && !state.input.touchMode) drawText(ctx, label, x + 9, 131, FAINT, { align: 'center', shadow: null });
+      if (label && !state.input.touchMode) drawText(ctx, label, x + 9, y + 26, FAINT, { align: 'center', shadow: null });
     };
-    slot(8, p.trinket ? CURIO_FRAME.trinket(p.trinket) : -1, null);
-    slot(30, p.consumable ? curioFrame(state, p.consumable) : -1, 'Q');
+    slot(42, p.trinket ? CURIO_FRAME.trinket(p.trinket) : -1, null);
+    slot(61, p.consumable ? curioFrame(state, p.consumable) : -1, 'Q');
+    if (!state.input.touchMode) drawText(ctx, 'SPACE', 20, y + 30, FAINT, { align: 'center', shadow: null });
+    y += 40;
+    // the Seal Fragments
     p.seals.forEach((has, i) => {
       if (!has) return;
       const ic = this._curioIcon(CURIO_FRAME.seal(i));
-      ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, 52 + i * 9, 111, 16, 16);
+      ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, 8 + i * 12, y, 16, 16);
     });
 
-    // the weapon in hand, beside the active relic
-    if (p.weaponId) {
-      ctx.fillStyle = 'rgba(11,10,13,0.75)';
-      ctx.fillRect(44, 8, 18, 18);
-      ctx.strokeStyle = '#5a4a30';
-      ctx.strokeRect(44.5, 8.5, 17, 17);
-      const ws = getSheet('weapons');
-      ctx.drawImage(ws.colorCanvas, WEAPON_IDS.indexOf(p.weaponId) * 16, 0, 16, 16, 45, 9, 16, 16);
-    }
-
-    // relics carried, small, under the slots
-    const ids = p.relics;
-    ids.forEach((id, i) => {
-      const ic = this._relicIcon(id);
-      ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, 8 + (i % 4) * 17, 140 + Math.floor(i / 4) * 17, 16, 16);
-    });
-
-    // minimap + floor name
+    // --- the right panel: map, floor, omen, relics
+    const RX = W - SIDE;
+    let ry = 4;
     if (state.floor) {
       if ((state.omen === 'lost' || state.oath('blind')) && !state.debugReveal) {
         // the Omen of the Lost: no map at all
-        drawText(ctx, '?', W - 40, 26, FAINT, { scale: 3, align: 'center' });
-        drawText(ctx, state.floorName, W - 8, 52, DIM, { align: 'right' });
-        if (state.omen) drawText(ctx, state.omenInfo.name.toUpperCase(), W - 8, 62, '#b080e0', { align: 'right' });
+        drawText(ctx, '?', RX + SIDE / 2, 22, FAINT, { scale: 3, align: 'center' });
+        ry = 66;
       } else {
         const m = drawMinimap(ctx, state.floor, state.room.data.id, state.debugReveal);
-        drawText(ctx, state.floorName, m.x + m.w, m.y + m.h + 6, DIM, { align: 'right' });
-        if (state.omen) drawText(ctx, state.omenInfo.name.toUpperCase(), m.x + m.w, m.y + m.h + 16, '#b080e0', { align: 'right' });
+        ry = m.y + m.h + 10;
+      }
+      for (const line of wrapText(state.floorName.toUpperCase(), 12)) {
+        drawText(ctx, line, RX + SIDE / 2, ry, INK, { align: 'center' });
+        ry += 10;
+      }
+      if (state.omen) {
+        for (const line of wrapText(state.omenInfo.name.toUpperCase(), 12)) {
+          drawText(ctx, line, RX + SIDE / 2, ry, '#b080e0', { align: 'center' });
+          ry += 10;
+        }
+      }
+      if (state.mode === 'stalked') {
+        drawText(ctx, 'STALKED', RX + SIDE / 2, ry, '#c84a5a', { align: 'center' });
+        ry += 10;
       }
     }
+    // relics carried
+    const ids = p.relics;
+    if (ids.length) {
+      ry += 4;
+      drawText(ctx, `RELICS ${ids.length}`, RX + 6, ry, FAINT, { shadow: null });
+      ry += 10;
+      const perRow = 4;
+      const maxRows = Math.floor((H - ry - 6) / 17);
+      const shown = ids.slice(-perRow * maxRows); // newest stay in view
+      shown.forEach((id, i) => {
+        const ic = this._relicIcon(id);
+        ctx.drawImage(ic.canvas, ic.sx, 0, 16, 16, RX + 5 + (i % perRow) * 17, ry + Math.floor(i / perRow) * 17, 16, 16);
+      });
+    }
+
     // the Siege Crossbow: how far the shot is drawn
     if (p.charge > 0) {
       ctx.fillStyle = '#0b0a0d';
@@ -366,13 +497,50 @@ export class Hud {
       const a = Math.min(1, this.bannerT * 2, (2.8 - this.bannerT) * 4);
       ctx.globalAlpha = a;
       ctx.fillStyle = 'rgba(5,4,8,0.7)';
-      ctx.fillRect(0, 44, W, 40);
+      ctx.fillRect(SIDE, 44, W - SIDE * 2, 40); // inside the room: the side panels stay readable
       drawText(ctx, this.bannerDef.name, W / 2, 50, GOLD, { scale: 2, align: 'center' });
       drawText(ctx, this.bannerDef.flavour, W / 2, 70, INK, { align: 'center' });
       ctx.globalAlpha = 1;
     }
 
     if (this.debugText) drawText(ctx, this.debugText, 6, H - 12, '#9ad07a');
+  }
+
+  /** The hero's face in an iron medallion (cut from their own sprite, facing you). */
+  _drawPortrait(ctx, p, cx, cy) {
+    const r = 15;
+    ctx.fillStyle = '#0b0a0d';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#6a6a76';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1c1a22';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    const canvas = p.portraitCanvas || (p.sprite && p.sprite.sheet && p.sprite.sheet.colorCanvas);
+    if (canvas) {
+      const fw = 32;
+      const fh = 32;
+      const row = 0; // facing you
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
+      ctx.clip();
+      // head and shoulders: the top of the frame, a little enlarged
+      const scale = 1.5;
+      const sw = Math.min(fw, 22);
+      const sh = 20;
+      const sx = Math.round((fw - sw) / 2);
+      const sy = Math.max(0, Math.round(fh * 0.12));
+      ctx.drawImage(canvas, sx, row * fh + sy, sw, sh, Math.round(cx - (sw * scale) / 2), Math.round(cy - (sh * scale) / 2 + 3), sw * scale, sh * scale);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#9a9aa6';
+    ctx.fillRect(cx - 1, cy - r - 1, 2, 1); // a rivet at the top
   }
 
   _drawBossCard(state) {
@@ -533,6 +701,7 @@ export class Hud {
       drawText(ctx, v, W / 2 + 8, 92 + i * 14, i === 0 ? GOLD : INK);
     });
     this._drawRelicRow(state, 164);
+    this._drawEmbersHome(state, H - 66);
     this._drawRunNote(state, H - 50);
     drawText(ctx, state.input.touchMode ? 'TAP TO DESCEND AGAIN' : 'R  DESCEND AGAIN      ESC  TITLE', W / 2, H - 34, INK, { align: 'center' });
     ctx.globalAlpha = 1;
@@ -557,6 +726,7 @@ export class Hud {
       ctx.globalAlpha = 1;
     }
     this._drawRelicRow(state, 140);
+    this._drawEmbersHome(state, H - 66);
     this._drawRunNote(state, H - 50);
     drawText(ctx, state.input.touchMode ? 'TAP FOR A NEW RUN' : 'R  NEW RUN      ESC  TITLE', W / 2, H - 34, INK, { align: 'center' });
   }
@@ -578,6 +748,14 @@ export class Hud {
   }
 
   /** Under the death / victory screen: the Daily Descent's result, or the run's heat. */
+  _drawEmbersHome(state, y) {
+    if (!state.embersBanked) return;
+    const ctx = this.ctx;
+    const W = RENDER.width;
+    ctx.drawImage(this.icons.ember, W / 2 - 92, y - 3);
+    drawText(ctx, `${state.embersBanked} EMBERS CARRIED HOME   (${Save.data.embers || 0} AT THE HEARTH)`, W / 2 - 76, y, '#f0a848');
+  }
+
   _drawRunNote(state, y) {
     const ctx = this.ctx;
     const W = RENDER.width;

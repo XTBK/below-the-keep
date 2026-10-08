@@ -16,6 +16,35 @@ function arpeggio(s, out, t, notes, step, gain, dur = 1.4, bright = 0.45) {
 }
 
 export const SOUNDS = {
+  // --- Beatrix the Wandering ---
+  heartbeat: [0.15, (s, o, t) => {
+    s.drum(o, t, 62, 38, 0.14, 0.55, 0.05); // lub
+    s.drum(o, t + 0.2, 56, 34, 0.12, 0.4, 0.05); // dub
+  }],
+  whisper: [0.85, (s, o, t, p) => {
+    // breath shaped into a voice that isn't saying anything you want to hear
+    s.noise(o, t, { type: 'bandpass', f: [2200 * p, 900 * p], q: 5, gain: 0.07, attack: 0.18, dur: 0.9 });
+    s.noise(o, t + 0.25, { type: 'bandpass', f: [1400 * p, 2600 * p], q: 6, gain: 0.05, attack: 0.15, dur: 0.7 });
+    s.noise(o, t + 0.1, { type: 'highpass', f: [5000, 4000], q: 0.7, gain: 0.03, attack: 0.1, dur: 0.6 });
+  }],
+  sting: [0.7, (s, o, t, p) => {
+    // a scrape of strings, two notes rubbing against each other
+    s.sweep(o, t, 'sawtooth', 1120 * p, 1060 * p, 0.7, 0.07, 2600, 0.01);
+    s.sweep(o, t, 'sawtooth', 1187 * p, 1130 * p, 0.7, 0.06, 2600, 0.01);
+    s.sweep(o, t, 'sawtooth', 280 * p, 140 * p, 0.6, 0.06, 900, 0.005);
+    s.noise(o, t, { type: 'highpass', f: [4000, 2500], q: 0.8, gain: 0.08, dur: 0.25 });
+  }],
+  creak: [0.6, (s, o, t, p) => {
+    // a door, somewhere close, opening slowly
+    s.sweep(o, t, 'square', 70 * p, 120 * p, 0.6, 0.035, 500, 0.05);
+    s.sweep(o, t + 0.35, 'square', 110 * p, 80 * p, 0.5, 0.03, 500, 0.05);
+    for (let i = 0; i < 9; i++) s.noise(o, t + i * 0.09, { type: 'bandpass', f: [900, 700], q: 8, gain: 0.05, dur: 0.03 });
+  }],
+  beatrixHum: [0.9, (s, o, t, p) => {
+    // a woman humming, out of tune, from very far away
+    s.choir(o, t, [220 * p, 233 * p], 2.2, 0.045, 0.6);
+    s.choir(o, t + 1.1, [196 * p, 208 * p], 1.8, 0.035, 0.5);
+  }],
   // --- found weapons ---
   castFire: [0.35, (s, o, t, p) => {
     s.noise(o, t, { type: 'lowpass', f: [3200 * p, 500], q: 0.8, gain: 0.3, dur: 0.18 }); // a whoomph of flame

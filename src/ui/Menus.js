@@ -6,6 +6,8 @@ import { OATHS, OATH_IDS, MAX_HEAT, heatOf } from '../data/oaths.js';
 import { CHARACTERS } from '../data/characters.js';
 import { daily } from '../core/Daily.js';
 import { ROUTES } from '../data/routes.js';
+import { UPGRADES, UPGRADE_IDS, rank, bank, taught, buy } from '../data/embers.js';
+import { PRISONERS } from '../data/prisoners.js';
 
 // Every menu in the game: the title menu, pause, settings, controls, oaths, the Daily Descent and
 // yes/no questions. A screen is a list of items; the cursor moves with W/S, the arrows or the d-pad,
@@ -294,6 +296,10 @@ function wrap(text, n) {
   return lines;
 }
 
+function g_hint(menus) {
+  return menus.game.input.touchMode ? 'TAP AN UPGRADE TO BUY IT' : 'W/S CHOOSE    ENTER BUY    ESC LEAVE';
+}
+
 function dimBackground(ctx, a = 0.72) {
   ctx.fillStyle = `rgba(4,3,6,${a})`;
   ctx.fillRect(0, 0, W, H);
@@ -361,6 +367,7 @@ const SCREENS = {
       const heat = heatOf(Save.data.oaths);
       return [
         { label: 'BEGIN THE DESCENT', action: () => g.beginFromTitle(), note: heat && won ? `SWORN TO ${heat} HEAT.` : null },
+        { label: 'STALKED', action: () => g.beginFromTitle({ mode: 'stalked' }), note: 'A different descent: Beatrix the Wandering hunts you through the Keep. She cannot be killed. Embers x1.5.' },
         { label: 'DAILY DESCENT', action: () => { daily.fetchBoard(); menus.open('daily'); }, note: 'One seed, one hero, everyone. Climb the board.' },
         won
           ? { label: 'OATHS', action: () => menus.open('oaths'), value: heat ? () => `HEAT ${heat}` : null, note: 'Swear oaths to make the descent harder - and its relics better.' }
@@ -369,6 +376,68 @@ const SCREENS = {
         { label: 'COLLECTION', action: () => g.openCollection() },
         { label: 'SETTINGS', action: () => menus.open('settings') },
       ];
+    },
+  },
+
+  // the Hearth at the Gatehouse: spend embers on lasting upgrades
+  hearth: {
+    back(g) {
+      g.setPaused(false);
+    },
+    items(g) {
+      const list = UPGRADE_IDS.map((id) => {
+        const u = UPGRADES[id];
+        const r = rank(id);
+        const max = r >= u.costs.length;
+        const ok = taught(id);
+        const cost = max ? 0 : u.costs[r];
+        const pips = '#'.repeat(r) + '-'.repeat(u.costs.length - r);
+        return {
+          label: u.name.toUpperCase(),
+          value: () => (!ok ? 'LOCKED' : max ? 'MASTERED' : `${cost}`),
+          disabled: !ok || max || bank() < cost,
+          selectable: true,
+          pips,
+          note: !ok ? `FREE ${PRISONERS[u.by].name.toUpperCase()} TO LEARN THIS.` : max ? u.text[u.text.length - 1].toUpperCase() : `NEXT: ${u.text[r].toUpperCase()}`,
+          action: () => {
+            if (buy(id)) {
+              g.audio.play('holy', 0.7);
+              g.player && g.effects.holySplash(g.player.x, g.player.y, 30);
+            }
+          },
+        };
+      });
+      list.push({ label: 'LEAVE THE FIRE', action: () => g.setPaused(false) });
+      return list;
+    },
+    draw(ctx, menus, time, t) {
+      dimBackground(ctx, 0.72);
+      drawPanel(ctx, 120, 40, 400, 270, 'THE HEARTH');
+      drawText(ctx, `EMBERS  ${bank()}`, W / 2, 62, '#f0a848', { align: 'center' });
+      const items = menus.items();
+      menus.rows = [];
+      items.forEach((it, i) => {
+        const y = 82 + i * 22;
+        const sel = i === t.cursor;
+        if (sel) {
+          ctx.fillStyle = 'rgba(232,196,108,0.12)';
+          ctx.fillRect(134, y - 4, 372, 18);
+        }
+        const col = it.label === 'LEAVE THE FIRE' ? (sel ? C.gold : C.dim) : it.value() === 'LOCKED' ? C.faint : sel ? C.gold : C.ink;
+        drawText(ctx, it.label, 144, y, col);
+        if (it.pips) {
+          for (let k = 0; k < it.pips.length; k++) {
+            ctx.fillStyle = it.pips[k] === '#' ? '#f0a848' : '#3a3640';
+            ctx.fillRect(300 + k * 9, y + 1, 6, 6);
+          }
+          const v = it.value();
+          drawText(ctx, v === 'LOCKED' || v === 'MASTERED' ? v : `${v} EMBERS`, 496, y, v === 'LOCKED' ? C.faint : v === 'MASTERED' ? '#f0a848' : bank() >= +v ? C.ink : C.red, { align: 'right' });
+        }
+        menus.rows.push({ x0: 134, x1: 506, y0: y - 4, y1: y + 14, i });
+      });
+      const note = items[t.cursor] && items[t.cursor].note;
+      if (note) wrap(note, 60).forEach((line, k) => drawText(ctx, line, W / 2, 248 + k * 11, C.dim, { align: 'center' }));
+      drawText(ctx, g_hint(menus), W / 2, H - 30, C.faint, { align: 'center' });
     },
   },
 

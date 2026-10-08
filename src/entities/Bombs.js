@@ -106,6 +106,7 @@ export class Bombs {
     // rocks
     room.destroyRocksNear(x, y, R);
     room.explosion(x, y, R);
+    if (room.game.beatrix) room.game.beatrix.explosion(x, y, R); // a blast drives Beatrix off
     // cracked walls into secret rooms
     let opened = false;
     for (const d of room.doors) {

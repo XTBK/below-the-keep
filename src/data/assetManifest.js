@@ -1,3 +1,4 @@
+import { beatrixFrame, BEATRIX_COLS } from '../render/art/beatrixArt.js'; // Beatrix the Wandering
 import { npcFrame } from '../render/art/gatehouseArt.js'; // the prisoners and the Gatehouse
 import * as B8 from '../render/art/bossesArt8.js'; // the secret bosses
 import * as E5 from '../render/art/enemiesArt5.js'; // the secret bestiary
@@ -282,6 +283,7 @@ Object.assign(ASSETS, {
   dice_table: { frameW: 40, frameH: 32, cols: 2, rows: 1, generate: (c) => I3.diceTableFrame(c) },
   beggar: { frameW: 24, frameH: 32, cols: 2, rows: 1, generate: (c) => I3.beggarFrame(c) },
   war_banner: { frameW: 20, frameH: 40, cols: 2, rows: 1, generate: (c) => I3.warBannerFrame(c) },
+  beatrix: { frameW: 36, frameH: 54, cols: BEATRIX_COLS, rows: 1, generate: (c) => beatrixFrame(c) },
   npcs: { frameW: 28, frameH: 36, cols: 16, rows: 1, generate: (c) => npcFrame(c) }, // the prisoners you can free
   sealed_stair: { frameW: 48, frameH: 40, cols: 2, rows: 1, generate: (c) => I3.sealedStairFrame(c) }, // the way down to a secret realm
   anvil: { frameW: 36, frameH: 30, cols: 3, rows: 1, generate: (c) => I3.anvilFrame(c) }, // the Blacksmith's Anvil: cold, glowing, spent

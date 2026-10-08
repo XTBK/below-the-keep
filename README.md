@@ -57,6 +57,13 @@ Each has their own weapon and their own dodge:
 The three were balanced with a bot that plays each hero through the same fights on every chapter: they
 take about the same damage for their health (within ~10%); the Iron Knight kills fastest but takes the most.
 
+## The HUD
+
+The screen is framed by two stone-and-iron side panels (the Keep's ledger), so the room in the middle stays
+clear. **Left:** the hero's portrait and weapon, **vigor** (one blood segment per heart, iron after them),
+pennies, bombs, keys and embers, then what's in your hands (active relic and charge, trinket, Q item).
+**Right:** the map, the floor's name and any omen, and the relics you carry.
+
 ## The Gatehouse
 
 Every run (except the Daily Descent) begins at **the Gatehouse**, home above the Keep. Its walls hold five empty
@@ -71,6 +78,36 @@ Gatehouse and help you on every run:
 | **Sister Ottilie** | floor 3 | Her prayer: the first time you fall in a run, you rise again with 2 hearts |
 | **Wynn the Cartographer** | floor 4 | Every floor's boss, armoury and merchant are on your map from the start |
 | **Old Ambrose** | floor 5 | Opens a forgotten stair in the Gatehouse: start in the Catacombs with a relic in hand |
+
+## Embers and the Hearth
+
+Every run brings something home. You earn **embers** as you go: each boss is worth more the deeper you are and
+the tougher it is, a floor with no damage taken earns a bonus, champions drop one, and winning earns 25. Oaths
+(heat) and the Stalked mode multiply them. When the run ends, won or lost, they're carried home. Spend them at
+**the Hearth** in the Gatehouse on lasting upgrades. Most are taught by a prisoner you've freed:
+
+| Upgrade | Teacher | Ranks |
+|---|---|---|
+| Kindled Heart | (always) | +1 heart, +2 hearts |
+| Tempered Steel | Hollis | +0.25 / +0.5 / +0.75 damage |
+| Fuller Stores | Bram | +5 pennies, then another bomb |
+| Deeper Prayer | Ottilie | the prayer lifts you with 3 hearts, then is answered twice |
+| Keen Eye | Wynn | secret rooms on the map, then the whole floor |
+| Old Knowledge | Ambrose | a rare relic down his stair, then a relic every run |
+
+(The Daily Descent never earns or uses embers, so its board stays fair.)
+
+## Stalked: Beatrix the Wandering
+
+A separate mode, from the title menu (**STALKED**). Beatrix can't be killed. A little while after you reach a
+floor she starts walking toward you, room by room. You hear her before you see her: a heartbeat that quickens,
+whispers, the light thinning, the edges of the screen going dark. Then she comes through the door and drifts
+straight at you, through rocks and walls. If you keep your distance too long, she's suddenly behind you.
+
+- Her touch costs **two hearts**; then she lets you go for a while.
+- A **dodge** passes through her unharmed. A **bomb** beside her drives her off.
+- Leave the room and she follows, a few seconds behind. She won't enter a boss's room while the boss lives.
+- Embers x1.5.
 
 ## The road forks
 
